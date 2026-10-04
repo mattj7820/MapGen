@@ -138,39 +138,6 @@ const ropeCoils = family({
   },
 });
 
-const chains = family({
-  base: "chain",
-  category: "nautical",
-  tags: "ship docks prison mine iron",
-  axes: { form: ["coil", "run"] },
-  spec: ({ form }) => ({
-    about:
-      form === "coil"
-        ? "a heap of heavy iron chain; lies flat"
-        : "a length of heavy chain across the floor, east to west at rotation 0",
-    size: form === "coil" ? [0.7, 0.7] : [2, 0.4],
-    resizable: form === "run",
-    round: form === "coil",
-    layer: "floor",
-    height: 0.1,
-    dressing: { stores: 0.1 },
-    draw: (k) => {
-      if (form === "coil") {
-        k.shadow(ring(k, 0.3, 20), 0.1, 0.3);
-        chain(k, spiral([0, 0], 0.28, 0.06, 2.2, k.rng.range(0, 6)), 0.09);
-        return;
-      }
-      const n = 16;
-      const ph = k.rng.range(0, 6);
-      const pts = Array.from({ length: n + 1 }, (_, i): Pt => {
-        const x = -k.w / 2 + 0.08 + ((k.w - 0.16) * i) / n;
-        return [x, Math.sin(x * 2.2 + ph) * k.d * 0.25];
-      });
-      chain(k, pts, 0.1);
-    },
-  }),
-});
-
 // ---------------------------------------------------------------- anchor, capstan, wheel, mast
 
 const anchors = family({
@@ -1236,7 +1203,6 @@ const sailRolls = family({
 
 export const NAUTICAL: Record<string, LibraryProp> = {
   ...ropeCoils,
-  ...chains,
   ...anchors,
   ...capstans,
   ...shipsWheel,

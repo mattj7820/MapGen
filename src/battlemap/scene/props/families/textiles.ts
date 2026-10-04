@@ -559,50 +559,6 @@ const bolts = family({
   }),
 });
 
-const hammocks = family({
-  base: "hammock",
-  category: "textiles",
-  tags: "ship camp forest cloth rope",
-  axes: {},
-  spec: () => ({
-    about:
-      "canvas hammock slung between two hooks or trees, its length north to south at rotation 0",
-    size: [0.9, 2.4],
-    layer: "solid",
-    height: 0.8,
-    draw: (k) => {
-      const [w, d] = [k.w, k.d];
-      for (const s of [-1, 1]) {
-        k.line(
-          [
-            [-w * 0.3, s * (d / 2 - 0.4)],
-            [0, s * (d / 2 - 0.03)],
-            [w * 0.3, s * (d / 2 - 0.4)],
-          ],
-          0.015,
-          mix(k.pal.burlap.shade, INK, 0.3),
-        );
-      }
-      const pts: Pt[] = [];
-      const n = 24;
-      for (let i = 0; i <= n; i++) {
-        const t = i / n;
-        pts.push([(w / 2 - 0.04) * Math.sin(Math.PI * t) * 0.95, -d / 2 + 0.35 + (d - 0.7) * t]);
-      }
-      const shape = [...pts, ...pts.map(([x, y]): Pt => [-x, y]).reverse()];
-      k.shadow(shape, 0.8);
-      k.body(shape, k.pal.burlap, 0.08);
-      for (const f of [-0.2, 0.2])
-        k.line(
-          pts.map(([x, y]): Pt => [x * f * 3, y]),
-          WEIGHT.detail * 0.5,
-          k.pal.burlap.shade,
-        );
-      k.outline(shape, WEIGHT.object, true);
-    },
-  }),
-});
-
 const blankets = family({
   base: "blankets",
   category: "textiles",
@@ -679,6 +635,5 @@ export const TEXTILES: Record<string, LibraryProp> = {
   ...cushions,
   ...washingLines,
   ...bolts,
-  ...hammocks,
   ...blankets,
 };

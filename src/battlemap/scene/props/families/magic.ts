@@ -1119,7 +1119,7 @@ const runestones = family({
 });
 
 const obelisks = family({
-  base: "obelisk",
+  base: "rune-obelisk",
   category: "magic",
   tags: "ruins desert cult temple graveyard magic stone",
   axes: { glow: ["dark", "blue"] },
