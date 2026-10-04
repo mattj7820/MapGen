@@ -1,4 +1,7 @@
 import type { Pt } from "../../geometry.js";
+import type { EdgeStyle } from "../../style/edges.js";
+
+export type { EdgeStyle };
 
 /**
  * Everything about a plateau map that matters for play or that someone might ask to
@@ -21,8 +24,6 @@ export interface PlateauLayout {
   shrubs: Feature[];
   lichen: Feature[];
 }
-
-export type EdgeStyle = "blocks" | "brushed";
 
 export interface Plateau {
   id: string;
