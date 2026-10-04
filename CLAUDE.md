@@ -231,11 +231,21 @@ Checklist for every look review:
    is 12x12; below that there is no room for chasm and neighbours.
 4. Renderer built on `style/`. Done; 24x16 at 256 px renders in about 3 s.
 5. CLI and output folder, with the output-path guard. Done.
-6. Look iteration, including multi-seed sheets. Noted so far:
-   - Tone blotches can still look a little like camouflage at thumbnail size.
-   - Lichen patches read as blurry smudges; they could use more definition.
-   - Grit is barely visible at overview size.
-   - Cracks are a touch thinner than the reference style.
-   - The `brushed` edge has had less attention than `blocks`.
+6. Look iteration, including multi-seed sheets. First round done:
+   - Plateau tops are calmer: gentler, broader tone steps and fainter slabs. The
+     detail comes from crisp ink (cracks, grit, pebbles), as in the reference.
+   - Cracks are bolder (0.025 of a square), more numerous, swell and pinch, waver
+     slightly, and have the odd tiny spur.
+   - Lichen is flat flecked patches in a colour muted towards the rock; no glow.
+   - Grit ticks are larger, and small inked pebbles are mixed in.
+   - `blocks` edges have their corners knocked off (`chamfer`), so they read as
+     chunks of stone, not tiles.
+   - `brushed` edges have stones tucked half under the edge line instead of chips
+     floating in the void.
+   - The "chasm" review crop sits just off the main edge, so it never shows only void.
+   - Checked at 140 px: the style holds.
+
+   Further rounds are driven by Matt's feedback on real maps.
+
 7. README polish with anonymous sample images.
 8. Later: a flat-colour layout export for restyling with an image model.

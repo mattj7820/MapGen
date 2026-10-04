@@ -39,9 +39,16 @@ export function plateauCrops(layout: PlateauLayout): Crop[] {
 
   const neighbour = layout.plateaus[1];
   if (neighbour) {
+    // Just off the main plateau's edge, so the crop shows the edge and the drop together
+    // even where the chasm is wider than the crop.
     const g = gap(main.outline, neighbour.outline);
+    const d = distance(g.from, g.to) || 1;
+    const step = Math.min(0.75, d / 2);
     crops.push({
-      centre: [(g.from[0] + g.to[0]) / 2, (g.from[1] + g.to[1]) / 2],
+      centre: [
+        g.from[0] + ((g.to[0] - g.from[0]) / d) * step,
+        g.from[1] + ((g.to[1] - g.from[1]) / d) * step,
+      ],
       label: "chasm",
     });
   }
