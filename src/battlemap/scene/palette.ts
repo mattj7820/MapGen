@@ -71,6 +71,7 @@ const EARTH: Record<GroundKind, Tones> = {
   rock: { base: "#9a8f80", light: "#aba08f", shade: "#82786a" },
   water: { base: "#4f7480", light: "#6a8f98", shade: "#3c5c67" },
   void: { base: "#151214", light: "#2e2724", shade: "#000000" },
+  bedrock: { base: "#4a443d", light: "#57514a", shade: "#37322d" },
 };
 
 const SHARED = {
@@ -78,6 +79,7 @@ const SHARED = {
     stone: { base: "#6e6a64", light: "#827d75", shade: "#57534d" },
     timber: { base: "#6d4c31", light: "#82603f", shade: "#553a25" },
     ruined: { base: "#75706a", light: "#89837b", shade: "#5c5852" },
+    cave: { base: "#4a443d", light: "#57514a", shade: "#37322d" },
   },
   stone: { base: "#8f8274", light: "#ab9e8e", shade: "#6f6458" },
   foliage: { base: "#6f7d4a", light: "#8a985c", shade: "#56613a" },

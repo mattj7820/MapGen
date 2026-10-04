@@ -68,13 +68,21 @@ export const GROUND_KINDS = [
   "rock",
   "water",
   "void",
+  "bedrock",
 ] as const;
 export type GroundKind = (typeof GROUND_KINDS)[number];
 
 /** Ground nobody can stand on: props and scatter must stay off it. */
-export const UNWALKABLE: readonly GroundKind[] = ["water", "void"];
+export const UNWALKABLE: readonly GroundKind[] = ["water", "void", "bedrock"];
 
-export const WALL_KINDS = ["stone", "timber", "ruined"] as const;
+/**
+ * `cave` is for rooms only: a rough rock face round the floor instead of a built
+ * wall, with solid `bedrock` beyond it (use it as the base). Its outline is roughened
+ * from the room's seed.
+ */
+export const WALL_KINDS = ["stone", "timber", "ruined", "cave"] as const;
+/** The wall kinds a free-standing wall can be. */
+export const BUILT_WALLS = ["stone", "timber", "ruined"] as const;
 export type WallKind = (typeof WALL_KINDS)[number];
 
 export const OPENING_KINDS = ["door", "double-door", "window", "archway"] as const;

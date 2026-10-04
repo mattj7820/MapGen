@@ -23,15 +23,20 @@ export interface EdgeColours {
   rimShade: string;
 }
 
-/** Draw the edge treatment outside `outline`. Draw the surface itself on top afterwards. */
+/**
+ * Draw the edge treatment outside `outline`. Draw the surface itself on top afterwards.
+ * `rising`: the ground outside is higher than the surface (a cave's rock face round
+ * its floor), so its faces are lit the other way round.
+ */
 export function drawEdge(
   paper: Paper,
   style: EdgeStyle,
   outline: readonly Pt[],
   colours: EdgeColours,
   rng: Rng,
+  rising = false,
 ): void {
-  if (style === "blocks") blockEdge(paper, outline, colours, rng);
+  if (style === "blocks") blockEdge(paper, outline, colours, rng, rising ? -1 : 1);
   else brushedEdge(paper, outline, colours, rng);
 }
 
@@ -40,7 +45,13 @@ export function edgeOutlineWeight(style: EdgeStyle): number {
   return style === "blocks" ? WEIGHT.outline : WEIGHT.heavy;
 }
 
-function blockEdge(paper: Paper, outline: readonly Pt[], colours: EdgeColours, rng: Rng): void {
+function blockEdge(
+  paper: Paper,
+  outline: readonly Pt[],
+  colours: EdgeColours,
+  rng: Rng,
+  lightSign: number,
+): void {
   const { g } = paper;
   const normals = vertexNormals(outline, true);
   const lengths = arcLengths(outline);
@@ -84,7 +95,7 @@ function blockEdge(paper: Paper, outline: readonly Pt[], colours: EdgeColours, r
       })
       .filter((_, j, all) => j === 0 || j === all.length - 1 || j % 2 === 0)
       .map(([x, y]): Pt => [x + rng.range(-0.05, 0.05), y + rng.range(-0.05, 0.05)]);
-    const light = facing(normals[Math.floor((i0 + i1) / 2)]!);
+    const light = lightSign * facing(normals[Math.floor((i0 + i1) / 2)]!);
 
     // Deeper blocks sometimes break into an inner and an outer piece.
     if (Math.min(depth0, depth1) > 0.36 && rng.chance(0.45)) {

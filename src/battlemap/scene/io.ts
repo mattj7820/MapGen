@@ -14,6 +14,7 @@ import {
   OPENING_KINDS,
   SCATTER_KINDS,
   type Scene,
+  BUILT_WALLS,
   WALL_KINDS,
 } from "./scene.js";
 
@@ -86,7 +87,7 @@ export function parseScene(text: string): Scene {
       const pts = points(o.points, `${n}.points`);
       if (pts.length < 2) throw new Error(`${n}.points needs at least 2 points`);
       return {
-        kind: oneOf(o.kind, WALL_KINDS, `${n}.kind`),
+        kind: oneOf(o.kind, BUILT_WALLS, `${n}.kind`),
         points: pts,
         ...(o.closed !== undefined ? { closed: bool(o.closed, `${n}.closed`) } : {}),
         seed: seedFor(o.seed, `${n}.seed`, "wall", pts),

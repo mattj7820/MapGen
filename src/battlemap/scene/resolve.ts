@@ -1,6 +1,7 @@
 import { contains, distance, type Pt, roundPt, segmentDistance } from "../../geometry.js";
 import { hash } from "../../rng.js";
 import { densify } from "../../style/ink.js";
+import { caveOutline } from "./cave.js";
 import { dress } from "./dressing.js";
 import { onSegment, placeProp, rectOutline, WALL_THICKNESS, wallRect } from "./place.js";
 import { PROPS } from "./props/library.js";
@@ -46,6 +47,8 @@ export interface ResolvedRegion {
   seed: number;
   /** A room's floor, which runs to the centre line of its walls. */
   room?: true;
+  /** A cave's floor, whose outline is its rough rock face (see cave.ts). */
+  cave?: true;
 }
 
 export interface WallSegment {
@@ -102,12 +105,13 @@ const LAYER_ORDER = ["floor", "seat", "solid", "top", "bridge", "overhead"] as c
 
 export function resolveScene(scene: Scene): Resolved {
   const regions: ResolvedRegion[] = [
-    ...scene.rooms.map((r, i) => ({
+    ...scene.rooms.map((r, i): ResolvedRegion => ({
       id: r.id ?? `room${i + 1}`,
       kind: r.floor,
-      outline: roomOutline(r),
+      outline: r.wall === "cave" ? caveOutline(roomOutline(r), r.seed) : roomOutline(r),
       seed: r.seed,
       room: true as const,
+      ...(r.wall === "cave" ? { cave: true as const } : {}),
     })),
     ...scene.ground.map((g, i): ResolvedRegion => {
       const raw = g.outline ?? rectOutline(g.rect!);
@@ -193,7 +197,9 @@ export function mergeWalls(scene: Scene): WallSegment[] {
       if (distance(a, b) > EPS) raw.push({ a, b, kind, seed });
     }
   };
-  for (const r of scene.rooms) add(roomOutline(r), true, r.wall, r.seed);
+  for (const r of scene.rooms) {
+    if (r.wall !== "cave") add(roomOutline(r), true, r.wall, r.seed);
+  }
   for (const w of scene.walls) add(w.points, w.closed ?? false, w.kind, w.seed);
 
   // Group by kind and line, then merge overlapping intervals along each line.

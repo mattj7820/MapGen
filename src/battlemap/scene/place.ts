@@ -6,7 +6,13 @@ import type { Prop, WallKind } from "./scene.js";
 /** Shapes worked out from a scene: shared by resolving, dressing and checking. */
 
 /** Wall thickness by kind, in squares. Walls are centred on the lines they're given. */
-export const WALL_THICKNESS: Record<WallKind, number> = { stone: 0.4, timber: 0.3, ruined: 0.4 };
+export const WALL_THICKNESS: Record<WallKind, number> = {
+  stone: 0.4,
+  timber: 0.3,
+  ruined: 0.4,
+  // A cave's floor runs right up to its rock face; this keeps dressing off the face.
+  cave: 0.2,
+};
 
 export function rectOutline([x0, y0, x1, y1]: [number, number, number, number]): Pt[] {
   return [

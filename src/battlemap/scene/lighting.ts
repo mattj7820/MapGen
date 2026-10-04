@@ -2,6 +2,7 @@ import { createCanvas } from "@napi-rs/canvas";
 import { contains, distance, type Pt, segmentDistance } from "../../geometry.js";
 import type { Rgb } from "../../style/colour.js";
 import { type Ctx, type Paper, tracePath } from "../../style/paper.js";
+import { caveOccluders } from "./cave.js";
 import { onSegment } from "./place.js";
 import type { LightColour } from "./props/spec.js";
 import type { Resolved } from "./resolve.js";
@@ -164,7 +165,7 @@ export function occluders(r: Resolved): [Pt, Pt][] {
       onSegment(o.segment, o.offset + o.width / 2),
     ]);
   }
-  return segs;
+  return [...segs, ...caveOccluders(r)];
 }
 
 /**

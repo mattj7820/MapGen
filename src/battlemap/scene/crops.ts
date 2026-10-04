@@ -41,6 +41,11 @@ export function sceneCrops(r: Resolved, max = 6): Crop[] {
     .filter((p): p is Pt => p !== undefined)
     .sort((a, b) => a[0] + a[1] - (b[0] + b[1]))[0];
   add(corner, "wall corner (lit side)");
+  for (const cave of r.regions.filter((g) => g.cave).slice(0, 2)) {
+    const byDiagonal = [...cave.outline].sort((a, b) => a[0] + a[1] - (b[0] + b[1]));
+    add(byDiagonal[0], "cave face (lit side)");
+    add(byDiagonal[byDiagonal.length - 1], "cave face (shaded side)");
+  }
   for (const o of r.openings.filter((o) => o.segment && !o.problem).slice(0, 2)) {
     add(o.centre, o.opening.kind);
   }
@@ -50,7 +55,7 @@ export function sceneCrops(r: Resolved, max = 6): Crop[] {
     .map((p) => ({ p, near: furniture.filter((o) => distance(o.prop.at, p.prop.at) < 2).length }))
     .sort((a, b) => b.near - a.near)[0];
   if (busiest) add(busiest.p.prop.at, "furniture");
-  const flame = r.props.find((p) => p.prop.kind === "hearth" || p.prop.kind === "range");
+  const flame = r.props.find((p) => p.spec.light && p.spec.layer !== "top");
   if (flame) add(flame.prop.at, flame.prop.kind);
 
   const stones = r.scene.scatter.filter((s) => s.kind === "stone");

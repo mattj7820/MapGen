@@ -17,6 +17,7 @@ import { makeNoise } from "../../style/noise.js";
 import { clipTo, fillPoly, lowres, type Paper, softPoly } from "../../style/paper.js";
 import { innerShade, toneSteps } from "../../style/shading.js";
 import { jagged } from "../../style/shapes.js";
+import { drawCaveFace, drawCaveLine } from "./cave.js";
 import type { Palette, Tones } from "./palette.js";
 import type { Resolved, ResolvedRegion } from "./resolve.js";
 import type { Crack, GroundKind, Scatter } from "./scene.js";
@@ -53,12 +54,14 @@ export function drawRegion(paper: Paper, pal: Palette, region: ResolvedRegion, r
   const rng = new Rng(region.seed);
   // A room's floor ends under its walls, so it needs no edge of its own.
   const open = !region.room;
+  if (region.cave) drawCaveFace(paper, pal, region, r);
   if (region.edge) drawEdge(paper, region.edge, region.outline, pal.rim, rng.fork("edge"));
   else if (open && !PAVED.includes(region.kind)) {
     // Natural ground fades into what's round it rather than stopping at a hard line.
     softPoly(paper, region.outline, pal.ground[region.kind].base, 0.25);
   }
   paint(paper, pal, region, r, frame);
+  if (region.cave) drawCaveLine(paper, region, r);
   if (region.edge) {
     brush(paper.g, region.outline, edgeOutlineWeight(region.edge), {
       closed: true,
@@ -108,6 +111,19 @@ function paint(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved, 
       break;
     case "water":
       drawWater(paper, tones, region, area, rng);
+      break;
+    case "bedrock":
+      toneSteps(
+        paper,
+        makeNoise(rng.fork("tone")),
+        [
+          { at: -0.35, colour: tones.shade },
+          { at: 0.35, colour: tones.light },
+        ],
+        2.5,
+        0.35,
+        area,
+      );
       break;
     case "void":
       toneSteps(
