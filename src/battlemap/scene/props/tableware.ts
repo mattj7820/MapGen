@@ -186,11 +186,11 @@ export const jug: PropSpec = small("jug with a spout and handle", [0.32, 0.32], 
   const body = k.ellipse(0, 0, r * 0.8, r * 0.8, 20);
   const spout: Pt[] = [
     [-r * 0.5, -r * 0.55],
-    [0, -r * 1.05],
+    [0, -r * 0.94],
     [r * 0.5, -r * 0.55],
   ];
-  const handle = k.rounded(-r * 0.25, r * 0.55, r * 0.25, r, 0.03);
-  k.shadow(body, 0.25, 0.35);
+  const handle = k.rounded(-r * 0.25, r * 0.55, r * 0.25, r * 0.9, 0.03);
+  k.shadow(body, 0.12, 0.35);
   k.solid(handle, ware, { band: 0.01 });
   k.fill(spout, ware.base);
   k.outline(spout, FINE);

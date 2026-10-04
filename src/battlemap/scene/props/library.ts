@@ -1,4 +1,19 @@
 import { bridge } from "./bridge.js";
+import {
+  altar,
+  bed,
+  brazier,
+  candelabra,
+  chest,
+  desk,
+  lamp,
+  lectern,
+  pew,
+  plant,
+  range,
+  stairs,
+  wardrobe,
+} from "./furnishings.js";
 import type { PropSpec } from "./spec.js";
 import {
   basket,
@@ -56,8 +71,22 @@ export const PROPS: Record<string, PropSpec> = {
   bench,
   bar,
   shelves,
+  desk,
   hearth,
+  range,
   rug,
+  bed,
+  wardrobe,
+  chest,
+  stairs,
+  plant,
+  // Church
+  pew,
+  altar,
+  lectern,
+  // Light
+  candelabra,
+  brazier,
   // Stores
   barrel,
   crate,
@@ -69,6 +98,7 @@ export const PROPS: Record<string, PropSpec> = {
   broom,
   // On tables and counters
   candle,
+  lamp,
   "candle-stub": candleStub,
   plate,
   bowl,
