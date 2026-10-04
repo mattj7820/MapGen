@@ -140,6 +140,28 @@ corner. Sidecar:
 fraction of the image **width**, `origin` is a point where two grid lines cross (as
 fractions of the image), and `lines` is line strength from 0 to 1.
 
+## Editing layouts
+
+`layout.json` (type `PlateauLayout` in `src/battlemap/plateau/layout.ts`) is in squares:
+x right, y down, origin at the map's top-left corner. Plateau 0 is the main plateau.
+Outlines are closed point lists about a quarter of a square apart. Every stone, shrub,
+lichen patch, plateau and bridge has its own `seed` for drawing detail.
+
+To make a change Matt asks for ("widen that chasm", "add a bridge here"), edit the
+layout with a small script rather than regenerating it, so everything else stays put:
+
+- **Widen a chasm:** move the outline points of one plateau that face the other
+  plateau away from it, fading the move out along the outline so the edge stays
+  smooth.
+- **Add a bridge:** add an entry to `bridges` with `width: 1` and each end reaching
+  0.5–1 square onto rock.
+- **Remove clutter:** delete entries.
+
+Then run `checkLayout()` (`src/battlemap/plateau/check.ts`). It catches items left
+hanging over the chasm, bridge ends off rock, overlapping plateaus and cracks running
+off edges. Fix what it reports (usually by deleting the stranded items) before
+rendering.
+
 ## Looking at renders
 
 The Read tool scales large images down, which hides line weight and texture, so never
@@ -181,7 +203,8 @@ Checklist for every look review:
    Done: see "Decisions so far". The code lives on the `prototype` branch for
    reference.
 2. Core: seeded RNG, grid and sidecar maths, with tests.
-3. Plateau layout generator writing `layout.json`, with rule tests.
+3. Plateau layout generator writing `layout.json`, with rule tests. Minimum map size
+   is 12x12; below that there is no room for chasm and neighbours.
 4. Renderer built on `style/`.
 5. CLI and output folder, with the output-path guard.
 6. Look iteration, including multi-seed sheets.
