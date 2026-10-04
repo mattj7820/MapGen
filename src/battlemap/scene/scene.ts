@@ -1,5 +1,6 @@
 import type { Pt } from "../../geometry.js";
 import type { EdgeStyle } from "../../style/edges.js";
+import type { Setting } from "./props/catalogue.js";
 
 /**
  * A battle map described at a high level, in squares (x right, y down, origin at the
@@ -170,6 +171,12 @@ export interface Dressing {
   kind: DressingKind;
   /** The id of a room or ground region. */
   in: string;
+  /**
+   * For `stores` and `litter`: pick from props tagged with this setting (a mine's ore
+   * carts and rubble, a forge's coal and iron) instead of household stores. See
+   * SETTINGS in props/catalogue.ts.
+   */
+  setting?: Setting;
   /** How much, from 0 to 1 (default 0.5). */
   amount: number;
   seed: number;

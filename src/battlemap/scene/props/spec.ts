@@ -1,3 +1,4 @@
+import type { Category, Tag } from "./catalogue.js";
 import type { PropKit } from "./kit.js";
 
 /**
@@ -40,6 +41,23 @@ export interface PropSpec {
   surface?: boolean;
   /** It gives light (see lighting.ts). */
   light?: PropLight;
+  /**
+   * How often room dressing picks it (see dressing.ts), by kind of dressing: `stores`
+   * along the walls, `litter` on the floor. Left out, dressing never places it.
+   */
+  dressing?: Partial<Record<"stores" | "litter", number>>;
   /** Draw it centred on (0, 0), `size` across, its front facing +y (south). */
   draw: (kit: PropKit) => void;
+}
+
+/**
+ * A prop as the library lists it: with its category (one each, for the catalogue and
+ * prop sheets) and tags (settings and materials, for search and setting-aware
+ * dressing). Both come from the fixed lists in catalogue.ts.
+ */
+export interface LibraryProp extends PropSpec {
+  category: Category;
+  tags: Tag[];
+  /** The family it's a variant of, if any (see family.ts). */
+  family?: string;
 }

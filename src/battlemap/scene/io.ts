@@ -3,6 +3,7 @@ import { hash } from "../../rng.js";
 import { EDGE_STYLES, type EdgeStyle } from "../../style/edges.js";
 import { parseLayout } from "../plateau/io.js";
 import { plateauScene } from "../plateau/scene.js";
+import { SETTINGS } from "./props/catalogue.js";
 import { DEFAULT_PALETTE } from "./palette.js";
 import {
   DRESSING_KINDS,
@@ -142,7 +143,13 @@ export function parseScene(text: string): Scene {
       const where = str(o.in, `${n}.in`);
       const amount = o.amount === undefined ? 0.5 : num(o.amount, `${n}.amount`);
       if (amount < 0 || amount > 1) throw new Error(`${n}.amount must be from 0 to 1`);
-      return { kind, in: where, amount, seed: seedFor(o.seed, `${n}.seed`, kind, where) };
+      return {
+        kind,
+        in: where,
+        amount,
+        ...(o.setting !== undefined ? { setting: oneOf(o.setting, SETTINGS, `${n}.setting`) } : {}),
+        seed: seedFor(o.seed, `${n}.seed`, kind, where),
+      };
     }),
     scatter: list(s.scatter, "scatter").map((f, i) => {
       const n = `scatter[${i}]`;

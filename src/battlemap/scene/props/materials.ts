@@ -58,3 +58,60 @@ export function wear(k: PropKit, shape: Pt[]): void {
   }
   k.unclip();
 }
+
+/** The materials families vary over, by name. */
+export const MATERIALS = [
+  "wood",
+  "dark-wood",
+  "pale-wood",
+  "iron",
+  "brass",
+  "gold",
+  "copper",
+  "stone",
+  "marble",
+  "bone",
+  "clay",
+  "glass",
+  "cloth",
+  "leather",
+  "wicker",
+] as const;
+export type Material = (typeof MATERIALS)[number];
+
+/** A material's three tones in this palette. */
+export function material(k: PropKit, m: Material): Tones {
+  const p = k.pal;
+  switch (m) {
+    case "wood":
+      return p.wood;
+    case "dark-wood":
+      return darkWood(k);
+    case "pale-wood":
+      return paleWood(k);
+    case "iron":
+      return p.metal;
+    case "brass":
+      return p.brass;
+    case "gold":
+      return p.gold;
+    case "copper":
+      return p.copper;
+    case "stone":
+      return p.walls.stone;
+    case "marble":
+      return p.marble;
+    case "bone":
+      return p.bone;
+    case "clay":
+      return p.pottery;
+    case "glass":
+      return k.tones(p.glass);
+    case "cloth":
+      return p.cloth;
+    case "leather":
+      return p.leather;
+    case "wicker":
+      return k.tones(mix(p.straw, p.wood.light, 0.45));
+  }
+}

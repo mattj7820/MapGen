@@ -90,3 +90,23 @@ describe("rendering a building", () => {
     for (const p of changed) expect(distance(p, from)).toBeLessThan(2.2);
   });
 });
+
+describe("dressing for a setting", () => {
+  const scene = tavern();
+  scene.dressing.push(
+    { kind: "stores", in: "hall", amount: 1, setting: "warehouse", seed: 3 },
+    { kind: "litter", in: "kitchen", amount: 1, setting: "ruins", seed: 4 },
+  );
+  const r = resolveScene(scene);
+  const generated = r.props.filter((p) => p.generated);
+
+  it("picks only props tagged with the setting, and still passes the checks", () => {
+    const stores = generated.filter(
+      (p) => p.spec.layer === "solid" && contains(r.regions[0]!.outline, p.prop.at),
+    );
+    expect(stores.length).toBeGreaterThan(5);
+    for (const p of stores) expect(p.spec.tags, p.prop.kind).toContain("warehouse");
+    expect(new Set(stores.map((p) => p.prop.kind)).size).toBeGreaterThan(3);
+    expect(checkScene(scene)).toEqual([]);
+  });
+});
