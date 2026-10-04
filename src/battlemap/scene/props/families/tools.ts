@@ -18,7 +18,7 @@ import { flame, ring } from "./parts.js";
 // ---------------------------------------------------------------- helpers
 
 /** A line weight for `k.boards`, which types its weight as the detail weight. */
-const bw = (n: number) => n as typeof WEIGHT.detail;
+export const bw = (n: number) => n as typeof WEIGHT.detail;
 
 /** Maps a tool's own coordinates (origin at its middle, head to -y) into the prop's. */
 export type Xf = (p: Pt) => Pt;
@@ -35,7 +35,7 @@ export function rod(k: PropKit, pts: Pt[], w: number, colour: string): void {
 }
 
 /** A small flat piece, shaded and inked lightly. */
-export function piece(k: PropKit, pts: Pt[], tones: Tones, weight = WEIGHT.detail): void {
+export function piece(k: PropKit, pts: Pt[], tones: Tones, weight: number = WEIGHT.detail): void {
   k.body(pts, tones, 0.015);
   k.outline(pts, weight);
 }
