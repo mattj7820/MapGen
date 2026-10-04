@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { FLAT, renderFlat, restylePrompt, restylePx } from "../../../src/battlemap/plateau/flat.js";
-import { generatePlateau, underBridge } from "../../../src/battlemap/plateau/generate.js";
-import type { PlateauLayout } from "../../../src/battlemap/plateau/layout.js";
+import { generatePlateau } from "../../../src/battlemap/plateau/generate.js";
+import { plateauScene } from "../../../src/battlemap/plateau/scene.js";
+import { bridgeEnds, underBridge } from "../../../src/battlemap/scene/check.js";
+import { FLAT, renderFlat, restylePrompt, restylePx } from "../../../src/battlemap/scene/flat.js";
+import { resolveScene } from "../../../src/battlemap/scene/resolve.js";
+import type { Scene } from "../../../src/battlemap/scene/scene.js";
 import {
   contains,
   distance,
@@ -10,11 +13,13 @@ import {
   segmentDistance,
 } from "../../../src/geometry.js";
 import { rgb } from "../../../src/style/colour.js";
+import { tavern } from "./fixtures.js";
 
-const layout = generatePlateau({ seed: 3, cols: 24, rows: 16, bridge: true });
+const scene = plateauScene(generatePlateau({ seed: 3, cols: 24, rows: 16, bridge: true }));
 const PX = 40;
-const flat = renderFlat(layout, PX);
+const flat = renderFlat(scene, PX);
 const data = flat.getContext("2d").getImageData(0, 0, flat.width, flat.height).data;
+const bridge = resolveScene(scene).props.find((p) => p.prop.kind === "bridge")!;
 
 function colourAt([x, y]: Pt): [number, number, number] {
   const i = (Math.floor(y * PX) * flat.width + Math.floor(x * PX)) * 4;
@@ -22,21 +27,22 @@ function colourAt([x, y]: Pt): [number, number, number] {
 }
 
 /** Grid points (in squares) that are well clear of every outline, item and crack. */
-function clearPoints(l: PlateauLayout): { rock: Pt[]; chasm: Pt[] } {
+function clearPoints(s: Scene): { rock: Pt[]; chasm: Pt[] } {
   const rock: Pt[] = [];
   const chasm: Pt[] = [];
-  for (let y = 0.25; y < l.squares[1]; y += 0.5) {
-    for (let x = 0.25; x < l.squares[0]; x += 0.5) {
+  const outlines = s.ground.map((g) => g.outline!);
+  for (let y = 0.25; y < s.squares[1]; y += 0.5) {
+    for (let x = 0.25; x < s.squares[0]; x += 0.5) {
       const p: Pt = [x, y];
-      if (l.plateaus.some((pl) => edgeDistance(pl.outline, p) < 0.3)) continue;
-      if (l.bridges.some((b) => underBridge(b, p, 0.3))) continue;
-      if ([...l.stones, ...l.shrubs].some((f) => distance(f.at, p) < f.radius * 1.2 + 0.2))
-        continue;
-      const nearCrack = l.cracks.some((c) =>
+      if (outlines.some((o) => edgeDistance(o, p) < 0.3)) continue;
+      if (underBridge(bridge, p, 0.3)) continue;
+      const items = s.scatter.filter((f) => f.kind !== "lichen");
+      if (items.some((f) => distance(f.at, p) < f.radius * 1.2 + 0.2)) continue;
+      const nearCrack = s.cracks.some((c) =>
         c.points.some((q, i) => i > 0 && segmentDistance(p, c.points[i - 1]!, q) < 0.15),
       );
       if (nearCrack) continue;
-      (l.plateaus.some((pl) => contains(pl.outline, p)) ? rock : chasm).push(p);
+      (outlines.some((o) => contains(o, p)) ? rock : chasm).push(p);
     }
   }
   return { rock, chasm };
@@ -48,7 +54,7 @@ describe("renderFlat", () => {
   });
 
   it("paints open rock and open chasm in exactly their flat colours, with no texture", () => {
-    const { rock, chasm } = clearPoints(layout);
+    const { rock, chasm } = clearPoints(scene);
     expect(rock.length).toBeGreaterThan(100);
     expect(chasm.length).toBeGreaterThan(50);
     for (const p of rock) expect(colourAt(p)).toEqual(rgb(FLAT.rock));
@@ -56,16 +62,18 @@ describe("renderFlat", () => {
   });
 
   it("puts each item's colour at its centre", () => {
-    const stone = layout.stones.find((s) => s.radius > 0.3)!;
+    const stone = scene.scatter.find((s) => s.kind === "stone" && s.radius > 0.3)!;
     expect(colourAt(stone.at)).toEqual(rgb(FLAT.stone));
-    const shrub = layout.shrubs.find(
-      (s) => !layout.stones.some((t) => distance(t.at, s.at) < t.radius + s.radius),
+    const shrub = scene.scatter.find(
+      (s) =>
+        s.kind === "shrub" &&
+        !scene.scatter.some(
+          (t) => t.kind === "stone" && distance(t.at, s.at) < t.radius + s.radius,
+        ),
     )!;
     expect(colourAt(shrub.at)).toEqual(rgb(FLAT.scrub));
-    const b = layout.bridges[0]!;
-    expect(colourAt([(b.from[0] + b.to[0]) / 2, (b.from[1] + b.to[1]) / 2])).toEqual(
-      rgb(FLAT.bridge),
-    );
+    expect(colourAt(bridge.prop.at)).toEqual(rgb(FLAT.bridge));
+    expect(bridgeEnds(bridge).length).toBe(2);
   });
 });
 
@@ -79,11 +87,13 @@ describe("restylePx", () => {
 
 describe("restylePrompt", () => {
   const prompt = restylePrompt(
-    layout,
+    scene,
     { width: 2040, height: 1360 },
     { file: "plateau-s3.png", width: 6144, height: 4096 },
     "plateau-s3.json",
   );
+  const quick = (s: Scene) =>
+    restylePrompt(s, { width: 1, height: 1 }, { file: "", width: 1, height: 1 }, "");
 
   it("gives the colour key, the size and the rules", () => {
     expect(prompt).toContain("24 x 16 squares");
@@ -98,20 +108,24 @@ describe("restylePrompt", () => {
 
   it("asks for the map's edge style", () => {
     expect(prompt).toMatch(/broken lip of chunky/);
-    const brushed = { ...layout, style: { ...layout.style, edge: "brushed" as const } };
-    expect(
-      restylePrompt(brushed, { width: 1, height: 1 }, { file: "", width: 1, height: 1 }, ""),
-    ).toMatch(/heavy, soft ink line/);
+    const brushed = {
+      ...scene,
+      ground: scene.ground.map((g) => ({ ...g, edge: "brushed" as const })),
+    };
+    expect(quick(brushed)).toMatch(/heavy, soft ink line/);
   });
 
-  it("leaves the bridge out of the key when there isn't one", () => {
-    const noBridge = { ...layout, bridges: [] };
-    const text = restylePrompt(
-      noBridge,
-      { width: 1, height: 1 },
-      { file: "", width: 1, height: 1 },
-      "",
-    );
+  it("leaves things out of the key that the map doesn't have", () => {
+    const text = quick({ ...scene, props: [] });
     expect(text).not.toContain("bridge");
+    expect(text).not.toContain(FLAT.wall);
+  });
+
+  it("keys walls, doors, floors and furniture on a building", () => {
+    const text = quick(tavern());
+    for (const colour of [FLAT.wall, FLAT.door, FLAT.wood, FLAT.furniture]) {
+      expect(text).toContain(colour);
+    }
+    expect(text).not.toContain(FLAT.rock);
   });
 });

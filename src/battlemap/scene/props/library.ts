@@ -1,0 +1,123 @@
+import { bridge } from "./bridge.js";
+import {
+  altar,
+  bed,
+  brazier,
+  candelabra,
+  chest,
+  desk,
+  lamp,
+  lectern,
+  pew,
+  plant,
+  range,
+  stairs,
+  wardrobe,
+} from "./furnishings.js";
+import type { PropSpec } from "./spec.js";
+import {
+  basket,
+  broom,
+  bucket,
+  cobweb,
+  firewood,
+  pot,
+  sack,
+  scraps,
+  spill,
+  straw,
+} from "./stores.js";
+import {
+  book,
+  bottle,
+  bowl,
+  bread,
+  candleStub,
+  cheese,
+  coins,
+  cutlery,
+  fruit,
+  jug,
+  mug,
+  papers,
+  plate,
+  roast,
+} from "./tableware.js";
+import {
+  bar,
+  barrel,
+  bench,
+  candle,
+  chair,
+  crate,
+  hearth,
+  rug,
+  shelves,
+  stool,
+  tableLong,
+  tableRound,
+} from "./tavern.js";
+
+/**
+ * Every prop a scene can use, by kind. Each is drawn once here and reused everywhere,
+ * so they all share the style. To add one, write its PropSpec and list it here.
+ */
+export const PROPS: Record<string, PropSpec> = {
+  // Furniture
+  "table-round": tableRound,
+  "table-long": tableLong,
+  chair,
+  stool,
+  bench,
+  bar,
+  shelves,
+  desk,
+  hearth,
+  range,
+  rug,
+  bed,
+  wardrobe,
+  chest,
+  stairs,
+  plant,
+  // Church
+  pew,
+  altar,
+  lectern,
+  // Light
+  candelabra,
+  brazier,
+  // Stores
+  barrel,
+  crate,
+  sack,
+  basket,
+  bucket,
+  pot,
+  firewood,
+  broom,
+  // On tables and counters
+  candle,
+  lamp,
+  "candle-stub": candleStub,
+  plate,
+  bowl,
+  mug,
+  bottle,
+  jug,
+  bread,
+  cheese,
+  roast,
+  fruit,
+  cutlery,
+  book,
+  papers,
+  coins,
+  // On the floor
+  straw,
+  spill,
+  scraps,
+  cobweb,
+  // Outdoors
+  bridge,
+};

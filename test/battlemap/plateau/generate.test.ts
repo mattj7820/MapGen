@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { checkLayout } from "../../../src/battlemap/plateau/check.js";
+import { plateauScene } from "../../../src/battlemap/plateau/scene.js";
+import { checkScene } from "../../../src/battlemap/scene/check.js";
 import {
   generatePlateau,
   openSides,
@@ -29,7 +30,7 @@ describe.each(SIZES)("plateau layouts at %ix%i", (cols, rows) => {
   const all = () => SEEDS.map((seed) => layout({ seed, cols, rows }));
 
   it("pass every layout check", () => {
-    for (const l of all()) expect(checkLayout(l), `seed ${l.seed}`).toEqual([]);
+    for (const l of all()) expect(checkScene(plateauScene(l)), `seed ${l.seed}`).toEqual([]);
   });
 
   it("cover 50–70% of the map with the main plateau", () => {
