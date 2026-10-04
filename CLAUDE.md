@@ -326,15 +326,52 @@ Checklist for every look review:
    tavern, a chapel, a city house) are in `scripts/samples/`. Matt's feedback after
    the first prototype: density and small detail matter most, lighting can wait.
 
-New work: more props and map kinds as Matt asks, or the ideas below.
+Next, in this order (Matt, after step 9):
+
+10. **Lighting.** Maps should be lit like the painted tavern reference Matt shared:
+    the room mostly dim, with warm pools of light round every lamp, candle, hearth,
+    brazier and window, and light falling off softly with distance. Work out:
+    - a scene-level setting for how dark it is (ambient level, maybe a time of day:
+      night interior, dim cellar, daylit room), with sensible defaults per base ground
+    - light sources as data: which props give light, with radius, colour and strength
+      (the props that glow now are the start), plus windows letting daylight in
+    - walls blocking light, so a lamp lights its own room and spills out of doorways
+      and windows rather than through walls (a visibility polygon per light)
+    - how lighting interacts with the style: ink stays near-black and readable in the
+      dark; playable ground must still read clearly at a glance (checklist item 4)
+    - performance: one low-res light layer composited over the map (see "Rendering
+      performance"), not a blur of the full canvas
+    - tests: light never crosses a wall; moving a lamp changes only pixels it reaches
+11. **A prop library in the hundreds, then thousands.** The goal is that for any map
+    in a wild game of D&D there's already the right prop: taverns and temples, but
+    also mines, wizard towers, shipwrecks, sewers, forges, libraries, throne rooms,
+    markets, camps, graveyards, laboratories, farms, prisons and more. Work out:
+    - **Coverage from research:** survey published battle-map asset libraries
+      (Dungeondraft and Forgotten Adventures asset lists, Wonderdraft, 2-Minute
+      Tabletop, Dungeon Alchemist, Inkarnate and similar) for which _kinds_ of objects
+      maps need, by setting. Use them only as lists of ideas: never download, trace or
+      copy their art (hard rule: no third-party map art).
+    - **Scale through families, not one-offs:** thousands of hand-written props won't
+      scale. Build parametric families (containers, tables, seating, shelving, tools,
+      weapons and racks, statues, machinery, plants, rubble, food, books and papers,
+      bones, magic items) whose variants come from parameters and seeds: material,
+      size, wear, contents, damage. Each variant still reads as hand-drawn and stays
+      inside its footprint (the existing test covers every prop automatically).
+    - **Finding props:** categories and tags, and search in `npm run props` (for
+      example `npm run props -- --search alchemy`), so the `/map` skill can find the
+      right thing among thousands. Prop sheets per category for look review.
+    - **Dressing that knows the setting:** surface and room dressings for the new
+      places (a forge's tools, a library's books, a lab's glassware, a mine's ore and
+      rubble), so density keeps up with the library.
+    - **Cave walls** for mines and caverns (see Future ideas): many of the new
+      settings need them.
+
+Other new work: map kinds as Matt asks, or the ideas below.
 
 ## Future ideas
 
 Not planned yet; raise them with Matt before starting.
 
-- **Lighting pass** (Matt: "nice to have, can come later"): an ambient darkness level
-  per scene, with pools of warm light round every lamp, candle, hearth and window, as
-  in the painted tavern reference he shared.
 - **Cave walls**, for mines and caverns: an irregular rock-mass wall kind round a
   walkable floor, plus mine props (timber supports, rails, carts, ore, lanterns) and
   `rubble`/`ore` dressing. The scene format and dressing already fit this.
