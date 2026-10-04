@@ -32,7 +32,7 @@ export interface FamilyDef<A extends Axes> {
   spec: (v: Values<A>) => VariantSpec;
 }
 
-export function family<A extends Axes>(def: FamilyDef<A>): Record<string, LibraryProp> {
+export function family<const A extends Axes>(def: FamilyDef<A>): Record<string, LibraryProp> {
   const names = Object.keys(def.axes) as (keyof A & string)[];
   let combos: Values<A>[] = [{} as Values<A>];
   for (const axis of names) {
