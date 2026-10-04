@@ -19,7 +19,8 @@ With no options: how many props there are in each category, and a sheet for ever
 category in output/props/<category>.png.
 
 Options:
-  --search words    props whose kind, description, tags or category match every word
+  --search words    props where every word starts a word in their kind, description,
+                    tags or category
                     (e.g. --search alchemy, --search open crate, --search grim);
                     draws them on output/props/search.png
   --category name   list one category and draw only its sheet
@@ -34,13 +35,18 @@ can be resized, its layer, what it is, and its tags.`;
 const CELL = 3;
 const COLUMNS = 10;
 
-/** Props matching every word of a search, in library order. */
+/**
+ * Props matching every word of a search, in library order. A search word matches the
+ * start of a word in the kind, description, category or tags, so "rack" finds racks
+ * but not barracks.
+ */
 export function search(words: string): string[] {
   const terms = words.toLowerCase().split(/\s+/).filter(Boolean);
   return Object.entries(PROPS)
     .filter(([kind, spec]) => {
       const text = [kind, spec.about, spec.category, ...spec.tags].join(" ").toLowerCase();
-      return terms.every((t) => text.includes(t));
+      const all = text.split(/[^a-z0-9]+/).filter(Boolean);
+      return terms.every((t) => t === kind || all.some((w) => w.startsWith(t)));
     })
     .map(([kind]) => kind);
 }

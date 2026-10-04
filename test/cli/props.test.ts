@@ -34,6 +34,9 @@ describe("npm run props", () => {
     expect(search("open crate")).not.toContain("crate");
     expect(search("gold")).toContain("chest-open-gold");
     expect(search("no such thing at all")).toEqual([]);
+    // Words match from their start: racks, but not barracks.
+    expect(search("rack")).toContain("weapon-rack");
+    expect(search("rack")).not.toContain("brazier");
   });
 
   it("refuses an unknown category", async () => {
