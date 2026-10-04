@@ -12,7 +12,9 @@ import { Rng } from "../../rng.js";
 import { doorwayPath, placeProp, WALL_THICKNESS } from "./place.js";
 import { PROPS } from "./props/library.js";
 import type { Resolved, ResolvedProp } from "./resolve.js";
-import { PASSABLE, type SurfaceDressing } from "./scene.js";
+import type { Setting } from "./props/catalogue.js";
+import { groundAt } from "./ground.js";
+import { PASSABLE, type SurfaceDressing, UNWALKABLE } from "./scene.js";
 
 /**
  * Fill a scene in with small things, from seeds: laid tables, stores along the walls,
@@ -34,8 +36,12 @@ export function dress(r: Resolved): ResolvedProp[] {
     const wall = room ? WALL_THICKNESS[room.wall] / 2 : 0;
     const rng = new Rng(d.seed);
     const area = { outline: region.outline, wall };
-    if (d.kind === "stores") out.push(...stores(r, area, d.amount, rng, out));
-    if (d.kind === "litter") out.push(...litter(r, area, d.amount, rng));
+    if (d.kind === "stores") {
+      out.push(...stores(r, area, d.amount, rng, out, choices("stores", d.setting, STORES)));
+    }
+    if (d.kind === "litter") {
+      out.push(...litter(r, area, d.amount, rng, out, choices("litter", d.setting, LITTER)));
+    }
     if (d.kind === "cobwebs") out.push(...cobwebs(area, d.amount, rng));
   }
   return out;
@@ -72,7 +78,89 @@ function radius(p: ResolvedProp): number {
 // ---------------------------------------------------------------- on surfaces
 
 /** What each kind of dressing sets out: per place at the table, and in the middle. */
-const MENUS: Record<SurfaceDressing, { place: string[]; middle: string[]; perSquare: number }> = {
+export const MENUS: Record<
+  SurfaceDressing,
+  { place: string[]; middle: string[]; perSquare: number }
+> = {
+  // An alchemist's bench: glassware, jars of ingredients, a mortar, notes.
+  alchemy: {
+    place: [],
+    middle: [
+      "flask",
+      "flask-green-bubbling",
+      "flask-red-vial",
+      "flask-amber-square",
+      "flask-violet",
+      "jar-glass-herbs",
+      "jar-glass-powder",
+      "specimen-jar",
+      "mortar",
+      "papers",
+      "candle-stub",
+      "flask-green",
+      "flask-red",
+    ],
+    perSquare: 3,
+  },
+  // A wizard's table: tomes and scrolls, an hourglass, a skull, a crystal ball.
+  arcane: {
+    place: [],
+    middle: [
+      "open-book",
+      "book-stack",
+      "scroll-open",
+      "scroll",
+      "hourglass",
+      "skull",
+      "candles",
+      "crystal-ball",
+      "quill-and-ink",
+      "specimen-jar-creature",
+      "wand",
+      "papers",
+    ],
+    perSquare: 2.2,
+  },
+  // A workbench: hand tools laid out.
+  workshop: {
+    place: [],
+    middle: ["hammer", "mallet", "chisel", "saw", "tongs", "hand-plane", "box", "candle-stub"],
+    perSquare: 2,
+  },
+  // A planning table: charts, letters and something to weigh them down.
+  maps: {
+    place: [],
+    middle: ["map", "letter", "quill-and-ink", "candle-stub", "map-sea", "letter-open", "mug"],
+    perSquare: 1.2,
+  },
+  // A counting table or hoard: coin, coffers, open boxes of gems, a ledger.
+  treasure: {
+    place: [],
+    middle: [
+      "coins",
+      "coins",
+      "coffer-open",
+      "box-open-gems",
+      "ledger",
+      "coffer",
+      "box-open-gold",
+      "candle",
+    ],
+    perSquare: 2.4,
+  },
+  // An altar or shrine: candles, offering bowls, a reliquary.
+  offerings: {
+    place: [],
+    middle: [
+      "candles",
+      "offering-bowl",
+      "offering-bowl-coins",
+      "reliquary",
+      "candle",
+      "offering-bowl-ash",
+    ],
+    perSquare: 2,
+  },
   meal: {
     place: ["plate", "mug", "cutlery"],
     middle: ["bread", "roast", "cheese", "jug", "fruit", "bowl", "candle-stub", "bottle", "bowl"],
@@ -247,6 +335,18 @@ function edges(area: Area): { a: Pt; b: Pt; length: number; along: Pt; inward: P
 }
 
 /** Is a generated prop clear of walls, doorways, the area's edge and everything else? */
+/**
+ * Whether a dressed item lies wholly on the map and on ground people can stand on: a
+ * room can hold water or a drop (a cave's sea channel), and dressing must keep off it.
+ */
+function onFirmGround(r: Resolved, item: ResolvedProp): boolean {
+  const [cols, rows] = r.scene.squares;
+  return [item.prop.at, ...item.footprint].every(
+    ([x, y]) =>
+      x >= 0 && y >= 0 && x <= cols && y <= rows && !UNWALKABLE.includes(groundAt(r, [x, y])),
+  );
+}
+
 function fits(
   r: Resolved,
   area: Area,
@@ -257,7 +357,8 @@ function fits(
   if (
     !item.footprint.every(
       (q) => contains(area.outline, q) && edgeDistance(area.outline, q) >= area.wall - 1e-6,
-    )
+    ) ||
+    !onFirmGround(r, item)
   ) {
     return false;
   }
@@ -295,6 +396,22 @@ const STORES: [string, number][] = [
   ["broom", 0.4],
 ];
 
+/**
+ * What dressing picks from: for a setting, every prop tagged with it that says how
+ * often it turns up as `role`; otherwise (or if none do) the household defaults.
+ */
+function choices(
+  role: "stores" | "litter",
+  setting: Setting | undefined,
+  defaults: [string, number][],
+): [string, number][] {
+  if (!setting) return defaults;
+  const found = Object.entries(PROPS)
+    .filter(([, p]) => (p.dressing?.[role] ?? 0) > 0 && p.tags.includes(setting))
+    .map(([kind, p]): [string, number] => [kind, p.dressing![role]!]);
+  return found.length > 0 ? found : defaults;
+}
+
 function weighted(rng: Rng, options: [string, number][]): string {
   let roll = rng.range(
     0,
@@ -314,6 +431,7 @@ function stores(
   amount: number,
   rng: Rng,
   earlier: ResolvedProp[],
+  options: [string, number][],
 ): ResolvedProp[] {
   const out: ResolvedProp[] = [];
   for (const e of edges(area)) {
@@ -322,7 +440,7 @@ function stores(
     while (t < e.length - 0.3) {
       const cluster = er.chance(0.5 + amount * 0.5) ? er.int(1, 2 + Math.round(amount * 4)) : 0;
       for (let i = 0; i < cluster && t < e.length - 0.3; i++) {
-        const kind = weighted(er, STORES);
+        const kind = weighted(er, options);
         const spec = PROPS[kind]!;
         const crate = kind === "crate" ? er.range(0.55, 0.9) : 0;
         const size: [number, number] | undefined = crate ? [crate, crate] : undefined;
@@ -354,13 +472,20 @@ const LITTER: [string, number][] = [
 ];
 
 /** Straw, spills and scraps over the floor; under tables too, where they'd collect. */
-function litter(r: Resolved, area: Area, amount: number, rng: Rng): ResolvedProp[] {
+function litter(
+  r: Resolved,
+  area: Area,
+  amount: number,
+  rng: Rng,
+  earlier: ResolvedProp[],
+  options: [string, number][],
+): ResolvedProp[] {
   const out: ResolvedProp[] = [];
   const b = bounds(area.outline);
   const count = Math.round((b.x1 - b.x0) * (b.y1 - b.y0) * 0.45 * amount);
   for (let i = 0; i < count; i++) {
     const at: Pt = [rng.range(b.x0, b.x1), rng.range(b.y0, b.y1)];
-    const kind = weighted(rng, LITTER);
+    const kind = weighted(rng, options);
     const scale = rng.range(0.6, 1.3);
     const spec = PROPS[kind]!;
     const size: [number, number] | undefined = spec.resizable
@@ -370,8 +495,11 @@ function litter(r: Resolved, area: Area, amount: number, rng: Rng): ResolvedProp
     const inside = item.footprint.every(
       (q) => contains(area.outline, q) && edgeDistance(area.outline, q) >= area.wall + 0.05,
     );
-    if (!inside || r.pieces.some((p) => overlaps(p.outline, item.footprint))) continue;
+    if (!inside || !onFirmGround(r, item)) continue;
+    if (r.pieces.some((p) => overlaps(p.outline, item.footprint))) continue;
     if (out.some((o) => distance(o.prop.at, at) < 0.45)) continue;
+    // Flat litter may lie under anything; solid litter (a broken barrel) needs room.
+    if (spec.layer !== "floor" && !fits(r, area, item, [...earlier, ...out], 0.05)) continue;
     out.push(item);
   }
   return out;

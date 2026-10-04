@@ -1,5 +1,5 @@
 import type { Pt } from "../../../geometry.js";
-import { mix, withAlpha } from "../../../style/colour.js";
+import { mix } from "../../../style/colour.js";
 import { INK, WEIGHT } from "../../../style/ink.js";
 import { lobed } from "../../../style/shapes.js";
 import { darkWood, paleWood, wear } from "./materials.js";
@@ -194,6 +194,7 @@ export const hearth: PropSpec = {
   resizable: true,
   layer: "solid",
   height: 0.8,
+  light: { at: [0, 0.2], radius: 6, strength: 0.9, colour: "fire" },
   draw(k) {
     const [w, d] = [k.w, k.d];
     const apronDepth = 0.22;
@@ -256,7 +257,6 @@ export const hearth: PropSpec = {
       );
     }
     k.outline(box, WEIGHT.detail * 1.2);
-    k.glow([0, 0.2], 3.2, k.pal.fire.base, 0.32);
   },
 };
 
@@ -312,6 +312,7 @@ export const candle: PropSpec = {
   round: true,
   layer: "top",
   height: 0.15,
+  light: { radius: 2.6, strength: 0.52, colour: "candle" },
   draw(k) {
     const dish = k.ellipse(0, 0, k.w / 2, k.d / 2, 16);
     k.shadow(dish, 0.12, 0.3);
@@ -319,7 +320,6 @@ export const candle: PropSpec = {
     const wax = k.ellipse(0, 0, k.w * 0.22, k.d * 0.22, 12);
     k.solid(wax, k.pal.linen, { band: 0.01, smooth: true });
     k.dot([0, 0], 0.02, k.pal.fire.light);
-    k.glow([0, 0], 1.4, k.pal.fire.light, 0.2);
   },
 };
 

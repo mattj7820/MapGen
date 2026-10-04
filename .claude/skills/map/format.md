@@ -15,6 +15,7 @@ to try a different look for one item.
   "squares": [22, 14], // [columns, rows]
   "palette": "hearth", // optional: "hearth" (default; muted browns and greys) or "rust"
   "base": "cobbles", // ground everywhere else; default "void"
+  "lighting": "night", // optional: "day", "dusk", "night" or "dark" (see Lighting)
   "rooms": [],
   "ground": [],
   "walls": [],
@@ -88,6 +89,9 @@ cuts the gap.
 { "kind": "archway", "at": [10, 6], "width": 3 }
 ```
 
+Doors are drawn shut unless given `"open": true`; an open door swings into the room
+and lets light out (see Lighting).
+
 Default widths: door 1, double-door 2, window 1, archway 2. An opening must sit
 wholly on one straight wall, clear of corners and of walls joining it. Doors and
 archways need 0.75 squares of clear floor each side, and must lead onto walkable
@@ -108,11 +112,25 @@ ground (or off the map).
   sitter looks; a hearth's or shelf's back goes against the wall.
 - `size` is `[width, depth]` before turning, for resizable props only.
 - `dress` fills a surface (tables, counters, shelves, desks, chests, altars) with
-  small things: `meal`, `drinks`, `kitchen`, `study` or `clutter`. Laid tables get a
+  small things: `meal`, `drinks`, `kitchen`, `study`, `clutter`, `alchemy` (glassware
+  and ingredients), `arcane` (tomes, scrolls, a skull, a crystal ball), `workshop`
+  (hand tools), `maps` (charts and letters), `treasure` (coin, coffers, gems) or
+  `offerings` (candles and offering bowls, for altars and shrines). Laid tables get a
   place setting in front of every seat within 0.9 squares of them.
 
-Run `npm run props` for the full catalogue (kinds, sizes, layers) and a sheet of every
-prop drawn in `output/props/props.png`.
+The library has hundreds of props, many in families of variants named from their
+parts (`crate-open-apples`, `chest-iron-open-gold`, `barrel-lying-tapped`). Find them
+by search rather than by memory:
+
+```sh
+npm run props                            # kinds per category
+npm run props -- --search open crate     # every word must match; draws output/props/search.png
+npm run props -- --search mine           # by setting tag
+npm run props -- --category lighting     # one category, with output/props/lighting.png
+```
+
+Each listed prop shows its kind, default size, whether it's resizable, its layer, what
+it is and its tags.
 
 Layers decide what may overlap:
 
@@ -145,6 +163,40 @@ keeps clear of walls, doorways, props and scatter, so it never breaks the checks
 - `cobwebs`: in the inside corners.
 
 `amount` runs from 0 to 1 (default 0.5).
+
+`stores` and `litter` can name a `setting`, and then pick from props tagged with it
+instead of household things (a warehouse's crate stacks and amphorae, a ruin's broken
+barrels and shards):
+
+```json
+{ "kind": "stores", "in": "hold", "amount": 1, "setting": "warehouse" }
+```
+
+Settings: tavern, home, temple, mine, cave, wizard, alchemy, library, forge, throne,
+barracks, prison, sewer, ship, docks, market, camp, graveyard, farm, stable, kitchen,
+warehouse, shop, noble, workshop, ruins, forest, swamp, desert, snow, underdark, cult,
+bath, vault. A setting with nothing tagged for the role falls back to household
+things; `npm run props -- --search <setting>` shows what's there.
+
+## Lighting
+
+`lighting` sets how dark it is. Left out, scenes with rooms are lit at `night` and
+open ground at `day`.
+
+- `day`: outside as drawn, rooms a little dim, daylight falling in through windows.
+- `dusk`: low warm light outside; rooms dim.
+- `night`: rooms dim and warm, the outside dark blue: lamps, candles and fires make
+  pools of light. The usual choice for interiors.
+- `dark`: cellars, dungeons, caves, mines: only what's lit can be seen well.
+
+`{ "time": "night", "inside": 0.5, "outside": 0.3 }` overrides how bright rooms and
+the outside are (0 to 1).
+
+Light comes from props that glow (candle, lamp, candelabra, brazier, hearth, range,
+and anything in the `lighting` category; their tags include `lit`). Each light is
+stopped by stone and timber walls and by closed doors, and passes through archways,
+windows, open doors and over ruined walls. So every room people use needs its own
+light, and a dark scene needs enough lights that its paths can be seen.
 
 ## Scatter and cracks
 

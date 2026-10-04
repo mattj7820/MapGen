@@ -1,6 +1,6 @@
 import { centroid, type Pt } from "../../../geometry.js";
 import { Rng } from "../../../rng.js";
-import { mix, rgb, withAlpha } from "../../../style/colour.js";
+import { mix, withAlpha } from "../../../style/colour.js";
 import { brush, WEIGHT } from "../../../style/ink.js";
 import { LIGHT, shadowOffset } from "../../../style/light.js";
 import { clipTo, fillPoly, type Paper, softPoly, softStroke } from "../../../style/paper.js";
@@ -205,33 +205,4 @@ export class PropKit {
     }
     this.unclip();
   }
-
-  /** Warm light round a flame. Collected and drawn once every prop is down. */
-  glow(at: Pt, radius: number, colour: string, strength: number): void {
-    this.lights.push({ at: this.map(at), radius, colour, strength });
-  }
-
-  readonly lights: Light[] = [];
-}
-
-export interface Light {
-  at: Pt;
-  radius: number;
-  colour: string;
-  strength: number;
-}
-
-/** Light thrown on everything round a flame, lightening rather than covering. */
-export function drawLight(paper: Paper, { at: [x, y], radius, colour, strength }: Light): void {
-  const { g } = paper;
-  const [r, gr, b] = rgb(colour);
-  const grad = g.createRadialGradient(x, y, 0, x, y, radius);
-  grad.addColorStop(0, `rgba(${r},${gr},${b},${strength})`);
-  grad.addColorStop(0.45, `rgba(${r},${gr},${b},${strength * 0.4})`);
-  grad.addColorStop(1, `rgba(${r},${gr},${b},0)`);
-  g.save();
-  g.globalCompositeOperation = "screen";
-  g.fillStyle = grad;
-  g.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-  g.restore();
 }

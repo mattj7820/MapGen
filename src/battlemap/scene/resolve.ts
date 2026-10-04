@@ -1,10 +1,11 @@
-import { distance, type Pt, roundPt, segmentDistance } from "../../geometry.js";
+import { contains, distance, type Pt, roundPt, segmentDistance } from "../../geometry.js";
 import { hash } from "../../rng.js";
 import { densify } from "../../style/ink.js";
+import { caveOutline } from "./cave.js";
 import { dress } from "./dressing.js";
 import { onSegment, placeProp, rectOutline, WALL_THICKNESS, wallRect } from "./place.js";
 import { PROPS } from "./props/library.js";
-import type { PropSpec } from "./props/spec.js";
+import type { LibraryProp } from "./props/spec.js";
 import {
   type EdgeStyle,
   type GroundKind,
@@ -46,6 +47,8 @@ export interface ResolvedRegion {
   seed: number;
   /** A room's floor, which runs to the centre line of its walls. */
   room?: true;
+  /** A cave's floor, whose outline is its rough rock face (see cave.ts). */
+  cave?: true;
 }
 
 export interface WallSegment {
@@ -81,11 +84,13 @@ export interface ResolvedOpening {
   centre: Pt;
   /** Why it can't be cut where it is, if it can't. */
   problem?: string;
+  /** For an open door: which side of the wall it swings to (1 is the segment's left). */
+  swing?: 1 | -1;
 }
 
 export interface ResolvedProp {
   prop: Prop;
-  spec: PropSpec;
+  spec: LibraryProp;
   size: [number, number];
   /** Radians, clockwise. */
   angle: number;
@@ -100,12 +105,13 @@ const LAYER_ORDER = ["floor", "seat", "solid", "top", "bridge", "overhead"] as c
 
 export function resolveScene(scene: Scene): Resolved {
   const regions: ResolvedRegion[] = [
-    ...scene.rooms.map((r, i) => ({
+    ...scene.rooms.map((r, i): ResolvedRegion => ({
       id: r.id ?? `room${i + 1}`,
       kind: r.floor,
-      outline: roomOutline(r),
+      outline: r.wall === "cave" ? caveOutline(roomOutline(r), r.seed) : roomOutline(r),
       seed: r.seed,
       room: true as const,
+      ...(r.wall === "cave" ? { cave: true as const } : {}),
     })),
     ...scene.ground.map((g, i): ResolvedRegion => {
       const raw = g.outline ?? rectOutline(g.rect!);
@@ -138,6 +144,11 @@ export function resolveScene(scene: Scene): Resolved {
         Math.abs(p.offset - o.offset) < (p.width + o.width) / 2,
     );
     if (clash) o.problem = `overlaps the ${clash.opening.kind} at ${fmt(clash.opening.at)}`;
+    // An open door swings into a room: the left side if that's in one, else the right.
+    if (o.opening.open && o.segment) {
+      const left = onSegment(o.segment, o.offset, 0.6);
+      o.swing = regions.some((g) => g.room && contains(g.outline, left)) ? 1 : -1;
+    }
   }
 
   const props: ResolvedProp[] = [];
@@ -186,7 +197,9 @@ export function mergeWalls(scene: Scene): WallSegment[] {
       if (distance(a, b) > EPS) raw.push({ a, b, kind, seed });
     }
   };
-  for (const r of scene.rooms) add(roomOutline(r), true, r.wall, r.seed);
+  for (const r of scene.rooms) {
+    if (r.wall !== "cave") add(roomOutline(r), true, r.wall, r.seed);
+  }
   for (const w of scene.walls) add(w.points, w.closed ?? false, w.kind, w.seed);
 
   // Group by kind and line, then merge overlapping intervals along each line.

@@ -1,12 +1,18 @@
 import type { Pt } from "../../geometry.js";
-import type { PropSpec } from "./props/spec.js";
+import type { LibraryProp } from "./props/spec.js";
 import type { ResolvedOpening, ResolvedProp, WallSegment } from "./resolve.js";
 import type { Prop, WallKind } from "./scene.js";
 
 /** Shapes worked out from a scene: shared by resolving, dressing and checking. */
 
 /** Wall thickness by kind, in squares. Walls are centred on the lines they're given. */
-export const WALL_THICKNESS: Record<WallKind, number> = { stone: 0.4, timber: 0.3, ruined: 0.4 };
+export const WALL_THICKNESS: Record<WallKind, number> = {
+  stone: 0.4,
+  timber: 0.3,
+  ruined: 0.4,
+  // A cave's floor runs right up to its rock face; this keeps dressing off the face.
+  cave: 0.2,
+};
 
 export function rectOutline([x0, y0, x1, y1]: [number, number, number, number]): Pt[] {
   return [
@@ -28,7 +34,7 @@ export function wallRect(s: WallSegment, from: number, to: number): Pt[] {
   return [onSegment(s, from, h), onSegment(s, to, h), onSegment(s, to, -h), onSegment(s, from, -h)];
 }
 
-export function placeProp(prop: Prop, spec: PropSpec): ResolvedProp {
+export function placeProp(prop: Prop, spec: LibraryProp): ResolvedProp {
   const size = prop.size ?? spec.size;
   const angle = (prop.rotation * Math.PI) / 180;
   const [w, d] = size;

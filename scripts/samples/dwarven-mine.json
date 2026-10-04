@@ -1,0 +1,315 @@
+{
+  "type": "scene",
+  "name": "dwarven-mine",
+  "squares": [28, 18],
+  "base": "bedrock",
+  "lighting": "dark",
+  "rooms": [
+    {
+      "id": "face",
+      "points": [
+        [1.5, 3],
+        [5, 1.5],
+        [9.5, 2],
+        [11.5, 4.5],
+        [11, 9],
+        [8.5, 11.5],
+        [4.5, 12],
+        [2, 10],
+        [1, 6.5]
+      ],
+      "floor": "rock",
+      "wall": "cave"
+    },
+    {
+      "id": "tunnel",
+      "points": [
+        [10.5, 4.6],
+        [16, 4.4],
+        [21, 4.8],
+        [21.5, 8],
+        [16.8, 8.2],
+        [16.6, 9.4],
+        [14.4, 9.4],
+        [14.2, 8.2],
+        [10.5, 8.4]
+      ],
+      "floor": "rock",
+      "wall": "cave"
+    },
+    {
+      "id": "shaft",
+      "points": [
+        [20, 2.5],
+        [24.5, 2],
+        [27, 5],
+        [26.5, 10.5],
+        [23, 12],
+        [20.5, 9.5]
+      ],
+      "floor": "rock",
+      "wall": "cave"
+    },
+    {
+      "id": "store",
+      "rect": [12, 9, 19, 16],
+      "floor": "flagstone",
+      "wall": "stone"
+    }
+  ],
+  "openings": [
+    {
+      "kind": "door",
+      "at": [15.5, 9],
+      "open": true
+    }
+  ],
+  "props": [
+    {
+      "kind": "ore-vein-gold",
+      "at": [2.4, 6],
+      "size": [1.6, 0.8],
+      "rotation": 95
+    },
+    {
+      "kind": "ore-vein-gold",
+      "at": [4.6, 2.6],
+      "size": [1.4, 0.6],
+      "rotation": 8,
+      "seed": 41
+    },
+    {
+      "kind": "ore-vein",
+      "at": [3.6, 9.8],
+      "rotation": -40
+    },
+    {
+      "kind": "pickaxe",
+      "at": [3.6, 7.6],
+      "rotation": 110
+    },
+    {
+      "kind": "pickaxe",
+      "at": [5.6, 3.6],
+      "rotation": 20,
+      "seed": 5
+    },
+    {
+      "kind": "shovel",
+      "at": [4.4, 9.4],
+      "rotation": 60
+    },
+    {
+      "kind": "sledgehammer",
+      "at": [7.4, 10.2],
+      "rotation": -15
+    },
+    {
+      "kind": "ore-heap",
+      "at": [6.2, 5],
+      "rotation": 10
+    },
+    {
+      "kind": "wheelbarrow-stones",
+      "at": [8.2, 8.6],
+      "rotation": 250
+    },
+    {
+      "kind": "lantern-floor",
+      "at": [3.4, 4.4]
+    },
+    {
+      "kind": "lantern-floor",
+      "at": [5.4, 10.6],
+      "seed": 9
+    },
+    {
+      "kind": "torch-standing",
+      "at": [9.6, 3.6]
+    },
+    {
+      "kind": "mine-support",
+      "at": [11.2, 6.5],
+      "size": [3.6, 0.5],
+      "rotation": 90
+    },
+    {
+      "kind": "rails-end",
+      "at": [7.6, 6.5],
+      "rotation": 270
+    },
+    {
+      "kind": "rails",
+      "at": [11.1, 6.5],
+      "size": [0.8, 5],
+      "rotation": 90
+    },
+    {
+      "kind": "rails",
+      "at": [16.1, 6.5],
+      "size": [0.8, 5],
+      "rotation": 90
+    },
+    {
+      "kind": "rails",
+      "at": [21.1, 6.5],
+      "size": [0.8, 5],
+      "rotation": 90
+    },
+    {
+      "kind": "mine-cart-ore",
+      "at": [9.6, 6.5],
+      "rotation": 90
+    },
+    {
+      "kind": "mine-cart",
+      "at": [18.4, 6.5],
+      "rotation": 92
+    },
+    {
+      "kind": "mine-support",
+      "at": [14.2, 6.5],
+      "size": [3.2, 0.5],
+      "rotation": 90
+    },
+    {
+      "kind": "mine-support-sagging",
+      "at": [17.6, 6.45],
+      "size": [3.1, 0.5],
+      "rotation": 90
+    },
+    {
+      "kind": "lantern-hanging",
+      "at": [16, 5.2]
+    },
+    {
+      "kind": "mine-shaft-winch",
+      "at": [24.4, 6.2],
+      "size": [1.8, 1.8]
+    },
+    {
+      "kind": "ore-heap-coal",
+      "at": [24.2, 9.8],
+      "rotation": -10
+    },
+    {
+      "kind": "crate-open-ore",
+      "at": [22.4, 9.6],
+      "rotation": 12
+    },
+    {
+      "kind": "sack-open-ore",
+      "at": [21.8, 3.6]
+    },
+    {
+      "kind": "rope-coil-large",
+      "at": [25, 4.4]
+    },
+    {
+      "kind": "brazier",
+      "at": [22.2, 4.4]
+    },
+    {
+      "kind": "workbench-plain",
+      "at": [15.5, 15.2],
+      "size": [2.6, 0.9],
+      "dress": "workshop"
+    },
+    {
+      "kind": "lantern",
+      "at": [16.5, 15.2]
+    },
+    {
+      "kind": "stool",
+      "at": [15.4, 14.2],
+      "rotation": 8
+    },
+    {
+      "kind": "tool-rack-mason",
+      "at": [12.5, 12.5],
+      "size": [1.8, 0.45],
+      "rotation": 90
+    },
+    {
+      "kind": "tool-rack",
+      "at": [18.5, 12.6],
+      "size": [1.6, 0.45],
+      "rotation": 270
+    },
+    {
+      "kind": "ingots-gold",
+      "at": [17.6, 10],
+      "rotation": 6
+    },
+    {
+      "kind": "ingots",
+      "at": [18.2, 10.6],
+      "rotation": -8
+    },
+    {
+      "kind": "chest-iron",
+      "at": [13.2, 15.3],
+      "rotation": 3
+    },
+    {
+      "kind": "lantern-hanging",
+      "at": [15.5, 12.2]
+    },
+    {
+      "kind": "crate-stack",
+      "at": [13.6, 10.3],
+      "rotation": 4
+    },
+    {
+      "kind": "barrel",
+      "at": [18.1, 14.9]
+    },
+    {
+      "kind": "barrel-water",
+      "at": [17.3, 15.2]
+    },
+    {
+      "kind": "sacks",
+      "at": [13.3, 13.9],
+      "rotation": -6
+    }
+  ],
+  "dressing": [
+    {
+      "kind": "litter",
+      "in": "face",
+      "amount": 0.5,
+      "setting": "mine"
+    },
+    {
+      "kind": "litter",
+      "in": "tunnel",
+      "amount": 0.3,
+      "setting": "mine"
+    },
+    {
+      "kind": "litter",
+      "in": "shaft",
+      "amount": 0.4,
+      "setting": "mine"
+    },
+    {
+      "kind": "stores",
+      "in": "store",
+      "amount": 0.6,
+      "setting": "mine"
+    },
+    {
+      "kind": "cobwebs",
+      "in": "store",
+      "amount": 0.5
+    },
+    {
+      "kind": "stores",
+      "in": "store",
+      "amount": 0.5,
+      "setting": "warehouse",
+      "seed": 7
+    }
+  ]
+}

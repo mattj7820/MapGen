@@ -276,6 +276,29 @@ function drawOpening(paper: Paper, pal: Palette, o: ResolvedOpening): void {
   };
   const leafTones = pal.wood;
   const kind = o.opening.kind;
+  /**
+   * A leaf that spanned a..b, swung open on its hinge at whichever end is nearer the
+   * jamb: it stands out from the wall into the room, along the jamb.
+   */
+  const openLeaf = (a: number, b: number) => {
+    const side = o.swing!;
+    const hinge = Math.abs(a + half) < Math.abs(b - half) ? a : b - 0.14;
+    const len = b - a;
+    const leaf = quad(hinge, hinge + 0.14, side * 0.02, side * len);
+    softPoly(paper, leaf, withAlpha("#000000", 0.35), 0.05, shadowOffset(0.08));
+    solid(leaf, leafTones);
+    for (let d = 0.17; d < len - 0.08; d += 0.17) {
+      brush(
+        paper.g,
+        [onSegment(s, t(hinge + 0.02), side * d), onSegment(s, t(hinge + 0.12), side * d)],
+        WEIGHT.detail * 0.8,
+        {
+          smooth: false,
+          seed: rng.int(0, 9999),
+        },
+      );
+    }
+  };
 
   if (kind === "door" || kind === "double-door") {
     const jamb = 0.1;
@@ -289,6 +312,10 @@ function drawOpening(paper: Paper, pal: Palette, o: ResolvedOpening): void {
             [0, half - jamb],
           ];
     for (const [a, b] of leaves) {
+      if (o.swing) {
+        openLeaf(a, b);
+        continue;
+      }
       const leaf = quad(a, b, 0.07, -0.07);
       softPoly(paper, leaf, withAlpha("#000000", 0.35), 0.05, shadowOffset(0.05));
       solid(leaf, leafTones);

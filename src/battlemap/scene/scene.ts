@@ -1,5 +1,6 @@
 import type { Pt } from "../../geometry.js";
 import type { EdgeStyle } from "../../style/edges.js";
+import type { Setting } from "./props/catalogue.js";
 
 /**
  * A battle map described at a high level, in squares (x right, y down, origin at the
@@ -41,6 +42,21 @@ export interface Scene {
   /** Small loose things: stones, shrubs, lichen. */
   scatter: Scatter[];
   cracks: Crack[];
+  /**
+   * How dark it is. Left out: `night` for scenes with rooms, `day` for the rest (see
+   * lighting.ts).
+   */
+  lighting?: Lighting;
+}
+
+export const LIGHTING_TIMES = ["day", "dusk", "night", "dark"] as const;
+export type LightingTime = (typeof LIGHTING_TIMES)[number];
+
+export interface Lighting {
+  time: LightingTime;
+  /** Override the ambient brightness inside rooms or outside them, 0 to 1. */
+  inside?: number;
+  outside?: number;
 }
 
 export const GROUND_KINDS = [
@@ -52,13 +68,21 @@ export const GROUND_KINDS = [
   "rock",
   "water",
   "void",
+  "bedrock",
 ] as const;
 export type GroundKind = (typeof GROUND_KINDS)[number];
 
 /** Ground nobody can stand on: props and scatter must stay off it. */
-export const UNWALKABLE: readonly GroundKind[] = ["water", "void"];
+export const UNWALKABLE: readonly GroundKind[] = ["water", "void", "bedrock"];
 
-export const WALL_KINDS = ["stone", "timber", "ruined"] as const;
+/**
+ * `cave` is for rooms only: a rough rock face round the floor instead of a built
+ * wall, with solid `bedrock` beyond it (use it as the base). Its outline is roughened
+ * from the room's seed.
+ */
+export const WALL_KINDS = ["stone", "timber", "ruined", "cave"] as const;
+/** The wall kinds a free-standing wall can be. */
+export const BUILT_WALLS = ["stone", "timber", "ruined"] as const;
 export type WallKind = (typeof WALL_KINDS)[number];
 
 export const OPENING_KINDS = ["door", "double-door", "window", "archway"] as const;
@@ -106,6 +130,8 @@ export interface Opening {
   at: Pt;
   /** Along the wall, in squares. Defaults depend on the kind (see OPENING_WIDTH). */
   width?: number;
+  /** A door or double door standing open, swung into the room; it lets light through. */
+  open?: boolean;
   seed: number;
 }
 
@@ -135,7 +161,19 @@ export interface Prop {
 }
 
 /** What `dress` lays on a table, counter or other surface. */
-export const SURFACE_DRESSINGS = ["meal", "drinks", "kitchen", "study", "clutter"] as const;
+export const SURFACE_DRESSINGS = [
+  "meal",
+  "drinks",
+  "kitchen",
+  "study",
+  "clutter",
+  "alchemy",
+  "arcane",
+  "workshop",
+  "maps",
+  "treasure",
+  "offerings",
+] as const;
 export type SurfaceDressing = (typeof SURFACE_DRESSINGS)[number];
 
 /**
@@ -153,6 +191,12 @@ export interface Dressing {
   kind: DressingKind;
   /** The id of a room or ground region. */
   in: string;
+  /**
+   * For `stores` and `litter`: pick from props tagged with this setting (a mine's ore
+   * carts and rubble, a forge's coal and iron) instead of household stores. See
+   * SETTINGS in props/catalogue.ts.
+   */
+  setting?: Setting;
   /** How much, from 0 to 1 (default 0.5). */
   amount: number;
   seed: number;

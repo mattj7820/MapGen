@@ -41,6 +41,22 @@ export interface Palette {
   /** Glazed and unglazed pots, jugs and plates. */
   pottery: Tones;
   straw: string;
+  /** Gold and gilt: coins, crowns, idols. */
+  gold: Tones;
+  /** Bone, ivory and skulls. */
+  bone: Tones;
+  /** Polished pale stone: statues, fine floors, tombs. */
+  marble: Tones;
+  /** Leather: straps, saddles, book bindings. */
+  leather: Tones;
+  /** Copper and bronze, with a hint of verdigris. */
+  copper: Tones;
+  /** Arcane glow: crystals, runes, potions. */
+  arcane: Tones;
+  /** Rough ore and raw rock in a mine. */
+  ore: Tones;
+  /** Moss, mould and fungus. */
+  moss: Tones;
   /** Food and drink, a colour each. */
   food: Record<"bread" | "meat" | "greens" | "fruit" | "cheese" | "ale" | "wine" | "stew", string>;
 }
@@ -55,6 +71,7 @@ const EARTH: Record<GroundKind, Tones> = {
   rock: { base: "#9a8f80", light: "#aba08f", shade: "#82786a" },
   water: { base: "#4f7480", light: "#6a8f98", shade: "#3c5c67" },
   void: { base: "#151214", light: "#2e2724", shade: "#000000" },
+  bedrock: { base: "#4a443d", light: "#57514a", shade: "#37322d" },
 };
 
 const SHARED = {
@@ -62,6 +79,7 @@ const SHARED = {
     stone: { base: "#6e6a64", light: "#827d75", shade: "#57534d" },
     timber: { base: "#6d4c31", light: "#82603f", shade: "#553a25" },
     ruined: { base: "#75706a", light: "#89837b", shade: "#5c5852" },
+    cave: { base: "#4a443d", light: "#57514a", shade: "#37322d" },
   },
   stone: { base: "#8f8274", light: "#ab9e8e", shade: "#6f6458" },
   foliage: { base: "#6f7d4a", light: "#8a985c", shade: "#56613a" },
@@ -77,6 +95,14 @@ const SHARED = {
   burlap: { base: "#a48a63", light: "#b89d74", shade: "#86704f" },
   pottery: { base: "#b5764e", light: "#c88b62", shade: "#935a39" },
   straw: "#cdb26a",
+  gold: { base: "#c9a03e", light: "#e6c766", shade: "#94712a" },
+  bone: { base: "#d6cbb0", light: "#e8dfc9", shade: "#aea185" },
+  marble: { base: "#b8b3a8", light: "#cac5ba", shade: "#938e84" },
+  leather: { base: "#7a4f32", light: "#916244", shade: "#5c3a24" },
+  copper: { base: "#a8653e", light: "#c27d52", shade: "#6f8a74" },
+  arcane: { base: "#6f7fc8", light: "#a9b6f0", shade: "#46519a" },
+  ore: { base: "#6b625a", light: "#857b70", shade: "#4d4640" },
+  moss: { base: "#6a7a45", light: "#86955a", shade: "#4c5a31" },
   food: {
     bread: "#c08a45",
     meat: "#9c4a35",

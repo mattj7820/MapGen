@@ -13,6 +13,7 @@ import type { GroundKind, Scene } from "./scene.js";
  */
 export const FLAT = {
   chasm: "#1a1210",
+  bedrock: "#3d3833",
   rock: "#d09a62",
   wood: "#b98a55",
   flagstone: "#a6a093",
@@ -40,11 +41,13 @@ const GROUND: Record<GroundKind, keyof typeof FLAT> = {
   rock: "rock",
   water: "water",
   void: "chasm",
+  bedrock: "bedrock",
 };
 
 /** What each flat colour stands for, in the prompt's colour key. */
 const MEANING: Record<keyof typeof FLAT, string> = {
   chasm: "a deep chasm or pit, a sheer drop",
+  bedrock: "solid rock round a cave, seen from directly above; nobody can stand in it",
   rock: "flat-topped rock, the ground people stand on",
   wood: "a wooden plank floor",
   flagstone: "a flagstone floor",

@@ -3,15 +3,18 @@ import { hash } from "../../rng.js";
 import { EDGE_STYLES, type EdgeStyle } from "../../style/edges.js";
 import { parseLayout } from "../plateau/io.js";
 import { plateauScene } from "../plateau/scene.js";
+import { SETTINGS } from "./props/catalogue.js";
 import { DEFAULT_PALETTE } from "./palette.js";
 import {
   DRESSING_KINDS,
   FACING,
   SURFACE_DRESSINGS,
   GROUND_KINDS,
+  LIGHTING_TIMES,
   OPENING_KINDS,
   SCATTER_KINDS,
   type Scene,
+  BUILT_WALLS,
   WALL_KINDS,
 } from "./scene.js";
 
@@ -84,7 +87,7 @@ export function parseScene(text: string): Scene {
       const pts = points(o.points, `${n}.points`);
       if (pts.length < 2) throw new Error(`${n}.points needs at least 2 points`);
       return {
-        kind: oneOf(o.kind, WALL_KINDS, `${n}.kind`),
+        kind: oneOf(o.kind, BUILT_WALLS, `${n}.kind`),
         points: pts,
         ...(o.closed !== undefined ? { closed: bool(o.closed, `${n}.closed`) } : {}),
         seed: seedFor(o.seed, `${n}.seed`, "wall", pts),
@@ -99,6 +102,7 @@ export function parseScene(text: string): Scene {
         kind,
         at,
         ...(o.width !== undefined ? { width: positive(o.width, `${n}.width`) } : {}),
+        ...(o.open !== undefined ? { open: bool(o.open, `${n}.open`) } : {}),
         seed: seedFor(o.seed, `${n}.seed`, kind, at),
       };
     }),
@@ -140,7 +144,13 @@ export function parseScene(text: string): Scene {
       const where = str(o.in, `${n}.in`);
       const amount = o.amount === undefined ? 0.5 : num(o.amount, `${n}.amount`);
       if (amount < 0 || amount > 1) throw new Error(`${n}.amount must be from 0 to 1`);
-      return { kind, in: where, amount, seed: seedFor(o.seed, `${n}.seed`, kind, where) };
+      return {
+        kind,
+        in: where,
+        amount,
+        ...(o.setting !== undefined ? { setting: oneOf(o.setting, SETTINGS, `${n}.setting`) } : {}),
+        seed: seedFor(o.seed, `${n}.seed`, kind, where),
+      };
     }),
     scatter: list(s.scatter, "scatter").map((f, i) => {
       const n = `scatter[${i}]`;
@@ -163,6 +173,24 @@ export function parseScene(text: string): Scene {
         weight: o.weight === undefined ? 1 : positive(o.weight, `${n}.weight`),
       };
     }),
+    ...(s.lighting !== undefined ? { lighting: lighting(s.lighting) } : {}),
+  };
+}
+
+/** `"night"`, or `{ "time": "night", "inside": 0.4 }`. */
+function lighting(value: unknown): NonNullable<Scene["lighting"]> {
+  if (typeof value === "string") return { time: oneOf(value, LIGHTING_TIMES, "lighting") };
+  const o = obj(value, "lighting");
+  const level = (key: "inside" | "outside") => {
+    if (o[key] === undefined) return {};
+    const v = num(o[key], `lighting.${key}`);
+    if (v < 0 || v > 1) throw new Error(`lighting.${key} must be from 0 to 1`);
+    return { [key]: v };
+  };
+  return {
+    time: oneOf(o.time, LIGHTING_TIMES, "lighting.time"),
+    ...level("inside"),
+    ...level("outside"),
   };
 }
 

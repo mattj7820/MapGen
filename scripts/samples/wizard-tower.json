@@ -1,0 +1,209 @@
+{
+  "type": "scene",
+  "name": "wizard-tower",
+  "squares": [20, 20],
+  "base": "void",
+  "lighting": "night",
+  "rooms": [
+    {
+      "id": "study",
+      "points": [
+        [17.31, 11.16],
+        [16.59, 13.36],
+        [15.23, 15.23],
+        [13.36, 16.59],
+        [11.16, 17.31],
+        [8.84, 17.31],
+        [6.64, 16.59],
+        [4.77, 15.23],
+        [3.41, 13.36],
+        [2.69, 11.16],
+        [2.69, 8.84],
+        [3.41, 6.64],
+        [4.77, 4.77],
+        [6.64, 3.41],
+        [8.84, 2.69],
+        [11.16, 2.69],
+        [13.36, 3.41],
+        [15.23, 4.77],
+        [16.59, 6.64],
+        [17.31, 8.84]
+      ],
+      "floor": "wood",
+      "wall": "stone"
+    }
+  ],
+  "openings": [
+    {
+      "kind": "window",
+      "at": [17.309, 10.0]
+    },
+    {
+      "kind": "window",
+      "at": [10.0, 17.309]
+    },
+    {
+      "kind": "window",
+      "at": [10.0, 2.691]
+    },
+    {
+      "kind": "window",
+      "at": [2.691, 10.0]
+    }
+  ],
+  "props": [
+    {
+      "kind": "spiral-stairs",
+      "at": [10, 14.6],
+      "size": [2.6, 2.6]
+    },
+    {
+      "kind": "magic-circle-summoning-blue",
+      "at": [10, 8.6],
+      "size": [3.4, 3.4]
+    },
+    {
+      "kind": "bookcase-curved",
+      "at": [3.5, 7.89],
+      "rotation": -72.0,
+      "size": [2.0, 0.45]
+    },
+    {
+      "kind": "bookcase-curved",
+      "at": [4.47, 5.98],
+      "rotation": -54.0,
+      "size": [2.0, 0.45],
+      "seed": 11
+    },
+    {
+      "kind": "scroll-rack",
+      "at": [5.98, 4.47],
+      "rotation": -36.0,
+      "size": [1.8, 0.45]
+    },
+    {
+      "kind": "desk",
+      "at": [5.6, 7.4],
+      "size": [1.6, 0.8],
+      "rotation": -55.0,
+      "dress": "arcane"
+    },
+    {
+      "kind": "chair",
+      "at": [6.3, 8.2],
+      "rotation": 125.0
+    },
+    {
+      "kind": "candelabra",
+      "at": [4.4, 9.4]
+    },
+    {
+      "kind": "rug-round",
+      "at": [6.3, 8.0],
+      "size": [2.4, 2.4]
+    },
+    {
+      "kind": "alchemy-bench",
+      "at": [12.04, 3.71],
+      "rotation": 18.0,
+      "size": [1.9, 0.9]
+    },
+    {
+      "kind": "potion-rack",
+      "at": [15.53, 5.98],
+      "rotation": 54.0,
+      "size": [1.8, 0.45]
+    },
+    {
+      "kind": "stool",
+      "at": [12.6, 5.6],
+      "rotation": 20
+    },
+    {
+      "kind": "cauldron-fire",
+      "at": [14.8, 8.4]
+    },
+    {
+      "kind": "telescope",
+      "at": [15.6, 10.0],
+      "rotation": 0
+    },
+    {
+      "kind": "table-square",
+      "at": [13.0, 10.9],
+      "size": [1.4, 1.1],
+      "rotation": 6
+    },
+    {
+      "kind": "map-stars",
+      "at": [13.0, 10.9],
+      "size": [1.1, 0.8],
+      "rotation": 6
+    },
+    {
+      "kind": "candle",
+      "at": [13.45, 11.25]
+    },
+    {
+      "kind": "book-pile-large",
+      "at": [7.6, 14.9],
+      "rotation": 20
+    },
+    {
+      "kind": "book-pile",
+      "at": [12.6, 15.0],
+      "rotation": -30
+    },
+    {
+      "kind": "orrery-armillary",
+      "at": [13.6, 12.4]
+    },
+    {
+      "kind": "globe",
+      "at": [15.2, 13.6]
+    },
+    {
+      "kind": "bookcase-curved-half",
+      "at": [4.47, 14.02],
+      "rotation": -126.0,
+      "size": [2.2, 0.45],
+      "seed": 5
+    },
+    {
+      "kind": "standing-mirror",
+      "at": [3.52, 12.1],
+      "rotation": -108.0
+    },
+    {
+      "kind": "armchair",
+      "at": [6.0, 12.4],
+      "rotation": -120.0
+    },
+    {
+      "kind": "light-orb",
+      "at": [4.6, 13.0]
+    },
+    {
+      "kind": "chest-dark",
+      "at": [6.01, 15.49],
+      "rotation": -144.0
+    },
+    {
+      "kind": "pedestal-crystal",
+      "at": [10, 4.2]
+    }
+  ],
+  "dressing": [
+    {
+      "kind": "litter",
+      "in": "study",
+      "amount": 0.1,
+      "setting": "library"
+    },
+    {
+      "kind": "cobwebs",
+      "in": "study",
+      "amount": 0.4
+    }
+  ]
+}

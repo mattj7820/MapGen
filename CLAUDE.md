@@ -3,7 +3,8 @@
 A local tool for making true top-down D&D battle maps in code. Matt runs it with
 Claude Code as the operator: Matt describes a map, Claude writes it as a scene (the
 `/map` skill), renders it, looks at the PNG, judges it against the style checklist
-below, and iterates. Finished maps are copied into Matt's Obsidian
+below, and iterates. Props a map needs that the library lacks go on a wishlist, and
+the `/prop` skill builds them. Finished maps are copied into Matt's Obsidian
 vault **by hand**; his separate app, Guildhall, turns them into interactive maps.
 
 ## Hard rules
@@ -59,7 +60,9 @@ Making maps (`--help` on any command lists every option):
 
 ```sh
 npm run render -- output/<map folder>/layout.json  # draw a scene (checks it first)
-npm run props                                      # prop catalogue + output/props/props.png
+npm run props                                      # kinds per category + a sheet per category
+npm run props -- --search open crate               # find props; draws output/props/search.png
+npm run props -- --category lighting               # one category's list and sheet
 npm run map -- plateau --seed 7                    # one map, 24x16 at 256 px
 npm run map -- plateau --seeds 1-6 --px 128        # several, plus a contact sheet
 npm run map -- plateau --seed 7 --edge brushed --bridge --squares 20x20
@@ -108,18 +111,34 @@ Tests write only under `output/.test/` and clean up after themselves.
   - `resolve.ts`: works out geometry once for checks and drawing alike: room floors,
     merged walls, joins, opening cuts, prop footprints, then dressing
   - `place.ts`: shared shapes (prop footprints, wall rects, doorway clearance)
-  - `dressing.ts`: surface dressing and room dressing, from seeds
+  - `dressing.ts`: surface dressing (menus) and room dressing, from seeds
   - `check.ts`: `checkScene()`, every rule as a readable sentence
   - `ground.ts`, `walls.ts`, `scatter.ts`, `render.ts`: drawing
+  - `cave.ts`: cave rooms: the roughened outline, the rock face, which faces stop light
+  - `lighting.ts`: ambient light by time of day, light sources, visibility polygons,
+    the light layer
   - `palette.ts`: palettes (colour roles for every ground, wall and material)
   - `crops.ts`: review crops; `flat.ts`: the restyle export
-  - `props/`: the prop library (`library.ts` lists them; `kit.ts` is what props draw
-    with; `materials.ts` shared wood tones and wear)
+  - `props/`: the prop library, about a thousand kinds:
+    - `library.ts` joins every group (and refuses a kind defined twice);
+      `catalogue.ts` is the fixed vocabulary of categories and tags
+    - `family.ts`: families, one drawing with axes of variation, each combination its
+      own kind; `spec.ts` the spec types (layer, light, dressing weights)
+    - `families/<category>.ts`: the families, one file per category; `parts.ts`
+      shared pieces (rings, flames, shards, splinters)
+    - `contents.ts`: goods drawn into any opening (grain, ore, gold, fish, ale...);
+      `materials.ts`: named materials, wood tones, wear; `kit.ts`: what props draw with
+    - `tavern.ts`, `furnishings.ts`, `tableware.ts`, `stores.ts`, `bridge.ts`: the
+      first fifty single props, kept as they were
 - **`src/battlemap/plateau/`:** the plateau generator (`generate.ts`, its rules in
   `layout.ts`, outline shapes in `shape.ts`), `scene.ts` to turn its output into a
   scene, and `io.ts` to read old plateau layouts.
 - **`.claude/skills/map/`:** the `/map` skill (`SKILL.md`) and the scene format
-  reference (`format.md`).
+  reference (`format.md`). **`.claude/skills/prop/`:** the `/prop` skill, which builds
+  props from the wishlist or a request.
+- **`docs/`:** `prop-library.md` (how the library scales), `props-coverage.md` (what
+  maps need, by category and setting, from a survey of published asset catalogues:
+  ideas only).
 - **Other kinds of map** (region and world maps) are expected later. They'll reuse
   `style/` but not the grid, sidecar or scenes. Don't build a "map kinds" layer until
   the first one is actually being built.
@@ -152,9 +171,54 @@ Tests write only under `output/.test/` and clean up after themselves.
   - Dressing keeps clear of everything by construction: candidates come from the
     owner's seed regardless of the rest of the scene, then colliders are dropped. So
     adding a prop only removes the dressing it lands on (tested).
-  - Firelight is a soft screen-blended glow, clipped to the room it's in so it never
-    leaks through walls. A real lighting pass (ambient darkness, pools of light) is
-    deferred: Matt asked for density and detail first.
+  - Doors and double doors can stand open (`"open": true`), swung into the room.
+- **Lighting** (`lighting.ts`; Matt's bar is the painted tavern reference: a dim room,
+  warm pools of light falling off softly):
+  - A scene's `lighting` is a time, `day`, `dusk`, `night` or `dark`, with optional
+    `inside` and `outside` brightness. Left out: `night` for scenes with rooms, `day`
+    otherwise. Night interiors sit at about 40% brightness between pools; nothing goes
+    below about a quarter, so floor still reads.
+  - The map is drawn fully lit, then one light layer is multiplied over it: ambient
+    (room floors one level, everywhere else another) plus every light, each clipped
+    to its visibility polygon. The layer is painted at 16 px per square, blurred
+    there and scaled up; a small screened hot spot is added round flames. So ink
+    stays ink, and the full canvas is never blurred. Costs about a second at 256 px.
+  - Light sources are data: `PropSpec.light` (radius, strength, colour: fire, candle,
+    magic, eerie green, ember red). Windows let daylight in by day and dusk (a shaft
+    from a point outside, clipped to the room), faint moonlight at night.
+  - Stone and timber walls, shut doors and cave faces stop light; archways, windows,
+    open doors and ruined walls don't. So a lamp lights its own room and spills out
+    of doorways.
+  - When nothing glows and it's full day, the pass is skipped: plateau maps render
+    pixel-identical to before lighting existed (tested by diffing a baseline).
+- **Caves:** a room with `"wall": "cave"` has a rough rock face instead of a built
+  wall, over `bedrock` (solid rock, unwalkable) as the base. The written outline is
+  roughened from the room's seed (about 0.2 squares either way), and that roughened
+  outline is what checks, dressing and lighting use. Hatched clumps sit in the rock and
+  a broken lip of blocks (lit as a face rising from the floor) runs along its foot;
+  caves that run into each other open up cleanly, with no line across the mouth.
+  Built rooms can sit next to caves (a stone store off a mine tunnel).
+- **The prop library** (see `docs/prop-library.md`):
+  - Families, not one-offs: a family's axes (material, contents, state...) give one
+    kind per combination, named from the base and its non-default values
+    (`crate-iron-open-ore`). Only axes whose variants look different at a glance;
+    `npm run props` counts objects as well as kinds so padding shows.
+  - Every prop has one category (26, each with a sheet) and tags from a fixed list of
+    34 settings, materials and traits; a test refuses unknown words.
+  - Search matches the start of words in kind, description, tags and category.
+  - Room `stores` and `litter` can name a `setting` and pick props tagged with it
+    that carry a weight for that role; without one they use the household defaults,
+    so old scenes don't change. Surface menus cover meal, drinks, kitchen, study,
+    clutter, alchemy, arcane, workshop, maps, treasure and offerings.
+  - Dressing keeps off unwalkable ground inside a room (water in a cave), and a bridge
+    may cross water within one room.
+  - Existing kinds never change look unless asked: new variants get new names.
+  - Built in parallel by forked agents, one worktree per few categories, then merged;
+    the duplicate guard caught the overlaps. Worktrees live in `.claude/worktrees/`,
+    ignored by git and Prettier.
+- **The wishlist loop:** `/map` searches the library for everything a map needs and
+  logs what's missing in `output/prop-wishlist.md` (outside git: it can carry campaign
+  context) with the stand-in it used; `/prop` builds from that list and ticks it off.
 - **Prototype findings to carry forward:**
   - Tone blotches were too contrasty ("camouflage") at overview size. Use softer
     steps and larger shapes.
@@ -217,8 +281,9 @@ is `plateau` for generated maps and `scene` for scenes written by hand.
 The full format is in `.claude/skills/map/format.md`; read it before writing a scene.
 In short: `base` ground, `ground` regions, `rooms` (a rect or points, a floor kind and
 a wall kind), free `walls`, `openings` placed on a wall's centre line, `props` by kind,
-position and facing (with optional `size` and `dress`), room `dressing`, outdoor
-`scatter` and `cracks`. All in squares: x right, y down, origin at the top-left corner.
+position and facing (with optional `size` and `dress`), room `dressing` (optionally for
+a `setting`), `lighting`, outdoor `scatter` and `cracks`. Caves are rooms with
+`"wall": "cave"` over a `bedrock` base. All in squares: x right, y down, origin at the top-left corner.
 
 To make a change Matt asks for, edit the scene rather than regenerating it, so
 everything else stays put:
@@ -236,18 +301,26 @@ Then render: it runs `checkScene()` first (props in walls or off the ground, blo
 doorways, overlapping furniture, a candle not on a surface, items hanging over the
 chasm, bridge ends off rock, cracks running off edges) and lists what to fix.
 
-## Adding a prop
+## Adding a prop or a family
 
-1. Write a `PropSpec` in the right file under `src/battlemap/scene/props/`
-   (`tavern.ts`, `furnishings.ts`, `tableware.ts`, `stores.ts`): an `about` line, a
-   default `size` in squares, `layer`, `height` (for its shadow), and whether it's
-   `resizable`, `round` or a `surface`.
-2. Draw it in `draw(k)`, in its own coordinates: centred on (0, 0), `k.w` wide and
-   `k.d` deep, front towards +y. Use the kit: `shadow`, then `body`/`solid` for flat
-   colour with soft shading, `boards` and `line` for detail, `outline` last.
-   `k.rng` gives variety from the prop's seed. Colours come from `k.pal` roles, never
-   literals. Keep everything inside the footprint plus its shadow; a test checks it.
-3. List it in `props/library.ts`. Run `npm run props` and look at the sheet at 1:1.
+The `/prop` skill (`.claude/skills/prop/SKILL.md`) is the full process. In short:
+
+1. Search first (`npm run props -- --search ...`). If a family already draws the
+   thing, add a value to one of its axes; new goods go in `CONTENTS` and every
+   container gets them.
+2. Otherwise write a `family({ base, category, tags, axes, skip, spec })` in
+   `props/families/<category>.ts` (see `containers.ts` for a full example). `spec`
+   returns a `PropSpec`: an `about` line, a default `size` in squares, `layer`,
+   `height` (for its shadow), `resizable`, `round`, `surface`, `light` if it glows,
+   `dressing` weights if room dressing should place it, and extra `tags`.
+3. Draw it in `draw(k)`, in its own coordinates: centred on (0, 0), `k.w` wide and
+   `k.d` deep, front towards +y, true top-down. Use the kit: `shadow`, then
+   `body`/`solid` for flat colour with soft shading, `boards` and `line` for detail,
+   `outline` last. `k.rng` gives variety from the prop's seed. Colours come from
+   `k.pal` roles, `material()` and `k.tones()`, never literals. Keep everything inside
+   the footprint plus its shadow; a test checks every kind at three turns.
+4. Add the file's export to `merge(...)` in `props/library.ts`. Look at the sheet at
+   192 px and at 64 px, beside the category's other props.
 
 ## Looking at renders
 
@@ -274,6 +347,8 @@ Checklist for every look review:
 6. Shadows all agree with light from the top left.
 7. No grid lines, text or labels on the image.
 8. It looks hand-drawn, not procedural: varied, slightly irregular, never noisy.
+9. Lighting: pools of light where people are, falling off softly; nothing important
+   lost in the dark; ink still crisp. Check a small render (under 100 px) too.
 
 ## Workflow
 
@@ -326,9 +401,9 @@ Checklist for every look review:
    tavern, a chapel, a city house) are in `scripts/samples/`. Matt's feedback after
    the first prototype: density and small detail matter most, lighting can wait.
 
-Next, in this order (Matt, after step 9):
+Done after step 9 (one branch, `lighting-and-props`):
 
-10. **Lighting.** Maps should be lit like the painted tavern reference Matt shared:
+10. **Lighting.** Done; see "Decisions so far". The original brief: Maps should be lit like the painted tavern reference Matt shared:
     the room mostly dim, with warm pools of light round every lamp, candle, hearth,
     brazier and window, and light falling off softly with distance. Work out:
     - a scene-level setting for how dark it is (ambient level, maybe a time of day:
@@ -342,7 +417,11 @@ Next, in this order (Matt, after step 9):
     - performance: one low-res light layer composited over the map (see "Rendering
       performance"), not a blur of the full canvas
     - tests: light never crosses a wall; moving a lamp changes only pixels it reaches
-11. **A prop library in the hundreds, then thousands.** The goal is that for any map
+11. **A prop library in the hundreds, then thousands.** First round done: about a
+    thousand kinds from about 400 objects in 25 categories, cave walls, setting-aware
+    dressing, search, the `/prop` skill and the wishlist loop. Proof maps (a dwarven
+    mine, a wizard's tower, a smugglers' sea cave) are in `scripts/samples/`. The
+    original brief: The goal is that for any map
     in a wild game of D&D there's already the right prop: taverns and temples, but
     also mines, wizard towers, shipwrecks, sewers, forges, libraries, throne rooms,
     markets, camps, graveyards, laboratories, farms, prisons and more. Work out:
@@ -372,9 +451,13 @@ Other new work: map kinds as Matt asks, or the ideas below.
 
 Not planned yet; raise them with Matt before starting.
 
-- **Cave walls**, for mines and caverns: an irregular rock-mass wall kind round a
-  walkable floor, plus mine props (timber supports, rails, carts, ore, lanterns) and
-  `rubble`/`ore` dressing. The scene format and dressing already fit this.
+- **More props:** `machinery` (gears, winches, mills, levers) is still empty, and
+  wall hangings (banners, tapestries) need a way to read from above. Grow the rest
+  through the wishlist.
+- **Props casting light shadows:** tall props (pillars, bookcases) could stop light
+  too; for now only walls, doors and cave faces do.
+- **Water and caves blending:** water inside a cave meets the floor with a plain
+  edge; a wet margin or shingle would read better.
 - **Material wear on floors**: worn paths, scuffs and damaged boards on top of the
   spills and straw that `litter` gives now.
 

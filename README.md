@@ -60,14 +60,16 @@ Code works out the rest:
 
 - **Walls**: rooms that share a wall line share one wall; corners and T-joins close
   up; doors, windows and archways are cut into whichever wall they sit on.
-- **Props** come from a library of about fifty, each drawn once in the same hand:
-  furniture, a hearth and a cooking range, beds, pews and an altar, barrels and sacks,
-  and the small things that make a place feel used (plates with leftovers, mugs,
-  bottles, books, straw, spills, cobwebs).
-- **Dressing** fills in that clutter from seeds: `"dress": "meal"` lays a table with a
-  place setting in front of every chair; a room's `stores`, `litter` and `cobwebs`
-  stack sacks and crates along its walls, scatter the floor and web the corners, all
-  clear of doorways and furniture.
+- **Props** come from a library of about a thousand kinds (see below), each drawn in
+  the same hand.
+- **Dressing** fills in the clutter from seeds: `"dress": "meal"` lays a table with a
+  place setting in front of every chair (or `alchemy`, `arcane`, `workshop`, `maps`,
+  `treasure`, `offerings`...); a room's `stores`, `litter` and `cobwebs` stack things
+  along its walls, scatter the floor and web the corners, all clear of doorways and
+  furniture. Give them a `setting` (`"mine"`, `"forge"`, `"docks"`...) and they pick
+  what belongs there.
+- **Lighting**: rooms are dim, with warm pools of light round every lamp, candle,
+  hearth and brazier, stopped by walls and spilling out of open doors and windows.
 - **Checks** run before anything is drawn: props in walls, blocked doorways, chairs
   inside tables, a candle not on a surface, a door that isn't on a wall. Each problem
   names the item and where it is.
@@ -78,6 +80,43 @@ The same skill made a tavern, a small chapel and a city house from one-line
 descriptions (the scenes are in `scripts/samples/`):
 
 ![Three buildings: a tavern on cobbles, a stone chapel with pews and an altar on grass, and a timber house with a bedroom, front room, kitchen and storeroom](docs/images/buildings.jpg)
+
+### Light
+
+A scene is lit for a time of day (`day`, `dusk`, `night` or `dark`). Each lamp, candle,
+fire and glowing crystal throws a pool of light that falls off softly and stops at
+walls and shut doors; windows let daylight in. The light is one soft layer multiplied
+over the drawing, so the ink stays crisp.
+
+![The tavern in flat daylight (left) and at night (right): the same room, dim and warm-grey, with pools of light round each candle and the hearth, and the street outside dark blue](docs/images/lighting.jpg)
+
+### Any place, not just taverns
+
+The prop library has about a thousand kinds from some four hundred objects, in 25
+categories: furniture, containers, lighting, kitchen, books, tools, weapons, religious,
+magic, nautical, mining, nature, structure, debris, textiles, market, camp, vehicles,
+animals, prison, graveyard, farm and more. Most come in **families**: one drawing with
+variants by material, contents and state, each its own kind (`crate-iron-open-ore`,
+`chest-gilded-open-gems`, `barrel-lying-tapped`). Every one is drawn by code; the
+list of what maps need came from surveying published asset catalogues for ideas
+only (`docs/props-coverage.md`).
+
+![A cross-section of the prop library: crates and chests of goods, an anvil and forge, weapon racks and armour, an alchemy bench, a bubbling cauldron, a summoning circle, a curved bookcase, a statue, an open sarcophagus, a hanging cage, a mine cart and shaft winch, a rowing boat, an anchor, a covered wagon, a market stall, a tent, a tree, glowing crystals and a campfire](docs/images/props.jpg)
+
+```sh
+npm run props -- --search open crate     # find props; draws them on a sheet
+npm run props -- --category magic        # one category
+```
+
+**Caves** are rooms with a rough rock face instead of a built wall. The skill made a
+dwarven mine, a wizard's tower and a smugglers' sea cave from one-line descriptions:
+
+![Three maps: a dwarven mine (a lantern-lit working face, rails along a timbered tunnel to a winch over a shaft, and a stone tool store), a round wizard's tower room (curved bookcases, a glowing summoning circle, an alchemy bench, a telescope at a window), and a sea cave (a channel of sea water crossed by a plank bridge, rowing boats on the shingle, contraband on a rock ledge)](docs/images/places.jpg)
+
+![Close-up of the mine at full size: rails on sleepers running under timber supports, a mine cart full of ore, the rough rock face with hatching in the rock beyond](docs/images/mine-detail.jpg)
+
+When a map needs something the library doesn't have, `/map` uses the closest thing,
+says so, and adds it to a wishlist; the `/prop` skill builds props from that list.
 
 ## How it works
 
@@ -127,7 +166,8 @@ Requires Node 22.4 or newer.
 ```sh
 npm install
 npm run render -- output/tavern/layout.json      # draw a scene (checks it first)
-npm run props                                    # the prop catalogue, and a sheet of them all
+npm run props                                    # props per category, and a sheet of each
+npm run props -- --search anvil                  # find props by name, use, setting or material
 npm run map -- plateau --seed 7                  # 24x16 squares at 256 px per square
 npm run map -- plateau --seeds 1-6 --px 128      # several, plus a contact sheet
 npm run map -- plateau --seed 7 --edge brushed --bridge --squares 20x20
@@ -199,6 +239,9 @@ The tests cover what matters without brittle pixel snapshots:
 - the scene checks, each one breaking a sound scene on purpose
 - dressing: always valid, and an added prop only removes what it lands on
 - every prop draws inside its own footprint and shadow, at any turn
+- lighting: light never crosses a wall or a shut door, and moving a lamp changes
+  only the pixels it reaches
+- caves: roughened from their seed, no props in the rock, light stopped by the face
 - the grid sidecar maths, by placing grid lines from the sidecar alone
 - pixel locality: editing one item changes only the pixels near it
 - the output guard, including real junctions pointing outside `output/`
@@ -210,10 +253,12 @@ src/
   style/                   the drawing toolkit shared by every map
   battlemap/               grid, sidecar, review sheets
     scene/                 the scene format, resolver, checks, dressing, renderer
-      props/               the prop library
+      props/               the prop library: families by category, catalogue, search
     plateau/               the plateau generator, which outputs a scene
   cli/                     map, render, restyle and props commands, and the output guard
 .claude/skills/map/        the /map skill and the scene format reference
+.claude/skills/prop/       the /prop skill, for adding props
+docs/                      how the prop library scales, and the coverage list
 scripts/readme-images.ts   makes the images in this README
 scripts/samples/           the sample scenes shown here
 ```

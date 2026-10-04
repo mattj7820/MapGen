@@ -1,0 +1,33 @@
+{
+  "type": "scene",
+  "name": "warehouse",
+  "squares": [16, 11],
+  "base": "cobbles",
+  "lighting": { "time": "day", "inside": 0.7 },
+  "rooms": [{ "id": "hold", "rect": [1, 1, 15, 10], "floor": "wood", "wall": "timber" }],
+  "openings": [
+    { "kind": "double-door", "at": [8, 10], "open": true },
+    { "kind": "window", "at": [4, 1] },
+    { "kind": "window", "at": [12, 1] }
+  ],
+  "props": [
+    { "kind": "crate-stack-three", "at": [4.5, 4.6], "rotation": 3 },
+    { "kind": "crate-open-apples", "at": [6.2, 4.4], "rotation": -6 },
+    { "kind": "crate-iron", "at": [6.3, 5.4], "rotation": 9 },
+    { "kind": "barrel-lying-tapped", "at": [10.5, 4.3] },
+    { "kind": "barrel-lying", "at": [10.5, 5.15], "rotation": 2 },
+    { "kind": "sacks-five", "at": [12, 7.3], "rotation": -4 },
+    { "kind": "sack-spilled-grain", "at": [10.6, 7.4], "rotation": 30 },
+    { "kind": "chest-open-gold", "at": [3, 8.3], "rotation": 12 },
+    { "kind": "table-long", "at": [8, 7.5], "size": [2, 0.9], "dress": "study" },
+    { "kind": "lamp", "at": [8.6, 7.4] },
+    { "kind": "stool", "at": [8, 8.4], "rotation": 8 },
+    { "kind": "crate-broken", "at": [5.8, 7.6], "rotation": 20 },
+    { "kind": "amphora-lying-broken", "at": [13.2, 4.8], "rotation": 70 }
+  ],
+  "dressing": [
+    { "kind": "stores", "in": "hold", "amount": 1, "setting": "warehouse" },
+    { "kind": "litter", "in": "hold", "amount": 0.5 },
+    { "kind": "cobwebs", "in": "hold", "amount": 0.6 }
+  ]
+}

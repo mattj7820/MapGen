@@ -1,3 +1,4 @@
 references/
 output/
 node_modules/
+.claude/worktrees/
