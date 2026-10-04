@@ -31,6 +31,8 @@ import { MAGIC } from "./families/magic.js";
 import { NAUTICAL } from "./families/nautical.js";
 import { VEHICLES } from "./families/vehicles.js";
 import { ANIMALS } from "./families/animals.js";
+import { TOOLS } from "./families/tools.js";
+import { WEAPONS } from "./families/weapons.js";
 import type { LibraryProp } from "./spec.js";
 import {
   basket,
@@ -149,6 +151,8 @@ export const PROPS: Record<string, LibraryProp> = merge(
   NAUTICAL,
   VEHICLES,
   ANIMALS,
+  TOOLS,
+  WEAPONS,
 );
 
 /** Join groups of props, refusing a kind that two of them define. */
