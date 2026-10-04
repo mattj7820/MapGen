@@ -63,16 +63,16 @@
       "size": [3.4, 3.4]
     },
     {
-      "kind": "bookcase",
+      "kind": "bookcase-curved",
       "at": [3.5, 7.89],
       "rotation": -72.0,
-      "size": [1.9, 0.45]
+      "size": [2.0, 0.45]
     },
     {
-      "kind": "bookcase",
+      "kind": "bookcase-curved",
       "at": [4.47, 5.98],
       "rotation": -54.0,
-      "size": [1.9, 0.45],
+      "size": [2.0, 0.45],
       "seed": 11
     },
     {
@@ -163,11 +163,16 @@
       "at": [15.2, 13.6]
     },
     {
-      "kind": "bookcase",
+      "kind": "bookcase-curved-half",
       "at": [4.47, 14.02],
       "rotation": -126.0,
-      "size": [1.9, 0.45],
+      "size": [2.2, 0.45],
       "seed": 5
+    },
+    {
+      "kind": "standing-mirror",
+      "at": [3.52, 12.1],
+      "rotation": -108.0
     },
     {
       "kind": "armchair",

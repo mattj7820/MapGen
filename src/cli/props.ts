@@ -46,7 +46,7 @@ export function search(words: string): string[] {
     .filter(([kind, spec]) => {
       const text = [kind, spec.about, spec.category, ...spec.tags].join(" ").toLowerCase();
       const all = text.split(/[^a-z0-9]+/).filter(Boolean);
-      return terms.every((t) => t === kind || all.some((w) => w.startsWith(t)));
+      return terms.every((t) => kind.startsWith(t) || all.some((w) => w.startsWith(t)));
     })
     .map(([kind]) => kind);
 }

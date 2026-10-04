@@ -1130,7 +1130,65 @@ const mounds = family({
   }),
 });
 
+const seaweed = family({
+  base: "seaweed",
+  category: "nature",
+  tags: "docks ship cave swamp",
+  axes: { form: ["tangle", "strand"] },
+  spec: ({ form }) => ({
+    about:
+      form === "tangle"
+        ? "a wet tangle of kelp and wrack washed up on a shore; lies flat"
+        : "a strand line of washed-up seaweed along a shore, east to west at rotation 0; lies flat",
+    size: form === "tangle" ? [0.9, 0.7] : [2.4, 0.5],
+    resizable: true,
+    layer: "floor",
+    height: 0.02,
+    dressing: { litter: form === "tangle" ? 0.4 : 0.1 },
+    draw: (k) => {
+      const [w, d] = [k.w, k.d];
+      const weed = k.tones(mix(k.pal.moss.shade, k.pal.leather.shade, 0.35));
+      k.soft(
+        k.blob(0, 0, w * 0.45, d * 0.4, 0.4, 18),
+        withAlpha(k.pal.ground.water.shade, 0.35),
+        0.05,
+      );
+      const n = form === "tangle" ? 16 : 26;
+      // Loose strands can reach any way; keep them to the footprint.
+      k.clip(k.rect(-w / 2, -d / 2, w / 2, d / 2));
+      for (let i = 0; i < n; i++) {
+        const x0 = k.rng.range(-0.42, 0.42) * w;
+        const y0 = k.rng.range(-0.3, 0.3) * d;
+        const len = k.rng.range(0.18, 0.32);
+        const a = k.rng.range(0, Math.PI * 2);
+        const pts: Pt[] = Array.from({ length: 6 }, (_, j) => {
+          const t = j / 5;
+          return [
+            x0 + Math.cos(a) * len * t + Math.sin(t * 6 + i) * 0.03,
+            y0 + Math.sin(a) * len * t * (d / w + 0.4) + Math.cos(t * 5 + i) * 0.03,
+          ];
+        });
+        k.line(pts, 0.075, INK);
+        k.line(pts, 0.05, k.rng.chance(0.5) ? weed.base : weed.light);
+      }
+      // Bladder wrack's little floats, and wet glints.
+      for (let i = 0; i < n; i++) {
+        k.dot([k.rng.range(-0.4, 0.4) * w, k.rng.range(-0.3, 0.3) * d], 0.018, weed.shade);
+      }
+      for (let i = 0; i < 4; i++) {
+        k.dot(
+          [k.rng.range(-0.35, 0.35) * w, k.rng.range(-0.25, 0.25) * d],
+          0.012,
+          withAlpha("#ffffff", 0.6),
+        );
+      }
+      k.unclip();
+    },
+  }),
+});
+
 export const NATURE: Record<string, LibraryProp> = {
+  ...seaweed,
   ...trees,
   ...stumps,
   ...logs,

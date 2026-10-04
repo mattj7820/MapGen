@@ -1285,7 +1285,71 @@ const herbs = family({
   }),
 });
 
+const mirrors = family({
+  base: "standing-mirror",
+  category: "magic",
+  tags: "wizard noble home glass wood",
+  axes: { state: ["plain", "cracked", "glowing"] },
+  spec: ({ state }) => ({
+    about: `tall standing mirror in a carved frame on splayed feet, its glass to the south (rotation 0)${state === "cracked" ? ", the glass cracked" : state === "glowing" ? ", its glass glowing with a pale light" : ""}`,
+    size: [1, 0.5],
+    layer: "solid",
+    height: 1.8,
+    ...(state === "glowing"
+      ? {
+          light: {
+            at: [0, 0.4] as [number, number],
+            radius: 3,
+            strength: 0.5,
+            colour: "magic" as const,
+          },
+          tags: "magic lit",
+        }
+      : {}),
+    draw: (k) => {
+      const [w, d] = [k.w, k.d];
+      // Feet splayed out front and back, the frame standing between them.
+      for (const s of [-1, 1]) {
+        const foot = k.rounded(s * w * 0.42 - 0.05, -d / 2, s * w * 0.42 + 0.05, d / 2, 0.04);
+        k.shadow(foot, 0.2, 0.3);
+        k.solid(foot, darkWood(k), { band: 0.01 });
+      }
+      const frame = k.rounded(-w / 2 + 0.04, -0.08, w / 2 - 0.04, 0.08, 0.04);
+      k.shadow(frame, 1.8, 0.3);
+      k.body(frame, k.pal.gold, 0.02);
+      // The glass, seen edge-on from above: a thin bright line along the front of the frame.
+      const glass = k.rect(-w / 2 + 0.12, 0.02, w / 2 - 0.12, 0.07);
+      k.fill(glass, state === "glowing" ? k.pal.arcane.light : mix(k.pal.glass, "#ffffff", 0.35));
+      if (state === "cracked") {
+        k.line(
+          [
+            [-0.1, 0.02],
+            [-0.04, 0.07],
+            [0.02, 0.03],
+            [0.09, 0.07],
+          ],
+          WEIGHT.detail * 0.6,
+        );
+      }
+      if (state === "glowing")
+        k.soft(
+          k.rect(-w / 2 + 0.1, 0.06, w / 2 - 0.1, 0.25),
+          withAlpha(k.pal.arcane.light, 0.5),
+          0.08,
+        );
+      // A reflection falling on the floor in front of it.
+      k.soft(
+        k.rect(-w / 2 + 0.15, 0.1, w / 2 - 0.15, d / 2 - 0.02),
+        withAlpha(k.pal.linen.light, state === "glowing" ? 0.25 : 0.12),
+        0.06,
+      );
+      k.outline(frame, WEIGHT.object);
+    },
+  }),
+});
+
 export const MAGIC: Record<string, LibraryProp> = {
+  ...mirrors,
   ...flasks,
   ...racks,
   ...cauldrons,

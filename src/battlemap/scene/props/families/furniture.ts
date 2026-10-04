@@ -945,6 +945,74 @@ const bookcases = family({
   }),
 });
 
+/** The radius of round wall each curved bookcase fits, in squares. */
+const CURVE = { wide: 7, tight: 4 } as const;
+
+const curvedBookcases = family({
+  base: "bookcase-curved",
+  category: "furniture",
+  tags: "library wizard noble wood paper",
+  axes: { fill: ["full", "half", "empty"], curve: ["wide", "tight"] },
+  spec: ({ fill, curve }) => ({
+    about: `bookcase bowed to stand against a round wall about ${CURVE[curve]} squares in radius (a tower room), ${fill === "empty" ? "empty" : fill === "half" ? "half full of books" : "packed with books"}; back to the north (rotation 0)`,
+    size: [2, 0.45],
+    resizable: true,
+    layer: "solid",
+    height: 1.6,
+    tags: fill === "empty" ? "" : "loot",
+    draw: (k) => {
+      const [w, d] = [k.w, k.d];
+      const R = CURVE[curve];
+      // Arcs about a centre to the south: the back on the wall's face, the front inside it.
+      const cy = R - d / 2;
+      const at = (r: number, t: number): Pt => [r * Math.sin(t), cy - r * Math.cos(t)];
+      const span = w / 2 / R;
+      const arc = (r: number, n = 24) =>
+        Array.from({ length: n + 1 }, (_, i) => at(r, -span + (2 * span * i) / n));
+      const sector = (r0: number, r1: number, t0: number, t1: number, n = 8): Pt[] => {
+        const outer = Array.from({ length: n + 1 }, (_, i) => at(r1, t0 + ((t1 - t0) * i) / n));
+        const inner = Array.from({ length: n + 1 }, (_, i) => at(r0, t1 - ((t1 - t0) * i) / n));
+        return [...outer, ...inner];
+      };
+      const shape = [...arc(R), ...arc(R - d).reverse()];
+      k.shadow(shape, 1.6);
+      const tones = darkWood(k);
+      k.body(shape, tones, 0.04);
+      const inset = 0.05 / R;
+      k.body(
+        sector(R - d + 0.03, R - 0.05, -span + inset, span - inset, 24),
+        k.tones(mix(tones.shade, INK, 0.4)),
+        0.03,
+      );
+      const covers = [
+        k.pal.cloth,
+        k.pal.cloth2,
+        k.pal.leather,
+        k.pal.moss,
+        k.pal.linen,
+        k.pal.burlap,
+      ];
+      let t = -span + inset * 1.2;
+      while (t < span - inset * 1.6) {
+        const bt = k.rng.range(0.05, 0.1) / R;
+        if (k.rng.chance(BOOK_FILL[fill])) {
+          const depth = k.rng.range(d * 0.45, d * 0.75);
+          const book = sector(R - d + 0.03, R - d + 0.03 + depth, t, t + bt - 0.008 / R, 2);
+          k.body(book, k.rng.pick(covers), 0.008);
+          k.outline(book, WEIGHT.detail * 0.5, false);
+        }
+        t += bt;
+      }
+      const bays = Math.max(1, Math.round(w / 0.9));
+      for (let i = 1; i < bays; i++) {
+        const bt = -span + ((2 * span) / bays) * i;
+        k.solid(sector(R - d, R, bt - 0.025 / R, bt + 0.025 / R, 2), tones, { band: 0.006 });
+      }
+      k.outline(shape);
+    },
+  }),
+});
+
 const hutches = family({
   base: "hutch",
   category: "furniture",
@@ -1293,6 +1361,7 @@ export const FURNITURE: Record<string, LibraryProp> = {
   ...dressers,
   ...cupboards,
   ...bookcases,
+  ...curvedBookcases,
   ...hutches,
   ...cabinets,
   ...coatRacks,
