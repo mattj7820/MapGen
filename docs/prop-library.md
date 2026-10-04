@@ -1,7 +1,7 @@
 # The prop library: how it scales
 
 The goal is that any map in a wild game of D&D already has the right prop. That means
-hundreds of kinds now and thousands later, all drawn by code in one hand. Writing each
+hundreds of kinds now (about a thousand at the first round) and thousands later, all drawn by code in one hand. Writing each
 one by hand doesn't scale, so the library is built from **families**.
 `docs/props-coverage.md` lists what maps need, by category and by setting. It was
 compiled from how published asset libraries organise their catalogues, as lists of
@@ -79,6 +79,12 @@ Dressing then picks from every prop tagged with that setting that has a weight f
 the role. Without a setting it uses the household defaults as before, so existing
 scenes don't change. Surface dressing (`"dress"` on a table) will gain setting menus
 in the same way: an alchemist's bench, a smith's tools, a cartographer's charts.
+
+## Adding props
+
+Use the `/prop` skill (`.claude/skills/prop/SKILL.md`). When `/map` makes a map that
+needs something the library lacks, it logs the prop in `output/prop-wishlist.md`;
+`/prop` builds from that list and ticks it off.
 
 ## Rules every prop keeps
 

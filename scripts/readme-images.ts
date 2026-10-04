@@ -14,6 +14,7 @@ import { renderScene } from "../src/battlemap/scene/render.js";
 import { resolveScene } from "../src/battlemap/scene/resolve.js";
 import type { Scene } from "../src/battlemap/scene/scene.js";
 import { OutputDir, REPO_ROOT } from "../src/cli/paths.js";
+import { propSheet } from "../src/cli/props.js";
 import type { Pt } from "../src/geometry.js";
 
 const out = new OutputDir(REPO_ROOT);
@@ -72,3 +73,77 @@ const buildings = ["tavern", "chapel", "house"].map((name) => ({
   canvas: renderScene(sample(name), 32),
 }));
 await save("buildings.jpg", contactSheet(buildings));
+
+// Lighting: the tavern in flat daylight against the same tavern at night.
+const flat: Scene = { ...tavern, lighting: { time: "day", inside: 1 } };
+const lit = createCanvas(22 * 64 * 2 + 20, 14 * 64);
+const lg = lit.getContext("2d");
+lg.fillStyle = "#2b2b2b";
+lg.fillRect(0, 0, lit.width, lit.height);
+lg.drawImage(renderScene(flat, 64), 0, 0);
+lg.drawImage(renderScene(tavern, 64), 22 * 64 + 20, 0);
+await save("lighting.jpg", lit);
+
+// The proof places from scripts/samples/, each written by the /map skill.
+// Side by side at one height, each keeping its own proportions.
+const places = ["dwarven-mine", "wizard-tower", "sea-cave"].map((name) =>
+  renderScene(sample(name), 40),
+);
+const tall = Math.max(...places.map((c) => c.height));
+const row = createCanvas(
+  places.reduce((w, c) => w + (c.width * tall) / c.height, 0) + 20 * (places.length - 1),
+  tall,
+);
+const rg = row.getContext("2d");
+rg.fillStyle = "#2b2b2b";
+rg.fillRect(0, 0, row.width, row.height);
+let x = 0;
+for (const c of places) {
+  const w = (c.width * tall) / c.height;
+  rg.drawImage(c, x, 0, w, tall);
+  x += w + 20;
+}
+await save("places.jpg", row);
+const mine = renderScene(sample("dwarven-mine"), 256);
+await save("mine-detail.jpg", crop(mine, 256, [9.5, 6.5], 1400, 800));
+
+// A cross-section of the prop library, a few from each corner of it.
+await save(
+  "props.jpg",
+  propSheet(
+    [
+      "crate-iron-open-ore",
+      "chest-gilded-open-gems",
+      "barrel-lying-tapped",
+      "sacks-five",
+      "urn-copper",
+      "anvil",
+      "forge",
+      "weapon-rack-mixed",
+      "armour-stand-plate",
+      "training-dummy",
+      "alchemy-bench",
+      "cauldron-fire",
+      "magic-circle-summoning-blue",
+      "orrery-armillary",
+      "bookcase-curved",
+      "statue-marble",
+      "sarcophagus-open",
+      "headstone-leaning",
+      "cage-hanging-bones",
+      "skeleton-slumped",
+      "mine-cart-ore",
+      "mine-shaft-winch",
+      "rowboat-oars",
+      "anchor",
+      "covered-wagon",
+      "market-stall-apples",
+      "tent-bell-open",
+      "tree-autumn",
+      "glow-crystal",
+      "campfire",
+    ],
+    96,
+    "hearth",
+  ),
+);
