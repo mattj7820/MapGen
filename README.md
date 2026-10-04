@@ -105,6 +105,21 @@ and nothing is drawn if there's a problem.
 refuses any other path, including `output/` itself being a symlink or junction to
 somewhere else.
 
+### Restyling with an image model
+
+To try a different look without losing the layout, export it as flat shapes:
+
+```sh
+npm run restyle -- output/plateau-s7-24x16-256/layout.json
+```
+
+This writes `restyle.png` (every plateau, stone, scrub patch, crack and bridge in a
+plain colour that says what it is, about 2048 px wide) and `restyle-prompt.txt`, a
+ready-to-paste prompt with the colour key and the rules: keep every shape, strictly
+top-down, no grid lines. Give both to an image model along with a style reference.
+The grid sidecar is in fractions of the image, so it still lines up with the result
+as long as the proportions are kept.
+
 ## Development
 
 ```sh
@@ -125,7 +140,7 @@ src/
   style/                   the drawing toolkit shared by every map
   battlemap/               grid, sidecar, review sheets
     plateau/               layout, generator, checks, renderer, palette
-  cli/                     the map and render commands, and the output guard
+  cli/                     the map, render and restyle commands, and the output guard
 scripts/readme-images.ts   makes the images in this README
 ```
 
