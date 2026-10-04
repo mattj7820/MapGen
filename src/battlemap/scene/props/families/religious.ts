@@ -34,7 +34,7 @@ const TAG_OF: Record<StatueMaterial, string> = {
  * A figure in a robe seen from straight above: the robe spreading to its hem at the
  * front, arms bent with the hands together, the head with its hair or hood at the back.
  */
-function figure(k: PropKit, at: Pt, s: number, tones: Tones, turn = 0): void {
+export function figure(k: PropKit, at: Pt, s: number, tones: Tones, turn = 0): void {
   const [c, sn] = [Math.cos(turn), Math.sin(turn)];
   const place = (pts: Pt[]) =>
     pts.map(([x, y]): Pt => [at[0] + x * c - y * sn, at[1] + x * sn + y * c]);
