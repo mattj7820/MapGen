@@ -8,7 +8,7 @@
     { "id": "kitchen", "rect": [14, 1, 20, 8], "floor": "flagstone", "wall": "stone" }
   ],
   "openings": [
-    { "kind": "double-door", "at": [7.5, 13] },
+    { "kind": "double-door", "at": [7.5, 13], "open": true },
     { "kind": "door", "at": [14, 5] },
     { "kind": "door", "at": [17.5, 8] },
     { "kind": "window", "at": [1, 4] },

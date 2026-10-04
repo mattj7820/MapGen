@@ -1,4 +1,4 @@
-import { distance, type Pt, roundPt, segmentDistance } from "../../geometry.js";
+import { contains, distance, type Pt, roundPt, segmentDistance } from "../../geometry.js";
 import { hash } from "../../rng.js";
 import { densify } from "../../style/ink.js";
 import { dress } from "./dressing.js";
@@ -81,6 +81,8 @@ export interface ResolvedOpening {
   centre: Pt;
   /** Why it can't be cut where it is, if it can't. */
   problem?: string;
+  /** For an open door: which side of the wall it swings to (1 is the segment's left). */
+  swing?: 1 | -1;
 }
 
 export interface ResolvedProp {
@@ -138,6 +140,11 @@ export function resolveScene(scene: Scene): Resolved {
         Math.abs(p.offset - o.offset) < (p.width + o.width) / 2,
     );
     if (clash) o.problem = `overlaps the ${clash.opening.kind} at ${fmt(clash.opening.at)}`;
+    // An open door swings into a room: the left side if that's in one, else the right.
+    if (o.opening.open && o.segment) {
+      const left = onSegment(o.segment, o.offset, 0.6);
+      o.swing = regions.some((g) => g.room && contains(g.outline, left)) ? 1 : -1;
+    }
   }
 
   const props: ResolvedProp[] = [];

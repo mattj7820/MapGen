@@ -34,7 +34,7 @@ export const TIMES: Record<LightingTime, Time> = {
   day: {
     inside: [0.78, 0.76, 0.73],
     outside: [1, 1, 1],
-    window: { colour: "daylight", strength: 0.5 },
+    window: { colour: "daylight", strength: 0.68 },
   },
   /** Low warm light outside; rooms dim, lamps starting to matter. */
   dusk: {
@@ -55,7 +55,7 @@ export const TIMES: Record<LightingTime, Time> = {
 /** What each light colour adds, per channel, at full strength. */
 const COLOURS: Record<LightColour, Rgb> = {
   fire: [1, 0.66, 0.34],
-  candle: [1, 0.8, 0.52],
+  candle: [1, 0.76, 0.46],
   magic: [0.55, 0.68, 1],
   daylight: [1, 0.98, 0.92],
   dusk: [1, 0.78, 0.6],
@@ -77,6 +77,8 @@ export interface LightSource {
   colour: LightColour;
   /** Where it comes from, for messages and tests. */
   from: string;
+  /** Lights only inside this outline: a window lights its room, not the street. */
+  within?: Pt[];
 }
 
 /** The lighting a scene asks for, with defaults filled in. */
@@ -118,11 +120,12 @@ export function lightSources(r: Resolved): LightSource[] {
         o.centre[0] + normal[0] * k * 0.6,
         o.centre[1] + normal[1] * k * 0.6,
       ];
-      const inRoom = (p: Pt) => r.regions.some((g) => g.room && contains(g.outline, p));
-      const out = [1, -1].filter((k) => !inRoom(side(k)));
+      const roomAt = (p: Pt) => r.regions.find((g) => g.room && contains(g.outline, p));
+      const out = [1, -1].filter((k) => !roomAt(side(k)));
       // Only a window between a room and the outside lets light in.
       if (out.length !== 1) continue;
       const k = out[0]!;
+      const room = roomAt(side(-k))!;
       // Far enough outside that the light comes in as a shaft through the gap.
       const back = 2;
       lights.push({
@@ -131,13 +134,14 @@ export function lightSources(r: Resolved): LightSource[] {
         strength: window.strength,
         colour: window.colour,
         from: "window",
+        within: room.outline,
       });
     }
   }
   return lights;
 }
 
-/** The line segments light can't pass: every standing wall, and closed doors. */
+/** The line segments light can't pass: every standing wall, and doors that are shut. */
 export function occluders(r: Resolved): [Pt, Pt][] {
   const segs: [Pt, Pt][] = [];
   for (const piece of r.pieces) {
@@ -148,7 +152,9 @@ export function occluders(r: Resolved): [Pt, Pt][] {
   }
   for (const o of r.openings) {
     if (o.problem || !o.segment) continue;
-    if (o.opening.kind !== "door" && o.opening.kind !== "double-door") continue;
+    if (o.opening.open || (o.opening.kind !== "door" && o.opening.kind !== "double-door")) {
+      continue;
+    }
     segs.push([
       onSegment(o.segment, o.offset - o.width / 2),
       onSegment(o.segment, o.offset + o.width / 2),
@@ -270,6 +276,11 @@ function pool(
     grad.addColorStop(t, css(colour, k * strength));
   }
   g.save();
+  if (l.within) {
+    g.beginPath();
+    tracePath(g, l.within, true);
+    g.clip();
+  }
   g.beginPath();
   tracePath(g, seen, true);
   g.clip();

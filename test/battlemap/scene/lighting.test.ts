@@ -59,15 +59,16 @@ describe("lighting", () => {
     expect(contains(seen, [6.5, 4])).toBe(true);
   });
 
-  it("passes through archways and windows but not closed doors", () => {
-    const seenAt = (kind: string) => {
-      const r = resolveScene(rooms({ openings: [{ kind, at: [7, 4] }] }));
+  it("passes through archways and windows and open doors, but not shut ones", () => {
+    const seenAt = (kind: string, open = false) => {
+      const r = resolveScene(rooms({ openings: [{ kind, at: [7, 4], open }] }));
       const [lamp] = lightSources(r);
       return contains(visibility(lamp!.at, lamp!.radius, occluders(r)), [7.6, 4]);
     };
     expect(seenAt("archway")).toBe(true);
     expect(seenAt("window")).toBe(true);
     expect(seenAt("door")).toBe(false);
+    expect(seenAt("door", true)).toBe(true);
   });
 
   it("lets daylight in through windows on outside walls only", () => {

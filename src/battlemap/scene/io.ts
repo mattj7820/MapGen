@@ -100,6 +100,7 @@ export function parseScene(text: string): Scene {
         kind,
         at,
         ...(o.width !== undefined ? { width: positive(o.width, `${n}.width`) } : {}),
+        ...(o.open !== undefined ? { open: bool(o.open, `${n}.open`) } : {}),
         seed: seedFor(o.seed, `${n}.seed`, kind, at),
       };
     }),

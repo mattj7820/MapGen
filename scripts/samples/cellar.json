@@ -1,0 +1,32 @@
+{
+  "type": "scene",
+  "name": "cellar",
+  "squares": [16, 12],
+  "base": "rock",
+  "lighting": "dark",
+  "rooms": [
+    { "id": "vault", "rect": [1, 1, 11, 11], "floor": "flagstone", "wall": "stone" },
+    { "id": "store", "rect": [11, 1, 15, 7], "floor": "dirt", "wall": "stone" }
+  ],
+  "openings": [{ "kind": "archway", "at": [11, 4] }],
+  "props": [
+    { "kind": "stairs", "at": [2, 9.6], "size": [1.2, 2.4] },
+    { "kind": "brazier", "at": [6, 6] },
+    { "kind": "table-long", "at": [6.2, 2.4], "size": [2.6, 1], "dress": "clutter" },
+    { "kind": "lamp", "at": [5.4, 2.3] },
+    { "kind": "stool", "at": [6.4, 3.4], "rotation": 12 },
+    { "kind": "barrel", "at": [9.9, 9.9] },
+    { "kind": "barrel", "at": [9.0, 10.0] },
+    { "kind": "barrel", "at": [9.95, 9.0] },
+    { "kind": "crate", "at": [4.5, 10.1], "rotation": 8 },
+    { "kind": "chest", "at": [1.7, 4.5], "facing": "east" },
+    { "kind": "rug", "at": [6, 6], "size": [2.6, 2.6], "rotation": 4 }
+  ],
+  "dressing": [
+    { "kind": "stores", "in": "store", "amount": 1 },
+    { "kind": "stores", "in": "vault", "amount": 0.4 },
+    { "kind": "litter", "in": "vault", "amount": 0.6 },
+    { "kind": "cobwebs", "in": "vault", "amount": 0.8 },
+    { "kind": "cobwebs", "in": "store", "amount": 0.8 }
+  ]
+}

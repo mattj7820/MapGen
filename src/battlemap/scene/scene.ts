@@ -121,6 +121,8 @@ export interface Opening {
   at: Pt;
   /** Along the wall, in squares. Defaults depend on the kind (see OPENING_WIDTH). */
   width?: number;
+  /** A door or double door standing open, swung into the room; it lets light through. */
+  open?: boolean;
   seed: number;
 }
 
