@@ -3,7 +3,8 @@ import { type Grid, imageSize } from "./grid.js";
 /**
  * The JSON written next to each map PNG. `grid` matches Guildhall's grid shape
  * exactly, so Guildhall can set the map up without anyone measuring squares by hand.
- * `source` records how to make the same map again.
+ * `source` records how to make the same map again: from the seed, or, if `edited` is
+ * set, only from the layout.json beside it.
  */
 export interface Sidecar {
   grid: GuildhallGrid;
@@ -13,6 +14,8 @@ export interface Sidecar {
     squares: [number, number];
     px: number;
     version: string;
+    /** Drawn from a hand-edited layout, so the seed alone won't reproduce it. */
+    edited?: true;
   };
 }
 
@@ -36,7 +39,7 @@ export function guildhallGrid(grid: Grid, lines = DEFAULT_LINE_STRENGTH): Guildh
 
 export function makeSidecar(
   grid: Grid,
-  source: { generator: string; seed: number; version: string },
+  source: { generator: string; seed: number; version: string; edited?: true },
   lines = DEFAULT_LINE_STRENGTH,
 ): Sidecar {
   return {
