@@ -21,10 +21,16 @@
     "check": "npm run typecheck && npm run format:check && npm test"
   },
   "devDependencies": {
+    "@types/d3-delaunay": "^6.0.4",
     "@types/node": "^26.6.4",
     "prettier": "^3.9.9",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^1.0.10",
+    "d3-delaunay": "^6.0.4",
+    "simplex-noise": "^4.0.3"
   }
 }

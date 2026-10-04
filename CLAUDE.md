@@ -61,20 +61,29 @@ npm run map -- plateau --seed 7 [--squares 24x16] [--px 256] [--edge blocks|brus
 npm run render -- output/<map-folder>/layout.json   # re-render after editing the layout
 ```
 
-## Architecture (planned)
+## Architecture
 
 - **Stack:** TypeScript (strict, ESM) on Node, run with `tsx`, tested with `vitest`.
   Drawing uses `@napi-rs/canvas` (Skia, with prebuilt Windows binaries).
-- **Two stages:** `generate` turns a seed into `layout.json` (all geometry in
-  squares); `render` draws a layout. Edits such as "widen that chasm" are precise
-  changes to `layout.json` followed by a re-render. Each feature has its own texture
-  seed, so editing one feature doesn't reshuffle the rest.
-- **`src/style/`:** the reusable drawing tools: ink brush, tone-stepped shading,
-  inner edge shadow, edge treatments, drop shadow, grit, palettes. Shared by every
-  kind of map, so everything looks like it came from the same hand.
-- **`src/battlemap/`:** what battlemaps share: grid, sidecar, review sheets.
+- **Two stages:** `generatePlateau()` turns a seed into a layout (all geometry in
+  squares); `renderPlateau()` draws a layout. Edits such as "widen that chasm" are
+  precise changes to the layout followed by a re-render. Every plateau and item has
+  its own seed, so editing one leaves the rest of the image pixel-identical (tested).
+- **`src/geometry.ts`**, **`src/rng.ts`:** polygon maths and seeded randomness.
+- **`src/style/`:** the drawing toolkit shared by every kind of map, so everything
+  looks like it came from the same hand:
+  - `paper.ts`: a canvas scaled so one unit is one square, plus the fast soft-shape
+    helpers (`softPoly`, `lowres`)
+  - `ink.ts`: the ink colour, line weights (in squares), the brush, hatching
+  - `edges.ts`: the `blocks` and `brushed` edge styles
+  - `shading.ts`: tone steps and the inner edge shade
+  - `light.ts`: light from the top left
+  - `shapes.ts`, `details.ts`, `colour.ts`, `noise.ts`: helpers
+- **`src/battlemap/`:** what battlemaps share: `grid.ts`, `sidecar.ts`, `review.ts`
+  (review and contact sheets).
 - **Battlemap types** (only `src/battlemap/plateau/` for now) own their layout
-  generator, their content (rubble, vegetation, bridge and so on) and their palette.
+  (`layout.ts`, `generate.ts`, `check.ts`), drawing (`render.ts`), palette
+  (`palette.ts`) and review crops (`crops.ts`).
 - **Other kinds of map** (region and world maps) are expected later. They'll reuse
   `style/` but not the grid or sidecar. Don't build a "map kinds" layer until the
   first one is actually being built.
@@ -205,8 +214,13 @@ Checklist for every look review:
 2. Core: seeded RNG, grid and sidecar maths, with tests.
 3. Plateau layout generator writing `layout.json`, with rule tests. Minimum map size
    is 12x12; below that there is no room for chasm and neighbours.
-4. Renderer built on `style/`.
+4. Renderer built on `style/`. Done; 24x16 at 256 px renders in about 3 s.
 5. CLI and output folder, with the output-path guard.
-6. Look iteration, including multi-seed sheets.
+6. Look iteration, including multi-seed sheets. Noted so far:
+   - Tone blotches can still look a little like camouflage at thumbnail size.
+   - Lichen patches read as blurry smudges; they could use more definition.
+   - Grit is barely visible at overview size.
+   - Cracks are a touch thinner than the reference style.
+   - The `brushed` edge has had less attention than `blocks`.
 7. README polish with anonymous sample images.
 8. Later: a flat-colour layout export for restyling with an image model.
