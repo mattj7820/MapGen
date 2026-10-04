@@ -62,6 +62,7 @@ npm run map -- plateau --seeds 1-6 --px 128        # several, plus a contact she
 npm run map -- plateau --seed 7 --edge brushed --bridge --squares 20x20
 npm run map -- plateau --seed 7 --reference references/MountainPath.png@2956,1906
 npm run render -- output/<map folder>/layout.json  # redraw after editing the layout
+npm run restyle -- output/<map folder>/layout.json # flat export + prompt for an image model
 ```
 
 - With no seed, `map` picks a random one; it appears in the folder name.
@@ -224,8 +225,7 @@ Checklist for every look review:
 0. Scaffold: tooling, README, this file.
 1. Prototype: a hand-placed plateau, two edge treatments × 2–3 candidate palettes,
    with review sheets. Matt picks a direction. The prototype code is thrown away.
-   Done: see "Decisions so far". The code lives on the `prototype` branch for
-   reference.
+   Done: see "Decisions so far". The prototype branch has since been deleted.
 2. Core: seeded RNG, grid and sidecar maths, with tests.
 3. Plateau layout generator writing `layout.json`, with rule tests. Minimum map size
    is 12x12; below that there is no room for chasm and neighbours.
@@ -251,7 +251,14 @@ Checklist for every look review:
    `npx tsx scripts/readme-images.ts` (seeds only, never references), which writes to
    `output/readme/`; copy them into `docs/images/` by hand. Regenerate them when the
    look changes noticeably.
-8. Later: a flat-colour layout export for restyling with an image model.
+8. A flat-colour layout export for restyling with an image model. Done:
+   `npm run restyle` writes `restyle.png` (`renderFlat` in `plateau/flat.ts`: flat
+   colours from `FLAT`, plain outlines, stone silhouettes from their seeds, longest
+   side about 2048 px with exact proportions) and `restyle-prompt.txt` (colour key,
+   the edge style, rules, and how the sidecar still lines up). The prompt describes
+   drawing only, never story or setting.
+
+All planned steps are done. New work: more map types, or the ideas below.
 
 ## Future ideas
 
