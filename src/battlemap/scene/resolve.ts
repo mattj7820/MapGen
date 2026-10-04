@@ -1,6 +1,8 @@
 import { distance, type Pt, roundPt, segmentDistance } from "../../geometry.js";
 import { hash } from "../../rng.js";
 import { densify } from "../../style/ink.js";
+import { dress } from "./dressing.js";
+import { onSegment, placeProp, rectOutline, WALL_THICKNESS, wallRect } from "./place.js";
 import { PROPS } from "./props/library.js";
 import type { PropSpec } from "./props/spec.js";
 import {
@@ -12,9 +14,6 @@ import {
   type Scene,
   type WallKind,
 } from "./scene.js";
-
-/** Wall thickness by kind, in squares. Walls are centred on the lines they're given. */
-export const WALL_THICKNESS: Record<WallKind, number> = { stone: 0.4, timber: 0.3, ruined: 0.4 };
 
 /** Points closer than this are the same point. */
 const EPS = 1e-6;
@@ -92,10 +91,12 @@ export interface ResolvedProp {
   angle: number;
   /** The outline it covers on the map. */
   footprint: Pt[];
+  /** Put there by dressing rather than written in the scene. */
+  generated?: true;
 }
 
 /** Painting order of prop layers: seats go under table edges. */
-const LAYER_ORDER = ["floor", "seat", "solid", "top", "bridge"] as const;
+const LAYER_ORDER = ["floor", "seat", "solid", "top", "bridge", "overhead"] as const;
 
 export function resolveScene(scene: Scene): Resolved {
   const regions: ResolvedRegion[] = [
@@ -146,18 +147,11 @@ export function resolveScene(scene: Scene): Resolved {
     if (spec) props.push(placeProp(prop, spec));
     else unknownProps.push(prop);
   }
+  const resolved = { scene, regions, segments, pieces, openings, props, unknownProps };
+  props.push(...dress(resolved));
+  // A stable sort, so within a layer things keep the order they were written in.
   props.sort((a, b) => LAYER_ORDER.indexOf(a.spec.layer) - LAYER_ORDER.indexOf(b.spec.layer));
-
-  return { scene, regions, segments, pieces, openings, props, unknownProps };
-}
-
-export function rectOutline([x0, y0, x1, y1]: [number, number, number, number]): Pt[] {
-  return [
-    [x0, y0],
-    [x1, y0],
-    [x1, y1],
-    [x0, y1],
-  ];
+  return resolved;
 }
 
 function hasLongSides(outline: readonly Pt[]): boolean {
@@ -254,17 +248,6 @@ export function mergeWalls(scene: Scene): WallSegment[] {
   return segments;
 }
 
-/** A point `t` squares along a segment from `a`, moved `side` squares to its left. */
-export function onSegment(s: WallSegment, t: number, side = 0): Pt {
-  return [s.a[0] + s.along[0] * t + s.along[1] * side, s.a[1] + s.along[1] * t - s.along[0] * side];
-}
-
-/** The rectangle a wall covers between two distances along its segment. */
-export function wallRect(s: WallSegment, from: number, to: number): Pt[] {
-  const h = s.thickness / 2;
-  return [onSegment(s, from, h), onSegment(s, to, h), onSegment(s, to, -h), onSegment(s, from, -h)];
-}
-
 function placeOpening(opening: Opening, segments: WallSegment[]): ResolvedOpening {
   const width = opening.width ?? OPENING_WIDTH[opening.kind];
   let best: WallSegment | undefined;
@@ -321,26 +304,6 @@ function cutPieces(s: WallSegment, openings: ResolvedOpening[]): WallPiece[] {
 
 function piece(s: WallSegment, from: number, to: number, cut: [boolean, boolean]): WallPiece {
   return { segment: s, from, to, cut, outline: wallRect(s, from, to) };
-}
-
-// ---------------------------------------------------------------- props
-
-export function placeProp(prop: Prop, spec: PropSpec): ResolvedProp {
-  const size = prop.size ?? spec.size;
-  const angle = (prop.rotation * Math.PI) / 180;
-  const [w, d] = size;
-  const local: Pt[] = spec.round
-    ? Array.from({ length: 24 }, (_, i): Pt => {
-        const a = (i / 24) * Math.PI * 2;
-        return [(Math.cos(a) * w) / 2, (Math.sin(a) * d) / 2];
-      })
-    : rectOutline([-w / 2, -d / 2, w / 2, d / 2]);
-  const [cos, sin] = [Math.cos(angle), Math.sin(angle)];
-  const footprint = local.map(([x, y]): Pt => [
-    prop.at[0] + x * cos - y * sin,
-    prop.at[1] + x * sin + y * cos,
-  ]);
-  return { prop, spec, size, angle, footprint };
 }
 
 export function fmt([x, y]: Pt): string {

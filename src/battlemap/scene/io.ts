@@ -5,7 +5,9 @@ import { parseLayout } from "../plateau/io.js";
 import { plateauScene } from "../plateau/scene.js";
 import { DEFAULT_PALETTE } from "./palette.js";
 import {
+  DRESSING_KINDS,
   FACING,
+  SURFACE_DRESSINGS,
   GROUND_KINDS,
   OPENING_KINDS,
   SCATTER_KINDS,
@@ -125,8 +127,20 @@ export function parseScene(text: string): Scene {
         at,
         rotation,
         ...(size ? { size } : {}),
+        ...(o.dress !== undefined
+          ? { dress: oneOf(o.dress, SURFACE_DRESSINGS, `${n}.dress`) }
+          : {}),
         seed: seedFor(o.seed, `${n}.seed`, kind, at),
       };
+    }),
+    dressing: list(s.dressing, "dressing").map((d, i) => {
+      const n = `dressing[${i}]`;
+      const o = obj(d, n);
+      const kind = oneOf(o.kind, DRESSING_KINDS, `${n}.kind`);
+      const where = str(o.in, `${n}.in`);
+      const amount = o.amount === undefined ? 0.5 : num(o.amount, `${n}.amount`);
+      if (amount < 0 || amount > 1) throw new Error(`${n}.amount must be from 0 to 1`);
+      return { kind, in: where, amount, seed: seedFor(o.seed, `${n}.seed`, kind, where) };
     }),
     scatter: list(s.scatter, "scatter").map((f, i) => {
       const n = `scatter[${i}]`;

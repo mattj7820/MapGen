@@ -42,6 +42,7 @@ export function plateauScene(layout: PlateauLayout): Scene {
         seed: b.seed,
       };
     }),
+    dressing: [],
     scatter: [
       ...scatter("lichen", layout.lichen),
       ...scatter("stone", layout.stones),

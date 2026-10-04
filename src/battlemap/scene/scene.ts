@@ -36,6 +36,8 @@ export interface Scene {
   /** Doors, windows and archways, each snapped to the wall it sits on. */
   openings: Opening[];
   props: Prop[];
+  /** Small things filled in by code across a room: stores, litter, cobwebs. */
+  dressing: Dressing[];
   /** Small loose things: stones, shrubs, lichen. */
   scatter: Scatter[];
   cracks: Crack[];
@@ -127,6 +129,32 @@ export interface Prop {
   rotation: number;
   /** [width, depth] in squares, for props that can be resized; otherwise the default. */
   size?: [number, number];
+  /** Fill its top with small things from its seed: a laid table, a cluttered desk. */
+  dress?: SurfaceDressing;
+  seed: number;
+}
+
+/** What `dress` lays on a table, counter or other surface. */
+export const SURFACE_DRESSINGS = ["meal", "drinks", "kitchen", "study", "clutter"] as const;
+export type SurfaceDressing = (typeof SURFACE_DRESSINGS)[number];
+
+/**
+ * Small things filled in by code across one room or region, from its own seed. They
+ * keep clear of walls, doorways and every other prop, so they never need checking by
+ * hand; adding a prop later only removes the ones it would land on.
+ * - `stores`: sacks, crates, barrels, baskets, buckets and firewood along the walls.
+ * - `litter`: straw, spills, crumbs and scraps on the floor.
+ * - `cobwebs`: in the corners.
+ */
+export const DRESSING_KINDS = ["stores", "litter", "cobwebs"] as const;
+export type DressingKind = (typeof DRESSING_KINDS)[number];
+
+export interface Dressing {
+  kind: DressingKind;
+  /** The id of a room or ground region. */
+  in: string;
+  /** How much, from 0 to 1 (default 0.5). */
+  amount: number;
   seed: number;
 }
 

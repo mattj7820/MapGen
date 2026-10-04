@@ -1,6 +1,6 @@
 import { centroid, type Pt } from "../../../geometry.js";
 import { Rng } from "../../../rng.js";
-import { rgb, withAlpha } from "../../../style/colour.js";
+import { mix, rgb, withAlpha } from "../../../style/colour.js";
 import { brush, WEIGHT } from "../../../style/ink.js";
 import { LIGHT, shadowOffset } from "../../../style/light.js";
 import { clipTo, fillPoly, type Paper, softPoly, softStroke } from "../../../style/paper.js";
@@ -74,6 +74,29 @@ export class PropKit {
       const a = (i / n) * Math.PI * 2;
       return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
     });
+  }
+
+  /** An irregular, softly lumpy oval: food, sacks, spills. `lumps` is how uneven, 0..1. */
+  blob(cx: number, cy: number, rx: number, ry = rx, lumps = 0.2, n = 24): Pt[] {
+    const waves = [2, 3, 5].map((k) => ({
+      k,
+      amp: this.rng.range(0, lumps) / k,
+      ph: this.rng.range(0, 6.3),
+    }));
+    return Array.from({ length: n }, (_, i): Pt => {
+      const a = (i / n) * Math.PI * 2;
+      const r = 1 + waves.reduce((sum, w) => sum + w.amp * Math.sin(w.k * a + w.ph), 0);
+      return [cx + Math.cos(a) * rx * r, cy + Math.sin(a) * ry * r];
+    });
+  }
+
+  /** Three tone steps from one colour. */
+  tones(colour: string): Tones {
+    return {
+      base: colour,
+      light: mix(colour, "#ffffff", 0.22),
+      shade: mix(colour, "#000000", 0.28),
+    };
   }
 
   /** Move a shape towards the light by `by` squares (for lit faces). */

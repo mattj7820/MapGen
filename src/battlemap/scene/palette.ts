@@ -36,6 +36,13 @@ export interface Palette {
   linen: Tones;
   fire: Tones;
   glass: string;
+  /** Sacking and rope. */
+  burlap: Tones;
+  /** Glazed and unglazed pots, jugs and plates. */
+  pottery: Tones;
+  straw: string;
+  /** Food and drink, a colour each. */
+  food: Record<"bread" | "meat" | "greens" | "fruit" | "cheese" | "ale" | "wine" | "stew", string>;
 }
 
 /** Colours for the ground kinds a plateau map never uses, shared by every palette. */
@@ -67,6 +74,19 @@ const SHARED = {
   linen: { base: "#d8ccb0", light: "#e9dfc6", shade: "#b9ac90" },
   fire: { base: "#e07a2c", light: "#f6c45a", shade: "#a8401f" },
   glass: "#9fbdc4",
+  burlap: { base: "#a48a63", light: "#b89d74", shade: "#86704f" },
+  pottery: { base: "#b5764e", light: "#c88b62", shade: "#935a39" },
+  straw: "#cdb26a",
+  food: {
+    bread: "#c08a45",
+    meat: "#9c4a35",
+    greens: "#7f9a4a",
+    fruit: "#b8402f",
+    cheese: "#e0c060",
+    ale: "#a8682a",
+    wine: "#5e1f2a",
+    stew: "#8a5a32",
+  },
 };
 
 export const PALETTES: Record<string, Palette> = {

@@ -7,14 +7,8 @@ import { shadowOffset } from "../../style/light.js";
 import { clipTo, fillPoly, type Paper, softPoly, softShapes } from "../../style/paper.js";
 import { jagged } from "../../style/shapes.js";
 import type { Palette, Tones } from "./palette.js";
-import {
-  onSegment,
-  type Resolved,
-  type ResolvedOpening,
-  type WallPiece,
-  type WallSegment,
-  wallRect,
-} from "./resolve.js";
+import { onSegment, wallRect } from "./place.js";
+import type { Resolved, ResolvedOpening, WallPiece, WallSegment } from "./resolve.js";
 
 /** Walls stand about this tall, in squares, for their shadows. */
 const WALL_HEIGHT = 0.7;

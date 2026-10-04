@@ -7,8 +7,9 @@ import type { PropKit } from "./kit.js";
  * - `solid`: furniture; must not overlap other solid props.
  * - `top`: small things that stand on a `surface` (a candle on a table).
  * - `bridge`: spans unwalkable ground, with both ends on walkable ground.
+ * - `overhead`: hangs above everything else (cobwebs); anything may be under it.
  */
-export type PropLayer = "floor" | "seat" | "solid" | "top" | "bridge";
+export type PropLayer = "floor" | "seat" | "solid" | "top" | "bridge" | "overhead";
 
 export interface PropSpec {
   /** One line for the catalogue (`npm run props`). */

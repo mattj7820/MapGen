@@ -1,5 +1,5 @@
 import type { Pt } from "../../../geometry.js";
-import { mix } from "../../../style/colour.js";
+import { mix, withAlpha } from "../../../style/colour.js";
 import { INK, WEIGHT } from "../../../style/ink.js";
 import { lobed } from "../../../style/shapes.js";
 import type { Tones } from "../palette.js";
@@ -22,6 +22,43 @@ function paleWood(k: PropKit): Tones {
   };
 }
 
+/**
+ * The marks of use on a tabletop: faint rings from mugs, knife scratches, the odd
+ * dark stain. Drawn within `shape`, from the prop's seed.
+ */
+function wear(k: PropKit, shape: Pt[]): void {
+  const xs = shape.map((p) => p[0]);
+  const ys = shape.map((p) => p[1]);
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const spot = (): Pt => [k.rng.range(x0 + 0.12, x1 - 0.12), k.rng.range(y0 + 0.12, y1 - 0.12)];
+  const mark = withAlpha(k.pal.wood.shade, 0.7);
+  k.clip(shape);
+  for (let i = k.rng.int(1, 3); i > 0; i--) {
+    const [x, y] = spot();
+    const ring = k.ellipse(x, y, 0.08, 0.08, 16);
+    k.line([...ring, ring[0]!, ring[1]!].slice(k.rng.int(0, 4)), WEIGHT.detail * 0.7, mark);
+    k.soft(k.ellipse(x, y, 0.06, 0.06, 12), withAlpha(k.pal.wood.shade, 0.25), 0.01);
+  }
+  for (let i = k.rng.int(1, 4); i > 0; i--) {
+    const [x, y] = spot();
+    const a = k.rng.range(0, Math.PI);
+    const len = k.rng.range(0.06, 0.15);
+    k.line(
+      [
+        [x, y],
+        [x + Math.cos(a) * len, y + Math.sin(a) * len],
+      ],
+      WEIGHT.detail * 0.5,
+      mark,
+    );
+  }
+  if (k.rng.chance(0.4)) {
+    const [x, y] = spot();
+    k.soft(k.blob(x, y, 0.12, 0.08, 0.3, 16), withAlpha(k.pal.wood.shade, 0.45), 0.03);
+  }
+  k.unclip();
+}
+
 export const tableRound: PropSpec = {
   about: "round table, boards across its top",
   size: [1.4, 1.4],
@@ -35,6 +72,7 @@ export const tableRound: PropSpec = {
     k.shadow(top, 0.5);
     k.body(top, k.pal.wood, 0.09);
     k.boards(top, "y", 0.3);
+    wear(k, top);
     k.outline(top, WEIGHT.object, true);
   },
 };
@@ -51,6 +89,7 @@ export const tableLong: PropSpec = {
     k.shadow(top, 0.5);
     k.body(top, k.pal.wood, 0.09);
     k.boards(top, "x", 0.27);
+    wear(k, top);
     // Cleats across each end hold the boards together.
     for (const x of [-k.w / 2 + 0.2, k.w / 2 - 0.2]) {
       k.line(
@@ -77,7 +116,18 @@ export const chair: PropSpec = {
     k.shadow(k.rect(-w / 2, -d / 2, w / 2, d / 2), 0.35);
     k.solid(seat, k.pal.wood);
     k.boards(seat, "y", w / 3);
-    k.solid(back, darkWood(k), { band: 0.03 });
+    if (k.rng.chance(0.5)) {
+      k.solid(back, darkWood(k), { band: 0.03 });
+    } else {
+      // A spindle back: a rail with the tops of three spindles below it.
+      k.solid(k.rounded(-w / 2, -d / 2, w / 2, -d / 2 + 0.09, 0.04), darkWood(k), { band: 0.02 });
+      for (const x of [-w * 0.28, 0, w * 0.28]) {
+        k.solid(k.ellipse(x, -d / 2 + 0.14, 0.035, 0.035, 10), darkWood(k), {
+          band: 0.01,
+          smooth: true,
+        });
+      }
+    }
   },
 };
 
@@ -109,6 +159,7 @@ export const bar: PropSpec = {
     k.shadow(top, 0.6);
     k.body(top, k.pal.wood, 0.08);
     k.boards(k.rect(-w / 2, -d / 2, w / 2, d / 2 - 0.16), "x", 0.24);
+    wear(k, k.rect(-w / 2, -d / 2, w / 2, d / 2 - 0.16));
     // The rounded front edge, a little darker, with a brass foot rail just inside it.
     const lip = k.rect(-w / 2, d / 2 - 0.16, w / 2, d / 2);
     k.body(lip, darkWood(k), 0.04);
@@ -323,5 +374,57 @@ export const candle: PropSpec = {
     k.solid(wax, k.pal.linen, { band: 0.01, smooth: true });
     k.dot([0, 0], 0.02, k.pal.fire.light);
     k.glow([0, 0], 1.4, k.pal.fire.light, 0.2);
+  },
+};
+
+export const bench: PropSpec = {
+  about: "plank bench, for the long side of a table",
+  size: [2, 0.45],
+  resizable: true,
+  layer: "seat",
+  height: 0.3,
+  draw(k) {
+    const [w, d] = [k.w, k.d];
+    const seat = k.rounded(-w / 2, -d / 2, w / 2, d / 2, 0.04);
+    k.shadow(seat, 0.3);
+    k.body(seat, k.pal.wood, 0.05);
+    k.boards(seat, "x", d / 2);
+    for (const x of [-w / 2 + 0.15, w / 2 - 0.15]) {
+      k.line(
+        [
+          [x, -d / 2 + 0.03],
+          [x, d / 2 - 0.03],
+        ],
+        WEIGHT.detail,
+      );
+    }
+    wear(k, seat);
+    k.outline(seat);
+  },
+};
+
+export const shelves: PropSpec = {
+  about: "shelves against a wall (their back to the north at rotation 0); dress them",
+  size: [2, 0.5],
+  resizable: true,
+  layer: "solid",
+  height: 1,
+  surface: true,
+  draw(k) {
+    const [w, d] = [k.w, k.d];
+    const frame = k.rect(-w / 2, -d / 2, w / 2, d / 2);
+    const board = k.rect(-w / 2 + 0.07, -d / 2 + 0.05, w / 2 - 0.07, d / 2 - 0.04);
+    k.shadow(frame, 0.7);
+    k.body(frame, darkWood(k), 0.04);
+    k.body(board, k.pal.wood, 0.05);
+    k.boards(board, "x", (d - 0.09) / 2);
+    // Uprights dividing the shelves into bays.
+    const bays = Math.max(1, Math.round(w / 0.9));
+    for (let i = 1; i < bays; i++) {
+      const x = -w / 2 + (w * i) / bays;
+      k.solid(k.rect(x - 0.035, -d / 2, x + 0.035, d / 2), darkWood(k), { band: 0.01 });
+    }
+    k.outline(board, WEIGHT.detail);
+    k.outline(frame);
   },
 };

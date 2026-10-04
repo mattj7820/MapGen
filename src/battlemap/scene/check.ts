@@ -8,10 +8,10 @@ import {
 } from "../../geometry.js";
 import { groundAt, regionAt } from "./ground.js";
 import { PALETTES } from "./palette.js";
+import { doorwayPath, onSegment } from "./place.js";
 import { PROPS } from "./props/library.js";
 import {
   fmt,
-  onSegment,
   type Resolved,
   type ResolvedOpening,
   type ResolvedProp,
@@ -21,8 +21,6 @@ import { PASSABLE, type Scene, UNWALKABLE } from "./scene.js";
 
 /** Things may touch walls and each other by this much without it counting. */
 const TOUCH = 0.04;
-/** How far a passable opening must be kept clear on each side of its wall. */
-const DOORWAY_CLEARANCE = 0.75;
 /** Clear space kept round a bridge deck, beyond its half-width. */
 const BRIDGE_CLEARANCE = 0.15;
 
@@ -86,6 +84,15 @@ export function checkScene(scene: Scene): string[] {
     problems.push(
       `unknown prop "${p.kind}" at ${fmt(p.at)}; known: ${Object.keys(PROPS).join(", ")}`,
     );
+  }
+  for (const d of scene.dressing) {
+    if (!r.regions.some((g) => g.id === d.in))
+      problems.push(`${d.kind} dressing: no room or region "${d.in}"`);
+  }
+  for (const p of r.props) {
+    if (p.prop.dress && !p.spec.surface) {
+      problems.push(`${propName(p)} can't be dressed; only tables, counters and the like can`);
+    }
   }
   const walls = r.pieces.map((p) => p.outline);
   for (const p of r.props) {
@@ -196,14 +203,7 @@ function doorwayProblems(
 ): string[] {
   const s = o.segment!;
   const problems: string[] = [];
-  const half = o.width / 2 - 0.05;
-  const depth = s.thickness / 2 + DOORWAY_CLEARANCE;
-  const path = [
-    onSegment(s, o.offset - half, depth),
-    onSegment(s, o.offset + half, depth),
-    onSegment(s, o.offset + half, -depth),
-    onSegment(s, o.offset - half, -depth),
-  ];
+  const path = doorwayPath(o);
   const blocker = r.props.find(
     (p) => (p.spec.layer === "solid" || p.spec.layer === "seat") && overlaps(path, p.footprint),
   );
