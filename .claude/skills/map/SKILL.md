@@ -1,14 +1,15 @@
 ---
 name: map
-description: Make a battle map in this repo from a description, e.g. "a two-room tavern, bar along the north wall, hearth in the corner, back door to an alley". Writes a scene, checks and renders it, inspects the review sheet, fixes what's wrong, and hands back the PNG and sidecar paths.
+description: Make a battle map in this repo from a description, e.g. "a two-room tavern, bar along the north wall, hearth in the corner, back door to an alley". Writes a scene, finds the props it needs in the library, lights it, checks and renders it, inspects the review sheet, fixes what's wrong, and hands back the PNG and sidecar paths, plus any props the map needed that the library doesn't have yet.
 ---
 
 # Make a battle map from a description
 
 You turn a short description into a finished, lived-in battle map. You write the
 scene yourself (`output/<name>/layout.json`); code works out walls, joins, door gaps,
-dressing and drawing. Read `format.md` (next to this file) for the scene format before
-writing one; `npm run props` lists every prop.
+dressing, lighting and drawing. Read `format.md` (next to this file) for the scene
+format before writing one. The prop library has hundreds of kinds: find them with
+`npm run props -- --search <words>`, never from memory.
 
 The hard rules in `CLAUDE.md` apply. In particular: write only inside `output/`;
 **no story, lore or names**, so the map is geography and objects only and the file's
@@ -54,11 +55,46 @@ Sketch the plan in squares before writing JSON:
      them, and furnish those by hand instead (chests, wardrobes, a rug).
    - Lights: candles or lamps on tables, a hearth or range, a candelabra or brazier
      where it suits.
-5. **Make it lived in**: nothing perfectly lined up. Turn chairs and stools by 3–15
+5. **Light it**: pick `lighting` (`night` for most interiors, `dark` for cellars,
+   dungeons, caves and mines, `day` or `dusk` when the description says so). Give
+   every room in use its own light (candles or lamps on tables, a hearth, braziers,
+   torches): walls and shut doors stop light, so a lamp in one room leaves the next
+   dark. Open a door (`"open": true`) where light should spill out.
+6. **Make it lived in**: nothing perfectly lined up. Turn chairs and stools by 3–15
    degrees, pull some out from their tables, set a crate askew, put a rug in front of
    the hearth, a broom or bucket where work happens. Vary table sizes.
 
-## 3. Write, check and render
+## 3. Find the props
+
+List every kind of object the plan needs, including the things that make the
+setting itself (a forge's anvil and quench tub, a mine's ore cart and rails, a
+wizard's star charts), not just furniture. Search for each:
+
+```sh
+npm run props -- --search anvil
+npm run props -- --search forge          # everything tagged for a setting
+npm run props -- --search open crate ore
+```
+
+Look at `output/props/search.png` when choosing between variants. Use room dressing
+with a `setting` (`"stores"` and `"litter"`) for the clutter of the place.
+
+When the library has nothing right for something the map needs, don't force a poor
+substitute where it matters. Use the closest prop if one is close enough, or leave
+the object out, and **add it to the prop wishlist**, `output/prop-wishlist.md`
+(create it if it's missing; append, never rewrite others' lines). One line per prop:
+
+```md
+- [ ] ore cart: mining; solid; about 1x1.6; wooden cart of ore on rails, tipping
+      variant useful; settings mine; wanted by dwarven-mine (stood in: crate-open-ore)
+```
+
+Give a plain kind name, the category (from `npm run props`), layer, rough size in
+squares, what it looks like from above, useful variants, the settings it suits, and
+which map wanted it and what you used instead. Never put story or names in it. The
+`/prop` skill builds props from this list.
+
+## 4. Write, check and render
 
 Write `output/<name>/layout.json` (a new folder; if it exists, add `-2`). Then:
 
@@ -71,7 +107,7 @@ blocked doorways, overlapping furniture, a candle not on a surface, a door not o
 wall. Each problem names the item and its position. Fix the layout and render again
 until it's clean.
 
-## 4. Look, judge, fix
+## 5. Look, judge, fix
 
 Read `output/<name>/review.png`. It has a scaled-down overview and 1:1 crops (a wall
 corner, doors, the busiest furniture, the hearth, open floor). Judge the crops for
@@ -84,7 +120,10 @@ line weight and detail; the overview for layout. Check, in order:
    altar, a bar's front to the room).
 3. It looks lived in: no big bare patches unless deliberate; tables dressed; stores
    and clutter along walls; nothing looks stamped out in rows.
-4. The style checklist in `CLAUDE.md` ("Looking at renders"): true top-down, even ink
+4. It's lit sensibly: pools of light where people are, nothing important lost in the
+   dark, walkable floor and walls readable at a glance (check the overview at
+   thumbnail size too).
+5. The style checklist in `CLAUDE.md` ("Looking at renders"): true top-down, even ink
    weight, sensible sizes against a 5 ft square, readable at a glance, shadows down
    and to the right, no grid lines or text.
 
@@ -93,16 +132,20 @@ change dressing amounts) and render again. Two or three rounds is normal. To cha
 one item's look without moving it, give it a new `seed`.
 
 If something can't be fixed in the layout (a prop draws badly, a kind is missing),
-say so to Matt rather than working round it with a poor substitute; the library is
-code in `src/battlemap/scene/props/`.
+say so to Matt rather than working round it with a poor substitute, and add missing
+kinds to the wishlist (step 3).
 
-## 5. Hand it over
+## 6. Hand it over
 
 Tell Matt, briefly:
 
 - the map PNG and its sidecar (same base name, `.json`): these two go into the vault
 - the size in squares and px per square
-- anything you decided that he didn't specify (size, room layout, extra rooms)
+- anything you decided that he didn't specify (size, room layout, extra rooms,
+  lighting)
 - anything that didn't come out as described
+- **props the map needed but the library lacks**: each one, what you used instead,
+  and that they're on `output/prop-wishlist.md`. Offer to build them with `/prop`
+  and re-render the map with them.
 
 Don't copy anything into the vault or Guildhall; Matt does that by hand.
