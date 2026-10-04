@@ -64,10 +64,10 @@ describe("checkScene on a building", () => {
 
   it("catches a prop the library doesn't have, and a resize it can't take", () => {
     const text = problems((s) => {
-      s.props.push({ kind: "throne", at: [3, 5], rotation: 0, seed: 1 });
+      s.props.push({ kind: "no-such-prop", at: [3, 5], rotation: 0, seed: 1 });
       prop(s, "chair").size = [2, 2];
     });
-    expect(text).toMatch(/unknown prop "throne"/);
+    expect(text).toMatch(/unknown prop "no-such-prop"/);
     expect(text).toMatch(/chair .* can't be resized/);
   });
 
