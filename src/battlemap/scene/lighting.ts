@@ -57,6 +57,8 @@ const COLOURS: Record<LightColour, Rgb> = {
   fire: [1, 0.66, 0.34],
   candle: [1, 0.76, 0.46],
   magic: [0.55, 0.68, 1],
+  eerie: [0.55, 1, 0.6],
+  ember: [1, 0.42, 0.3],
   daylight: [1, 0.98, 0.92],
   dusk: [1, 0.78, 0.6],
   moon: [0.6, 0.7, 0.95],
@@ -67,6 +69,8 @@ const GLOW: Partial<Record<LightColour, Rgb>> = {
   fire: [0.95, 0.65, 0.29],
   candle: [0.96, 0.78, 0.42],
   magic: [0.56, 0.69, 1],
+  eerie: [0.5, 0.95, 0.55],
+  ember: [0.95, 0.38, 0.25],
 };
 
 /** A light on the map: where, how far it reaches (squares), how strong and what colour. */

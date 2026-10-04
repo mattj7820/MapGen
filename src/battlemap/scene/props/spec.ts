@@ -12,8 +12,12 @@ import type { PropKit } from "./kit.js";
  */
 export type PropLayer = "floor" | "seat" | "solid" | "top" | "bridge" | "overhead";
 
-/** What colour a light is: firelight, a candle, something magical, the sky. */
-export type LightColour = "fire" | "candle" | "magic" | "daylight" | "dusk" | "moon";
+/**
+ * What colour a light is: firelight, a candle, arcane blue, eerie green (fungus,
+ * necromancy), a deep ember red (infernal, embers), or the sky.
+ */
+export type LightColour =
+  "fire" | "candle" | "magic" | "eerie" | "ember" | "daylight" | "dusk" | "moon";
 
 export interface PropLight {
   /** Where the light comes from, as fractions of [width, depth] from the centre. */

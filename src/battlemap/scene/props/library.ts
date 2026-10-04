@@ -16,6 +16,7 @@ import {
 } from "./furnishings.js";
 import { single } from "./family.js";
 import { CONTAINERS } from "./families/containers.js";
+import { LIGHTING } from "./families/lighting.js";
 import type { LibraryProp } from "./spec.js";
 import {
   basket,
@@ -119,6 +120,7 @@ export const PROPS: Record<string, LibraryProp> = merge(
     bridge: single(bridge, "outdoors", "forest cave wood rope"),
   },
   CONTAINERS,
+  LIGHTING,
 );
 
 /** Join groups of props, refusing a kind that two of them define. */
