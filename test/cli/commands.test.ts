@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { parseLayout } from "../../src/battlemap/plateau/io.js";
+import { parseScene } from "../../src/battlemap/scene/io.js";
 import { folderName, runMap } from "../../src/cli/map.js";
 import { runRender } from "../../src/cli/render.js";
 import { makeSandbox } from "./sandbox.js";
@@ -38,8 +38,8 @@ describe("npm run map", () => {
   it("writes a layout that reads back exactly", async () => {
     const [folder] = await runMap(["plateau", "--seed", "8", "--px", "16"], ctx);
     const text = readFileSync(path.join(folder!, "layout.json"), "utf8");
-    expect(parseLayout(text).seed).toBe(8);
-    expect(JSON.parse(text)).toEqual(parseLayout(text));
+    expect(parseScene(text).seed).toBe(8);
+    expect(JSON.parse(text)).toEqual(parseScene(text));
   });
 
   it("makes several seeds plus a contact sheet", async () => {
@@ -50,7 +50,7 @@ describe("npm run map", () => {
       "plateau-s3-24x16-16-nobridge",
     ]);
     expect(existsSync(path.join(out, "contact-plateau-s1-3-24x16-blocks.png"))).toBe(true);
-    for (const f of folders) expect(json(path.join(f, "layout.json")).bridges).toEqual([]);
+    for (const f of folders) expect(json(path.join(f, "layout.json")).props).toEqual([]);
   });
 
   it("prints help rather than guessing", async () => {
@@ -79,24 +79,24 @@ describe("npm run render", () => {
     const [folder] = await runMap(["plateau", "--seed", "5", "--px", "16"], ctx);
     const layoutFile = path.join(folder!, "layout.json");
     const layout = json(layoutFile);
-    layout.stones = layout.stones.slice(1);
+    layout.scatter = layout.scatter.slice(1);
     writeFileSync(layoutFile, JSON.stringify(layout));
 
     expect(await runRender([path.relative(sandbox.root, layoutFile)], ctx)).toBe(folder);
     const sidecar = json(path.join(folder!, "plateau-s5.json"));
     expect(sidecar.source).toMatchObject({ px: 16, edited: true });
-    expect(json(layoutFile).stones).toHaveLength(layout.stones.length); // left as edited
+    expect(json(layoutFile).scatter).toHaveLength(layout.scatter.length); // left as edited
   });
 
   it("refuses to draw a layout with problems, and says what they are", async () => {
     const [folder] = await runMap(["plateau", "--seed", "6", "--px", "16"], ctx);
     const layoutFile = path.join(folder!, "layout.json");
     const layout = json(layoutFile);
-    layout.shrubs[0].at = [-5, -5];
+    layout.scatter.find((s: { kind: string }) => s.kind === "shrub").at = [-5, -5];
     writeFileSync(layoutFile, JSON.stringify(layout));
     const before = readFileSync(path.join(folder!, "plateau-s6.png"));
 
-    await expect(runRender([layoutFile], ctx)).rejects.toThrow(/shrub at .* hangs off/);
+    await expect(runRender([layoutFile], ctx)).rejects.toThrow(/shrub at .* is off the map/);
     expect(readFileSync(path.join(folder!, "plateau-s6.png"))).toEqual(before);
   });
 
@@ -110,10 +110,10 @@ describe("npm run render", () => {
     const [folder] = await runMap(["plateau", "--seed", "9", "--px", "16"], ctx);
     const layoutFile = path.join(folder!, "layout.json");
     const layout = json(layoutFile);
-    layout.stones[0].radius = "big";
+    layout.scatter[0].radius = "big";
     writeFileSync(layoutFile, JSON.stringify(layout));
     await expect(runRender([layoutFile], ctx)).rejects.toThrow(
-      /stones\[0\]\.radius must be a number/,
+      /scatter\[0\]\.radius must be a number/,
     );
   });
 });

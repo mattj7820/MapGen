@@ -2,10 +2,11 @@ import { type Canvas, createCanvas, type Image } from "@napi-rs/canvas";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { makeGrid } from "../battlemap/grid.js";
-import { plateauCrops } from "../battlemap/plateau/crops.js";
-import type { PlateauLayout } from "../battlemap/plateau/layout.js";
-import { renderPlateau } from "../battlemap/plateau/render.js";
 import { reviewSheet } from "../battlemap/review.js";
+import { sceneCrops } from "../battlemap/scene/crops.js";
+import { renderScene } from "../battlemap/scene/render.js";
+import { resolveScene } from "../battlemap/scene/resolve.js";
+import type { Scene } from "../battlemap/scene/scene.js";
 import { makeSidecar } from "../battlemap/sidecar.js";
 import type { Pt } from "../geometry.js";
 import { type OutputDir, REPO_ROOT } from "./paths.js";
@@ -17,6 +18,8 @@ export const VERSION: string = JSON.parse(
 export interface MapFiles {
   folder: string;
   png: string;
+  /** The base name shared by the map and its sidecar. */
+  base: string;
   /** A small copy of the map, for contact sheets. */
   thumbnail: Canvas;
 }
@@ -24,51 +27,61 @@ export interface MapFiles {
 export interface WriteOptions {
   px: number;
   lines: number;
-  /** Drawn from a hand-edited layout: mark the sidecar, and leave layout.json alone. */
-  edited: boolean;
+  /** Redrawn from an existing layout.json: leave it alone. */
+  redrawn: boolean;
   reference?: { image: Image; centre: Pt } | undefined;
 }
 
+/** The base name of a scene's map and sidecar: its own name, or its folder's. */
+export function baseName(scene: Scene, folder: string): string {
+  return scene.name ?? path.basename(folder);
+}
+
 /**
- * Render a layout and write its folder: the map, its Guildhall sidecar (same base
+ * Render a scene and write its folder: the map, its Guildhall sidecar (same base
  * name, so they travel together into the vault), layout.json and a review sheet.
  */
 export async function writeMap(
   out: OutputDir,
   folderName: string,
-  layout: PlateauLayout,
+  scene: Scene,
   options: WriteOptions,
 ): Promise<MapFiles> {
-  const [cols, rows] = layout.squares;
+  const [cols, rows] = scene.squares;
   const grid = makeGrid(cols, rows, options.px);
   const folder = out.folder(folderName);
-  const base = `plateau-s${layout.seed}`;
+  const base = baseName(scene, folder);
+  // A generated map redrawn from its layout was edited: its seed alone no longer makes it.
+  const edited = options.redrawn && scene.generator !== undefined;
 
-  const map = renderPlateau(layout, grid.px);
+  const map = renderScene(scene, grid.px);
   const png = out.write(path.join(folder, `${base}.png`), await map.encode("png"));
   const sidecar = makeSidecar(
     grid,
     {
-      generator: "plateau",
-      seed: layout.seed,
+      generator: scene.generator ?? "scene",
+      seed: scene.seed,
       version: VERSION,
-      ...(options.edited ? { edited: true as const } : {}),
+      ...(edited ? { edited: true as const } : {}),
     },
     options.lines,
   );
   out.write(path.join(folder, `${base}.json`), formatJson(sidecar));
-  if (!options.edited) out.write(path.join(folder, "layout.json"), formatJson(layout));
+  if (!options.redrawn) out.write(path.join(folder, "layout.json"), formatJson(scene));
 
+  const resolved = resolveScene(scene);
+  const edges = [...new Set(resolved.regions.flatMap((g) => (g.edge ? [g.edge] : [])))];
+  const title = [`${base}  ${cols}x${rows} @ ${grid.px}px  ${scene.palette}`, ...edges];
   const sheet = reviewSheet(map, grid.px, {
-    title: `${base}  ${cols}x${rows} @ ${grid.px}px  ${layout.style.edge}${options.edited ? "  (edited)" : ""}`,
-    crops: plateauCrops(layout),
+    title: [...title, ...(edited ? ["(edited)"] : [])].join("  "),
+    crops: sceneCrops(resolved),
     ...(options.reference
       ? { reference: { ...options.reference, label: "reference: line weight only" } }
       : {}),
   });
   out.write(path.join(folder, "review.png"), await sheet.encode("png"));
 
-  return { folder, png, thumbnail: shrink(map, 682) };
+  return { folder, png, base, thumbnail: shrink(map, 682) };
 }
 
 /** Pretty JSON, but with each [x, y] pair kept on one line so outlines stay readable. */

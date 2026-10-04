@@ -1,11 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { checkLayout } from "../battlemap/plateau/check.js";
-import { renderFlat, restylePrompt, restylePx } from "../battlemap/plateau/flat.js";
-import { parseLayout } from "../battlemap/plateau/io.js";
+import { checkScene } from "../battlemap/scene/check.js";
+import { renderFlat, restylePrompt, restylePx } from "../battlemap/scene/flat.js";
+import { parseScene } from "../battlemap/scene/io.js";
 import type { CliContext } from "./map.js";
 import { OutputDir } from "./paths.js";
+import { baseName } from "./write.js";
 
 export const RESTYLE_HELP = `Export a map's layout for restyling with an image model.
 
@@ -31,8 +32,8 @@ export async function runRestyle(argv: string[], ctx: CliContext): Promise<strin
   }
   const out = new OutputDir(ctx.root);
   const file = out.resolve(positionals[0]!, ctx.cwd);
-  const layout = parseLayout(readFileSync(file, "utf8"));
-  const problems = checkLayout(layout);
+  const scene = parseScene(readFileSync(file, "utf8"));
+  const problems = checkScene(scene);
   if (problems.length > 0) {
     throw new Error(
       `The layout has problems, so nothing was exported:\n  - ${problems.join("\n  - ")}`,
@@ -40,15 +41,15 @@ export async function runRestyle(argv: string[], ctx: CliContext): Promise<strin
   }
 
   const folder = path.dirname(file);
-  const [cols, rows] = layout.squares;
-  const base = `plateau-s${layout.seed}`;
+  const [cols, rows] = scene.squares;
+  const base = baseName(scene, folder);
   const mapPx = readMapPx(path.join(folder, `${base}.json`)) ?? 256;
-  const image = renderFlat(layout, restylePx(cols, rows));
+  const image = renderFlat(scene, restylePx(cols, rows));
   const png = out.write(path.join(folder, "restyle.png"), await image.encode("png"));
   const prompt = out.write(
     path.join(folder, "restyle-prompt.txt"),
     restylePrompt(
-      layout,
+      scene,
       image,
       { file: `${base}.png`, width: cols * mapPx, height: rows * mapPx },
       `${base}.json`,

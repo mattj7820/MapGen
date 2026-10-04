@@ -62,19 +62,73 @@ export function softPoly(
   blur: number,
   offset: Pt = [0, 0],
 ): void {
+  softShapes(paper, [pts], colour, blur, offset);
+}
+
+/**
+ * Like `softPoly` for several shapes at once, filled as one: where they overlap the
+ * colour doesn't build up, so joined pieces (like wall sections) cast one shadow.
+ */
+export function softShapes(
+  paper: Paper,
+  shapes: readonly (readonly Pt[])[],
+  colour: string,
+  blur: number,
+  offset: Pt = [0, 0],
+): void {
+  if (shapes.length === 0) return;
+  const { g } = paper;
+  const away = asShadow(paper, colour, blur, offset);
+  g.beginPath();
+  for (const pts of shapes) {
+    tracePath(
+      g,
+      pts.map(([x, y]): Pt => [x - away, y]),
+      true,
+    );
+  }
+  g.fillStyle = "#000000";
+  g.fill("nonzero");
+  g.restore();
+}
+
+/** A soft-edged line along a closed outline, `width` squares wide. */
+export function softStroke(
+  paper: Paper,
+  pts: readonly Pt[],
+  colour: string,
+  width: number,
+  blur: number,
+): void {
+  const { g } = paper;
+  const away = asShadow(paper, colour, blur, [0, 0]);
+  g.beginPath();
+  tracePath(
+    g,
+    pts.map(([x, y]): Pt => [x - away, y]),
+    true,
+  );
+  g.strokeStyle = "#000000";
+  g.lineWidth = width;
+  g.lineJoin = "round";
+  g.stroke();
+  g.restore();
+}
+
+/**
+ * Set the context up so that whatever is drawn next lands only as its blurred shadow:
+ * the shape itself goes `away` squares off to the left, beyond the canvas. Saves the
+ * context; the caller restores it.
+ */
+function asShadow(paper: Paper, colour: string, blur: number, offset: Pt): number {
   const { g, px } = paper;
-  const away = paper.cols * 4; // draw the real shape off the canvas; only its shadow lands
+  const away = paper.cols * 4;
   g.save();
   g.shadowColor = colour;
   g.shadowBlur = blur * px;
   g.shadowOffsetX = (away + offset[0]) * px;
   g.shadowOffsetY = offset[1] * px;
-  fillPoly(
-    g,
-    pts.map(([x, y]): Pt => [x - away, y]),
-    "#000000",
-  );
-  g.restore();
+  return away;
 }
 
 /**

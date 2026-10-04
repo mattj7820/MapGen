@@ -1,0 +1,348 @@
+import { distance, type Pt, roundPt, segmentDistance } from "../../geometry.js";
+import { hash } from "../../rng.js";
+import { densify } from "../../style/ink.js";
+import { PROPS } from "./props/library.js";
+import type { PropSpec } from "./props/spec.js";
+import {
+  type EdgeStyle,
+  type GroundKind,
+  type Opening,
+  OPENING_WIDTH,
+  type Prop,
+  type Scene,
+  type WallKind,
+} from "./scene.js";
+
+/** Wall thickness by kind, in squares. Walls are centred on the lines they're given. */
+export const WALL_THICKNESS: Record<WallKind, number> = { stone: 0.4, timber: 0.3, ruined: 0.4 };
+
+/** Points closer than this are the same point. */
+const EPS = 1e-6;
+
+/**
+ * A scene with its geometry worked out: rooms turned into floors and walls, walls
+ * merged where they share a line and split round openings, props given footprints.
+ * Both the checks and the renderer work from this, so they always agree.
+ */
+export interface Resolved {
+  scene: Scene;
+  /** Room floors first, then the scene's ground regions, in painting order. */
+  regions: ResolvedRegion[];
+  /** Every wall line, merged: two rooms side by side share one segment. */
+  segments: WallSegment[];
+  /** What's left of the segments once openings are cut out: what gets drawn. */
+  pieces: WallPiece[];
+  openings: ResolvedOpening[];
+  /** Props whose kind is in the library, in drawing order. */
+  props: ResolvedProp[];
+  /** Props whose kind isn't in the library. */
+  unknownProps: Prop[];
+}
+
+export interface ResolvedRegion {
+  id: string;
+  kind: GroundKind;
+  outline: Pt[];
+  edge?: EdgeStyle;
+  seed: number;
+  /** A room's floor, which runs to the centre line of its walls. */
+  room?: true;
+}
+
+export interface WallSegment {
+  a: Pt;
+  b: Pt;
+  kind: WallKind;
+  thickness: number;
+  seed: number;
+  /** How far each end reaches past its point to close a join; 0 at a free end. */
+  reach: [number, number];
+  length: number;
+  /** Unit vector from a to b. */
+  along: Pt;
+}
+
+export interface WallPiece {
+  segment: WallSegment;
+  /** Where the piece starts and ends, as distances from the segment's `a`, including reach. */
+  from: number;
+  to: number;
+  /** Ends cut by an opening: drawn square and plain. */
+  cut: [boolean, boolean];
+  outline: Pt[];
+}
+
+export interface ResolvedOpening {
+  opening: Opening;
+  width: number;
+  /** The segment it's cut into, or undefined if it isn't on a wall. */
+  segment?: WallSegment;
+  /** Distance of its centre from the segment's `a`. */
+  offset: number;
+  centre: Pt;
+  /** Why it can't be cut where it is, if it can't. */
+  problem?: string;
+}
+
+export interface ResolvedProp {
+  prop: Prop;
+  spec: PropSpec;
+  size: [number, number];
+  /** Radians, clockwise. */
+  angle: number;
+  /** The outline it covers on the map. */
+  footprint: Pt[];
+}
+
+/** Painting order of prop layers: seats go under table edges. */
+const LAYER_ORDER = ["floor", "seat", "solid", "top", "bridge"] as const;
+
+export function resolveScene(scene: Scene): Resolved {
+  const regions: ResolvedRegion[] = [
+    ...scene.rooms.map((r, i) => ({
+      id: r.id ?? `room${i + 1}`,
+      kind: r.floor,
+      outline: roomOutline(r),
+      seed: r.seed,
+      room: true as const,
+    })),
+    ...scene.ground.map((g, i): ResolvedRegion => {
+      const raw = g.outline ?? rectOutline(g.rect!);
+      return {
+        id: g.id ?? `ground${i + 1}`,
+        kind: g.kind,
+        // Raised edges are built along the outline's points, so long sides need more of them.
+        outline: g.edge && hasLongSides(raw) ? densify(raw, true, 0.25) : raw,
+        ...(g.edge ? { edge: g.edge } : {}),
+        seed: g.seed,
+      };
+    }),
+  ];
+
+  const segments = mergeWalls(scene);
+  const openings = scene.openings.map((o) => placeOpening(o, segments));
+  const pieces = segments.flatMap((s) =>
+    cutPieces(
+      s,
+      openings.filter((o) => o.segment === s && !o.problem),
+    ),
+  );
+  for (const o of openings) {
+    if (o.problem) continue;
+    const clash = openings.find(
+      (p) =>
+        p !== o &&
+        !p.problem &&
+        p.segment === o.segment &&
+        Math.abs(p.offset - o.offset) < (p.width + o.width) / 2,
+    );
+    if (clash) o.problem = `overlaps the ${clash.opening.kind} at ${fmt(clash.opening.at)}`;
+  }
+
+  const props: ResolvedProp[] = [];
+  const unknownProps: Prop[] = [];
+  for (const prop of scene.props) {
+    const spec = PROPS[prop.kind];
+    if (spec) props.push(placeProp(prop, spec));
+    else unknownProps.push(prop);
+  }
+  props.sort((a, b) => LAYER_ORDER.indexOf(a.spec.layer) - LAYER_ORDER.indexOf(b.spec.layer));
+
+  return { scene, regions, segments, pieces, openings, props, unknownProps };
+}
+
+export function rectOutline([x0, y0, x1, y1]: [number, number, number, number]): Pt[] {
+  return [
+    [x0, y0],
+    [x1, y0],
+    [x1, y1],
+    [x0, y1],
+  ];
+}
+
+function hasLongSides(outline: readonly Pt[]): boolean {
+  return outline.some((p, i) => distance(p, outline[(i + 1) % outline.length]!) > 0.5);
+}
+
+function roomOutline(r: Scene["rooms"][number]): Pt[] {
+  return r.points ?? rectOutline(r.rect!);
+}
+
+// ---------------------------------------------------------------- walls
+
+interface RawWall {
+  a: Pt;
+  b: Pt;
+  kind: WallKind;
+  seed: number;
+}
+
+/**
+ * Every wall line from rooms and free walls, with overlapping and touching pieces on
+ * the same line merged into one segment, and the reach each end needs to close its
+ * join with the walls it meets.
+ */
+export function mergeWalls(scene: Scene): WallSegment[] {
+  const raw: RawWall[] = [];
+  const add = (pts: Pt[], closed: boolean, kind: WallKind, seed: number) => {
+    const n = closed ? pts.length : pts.length - 1;
+    for (let i = 0; i < n; i++) {
+      const a = pts[i]!;
+      const b = pts[(i + 1) % pts.length]!;
+      if (distance(a, b) > EPS) raw.push({ a, b, kind, seed });
+    }
+  };
+  for (const r of scene.rooms) add(roomOutline(r), true, r.wall, r.seed);
+  for (const w of scene.walls) add(w.points, w.closed ?? false, w.kind, w.seed);
+
+  // Group by kind and line, then merge overlapping intervals along each line.
+  const lines = new Map<string, { along: Pt; base: Pt; spans: [number, number, number][] }>();
+  for (const w of raw) {
+    let [a, b] = [w.a, w.b];
+    if (b[0] < a[0] - EPS || (Math.abs(b[0] - a[0]) <= EPS && b[1] < a[1])) [a, b] = [b, a];
+    const len = distance(a, b);
+    const along: Pt = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
+    const offset = -along[1] * a[0] + along[0] * a[1];
+    const key = `${w.kind}|${along[0].toFixed(5)},${along[1].toFixed(5)}|${offset.toFixed(5)}`;
+    const line = lines.get(key) ?? { along, base: a, spans: [] };
+    const t = (p: Pt) =>
+      (p[0] - line.base[0]) * line.along[0] + (p[1] - line.base[1]) * line.along[1];
+    line.spans.push([t(a), t(b), w.seed]);
+    lines.set(key, line);
+  }
+
+  const segments: WallSegment[] = [];
+  for (const [key, line] of lines) {
+    const kind = key.split("|")[0] as WallKind;
+    const spans = line.spans.sort((p, q) => p[0] - q[0]);
+    const merged: [number, number, number][] = [];
+    for (const s of spans) {
+      const last = merged[merged.length - 1];
+      if (last && s[0] <= last[1] + EPS) last[1] = Math.max(last[1], s[1]);
+      else merged.push([...s]);
+    }
+    for (const [t0, t1, seed] of merged) {
+      const at = (t: number): Pt =>
+        roundPt([line.base[0] + line.along[0] * t, line.base[1] + line.along[1] * t], 6);
+      const a = at(t0);
+      const b = at(t1);
+      segments.push({
+        a,
+        b,
+        kind,
+        thickness: WALL_THICKNESS[kind],
+        // Each segment's own seed, from its owner's and its position, so that walls
+        // elsewhere don't change it.
+        seed: hash(`${seed}:${a.join()}:${b.join()}`) >>> 1,
+        reach: [0, 0],
+        length: distance(a, b),
+        along: line.along,
+      });
+    }
+  }
+
+  // An end that touches another wall reaches into it by half the thicker one's
+  // thickness, so corners and T-joins close up.
+  for (const s of segments) {
+    s.reach = [s.a, s.b].map((p) => {
+      const touching = segments.filter((o) => o !== s && segmentDistance(p, o.a, o.b) < EPS);
+      return touching.length === 0
+        ? 0
+        : Math.max(s.thickness, ...touching.map((o) => o.thickness)) / 2;
+    }) as [number, number];
+  }
+  return segments;
+}
+
+/** A point `t` squares along a segment from `a`, moved `side` squares to its left. */
+export function onSegment(s: WallSegment, t: number, side = 0): Pt {
+  return [s.a[0] + s.along[0] * t + s.along[1] * side, s.a[1] + s.along[1] * t - s.along[0] * side];
+}
+
+/** The rectangle a wall covers between two distances along its segment. */
+export function wallRect(s: WallSegment, from: number, to: number): Pt[] {
+  const h = s.thickness / 2;
+  return [onSegment(s, from, h), onSegment(s, to, h), onSegment(s, to, -h), onSegment(s, from, -h)];
+}
+
+function placeOpening(opening: Opening, segments: WallSegment[]): ResolvedOpening {
+  const width = opening.width ?? OPENING_WIDTH[opening.kind];
+  let best: WallSegment | undefined;
+  let bestD = Infinity;
+  for (const s of segments) {
+    const d = segmentDistance(opening.at, s.a, s.b);
+    if (d < bestD) {
+      bestD = d;
+      best = s;
+    }
+  }
+  const base = { opening, width, offset: 0, centre: opening.at };
+  if (!best || bestD > best.thickness / 2) {
+    return { ...base, problem: "isn't on a wall's centre line" };
+  }
+  const s = best;
+  const offset = (opening.at[0] - s.a[0]) * s.along[0] + (opening.at[1] - s.a[1]) * s.along[1];
+  const placed = { ...base, segment: s, offset, centre: onSegment(s, offset) };
+  const lo = offset - width / 2;
+  const hi = offset + width / 2;
+  if (lo < s.reach[0] - EPS || hi > s.length - s.reach[1] + EPS) {
+    return { ...placed, problem: "runs past the end of its wall or into a corner" };
+  }
+  // Nor may it cut into a wall that joins this one partway along.
+  for (const o of segments) {
+    if (o === s) continue;
+    for (const p of [o.a, o.b]) {
+      if (segmentDistance(p, s.a, s.b) > EPS) continue;
+      const t = (p[0] - s.a[0]) * s.along[0] + (p[1] - s.a[1]) * s.along[1];
+      if (Math.abs(t - offset) < width / 2 + o.thickness / 2) {
+        return { ...placed, problem: `cuts into the wall joining at ${fmt(p)}` };
+      }
+    }
+  }
+  return placed;
+}
+
+/** The parts of a segment left between its openings. */
+function cutPieces(s: WallSegment, openings: ResolvedOpening[]): WallPiece[] {
+  const gaps = [...openings].sort((a, b) => a.offset - b.offset);
+  const pieces: WallPiece[] = [];
+  let from = -s.reach[0];
+  let cutFrom = false;
+  for (const o of gaps) {
+    const to = o.offset - o.width / 2;
+    if (to - from > 0.02) pieces.push(piece(s, from, to, [cutFrom, true]));
+    from = o.offset + o.width / 2;
+    cutFrom = true;
+  }
+  const end = s.length + s.reach[1];
+  if (end - from > 0.02) pieces.push(piece(s, from, end, [cutFrom, false]));
+  return pieces;
+}
+
+function piece(s: WallSegment, from: number, to: number, cut: [boolean, boolean]): WallPiece {
+  return { segment: s, from, to, cut, outline: wallRect(s, from, to) };
+}
+
+// ---------------------------------------------------------------- props
+
+export function placeProp(prop: Prop, spec: PropSpec): ResolvedProp {
+  const size = prop.size ?? spec.size;
+  const angle = (prop.rotation * Math.PI) / 180;
+  const [w, d] = size;
+  const local: Pt[] = spec.round
+    ? Array.from({ length: 24 }, (_, i): Pt => {
+        const a = (i / 24) * Math.PI * 2;
+        return [(Math.cos(a) * w) / 2, (Math.sin(a) * d) / 2];
+      })
+    : rectOutline([-w / 2, -d / 2, w / 2, d / 2]);
+  const [cos, sin] = [Math.cos(angle), Math.sin(angle)];
+  const footprint = local.map(([x, y]): Pt => [
+    prop.at[0] + x * cos - y * sin,
+    prop.at[1] + x * sin + y * cos,
+  ]);
+  return { prop, spec, size, angle, footprint };
+}
+
+export function fmt([x, y]: Pt): string {
+  return `(${x.toFixed(2)}, ${y.toFixed(2)})`;
+}

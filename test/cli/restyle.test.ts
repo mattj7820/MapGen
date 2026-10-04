@@ -27,7 +27,7 @@ describe("npm run restyle", () => {
     const [folder] = await runMap(["plateau", "--seed", "4", "--px", "16"], ctx);
     const file = path.join(folder!, "layout.json");
     const layout = JSON.parse(readFileSync(file, "utf8"));
-    layout.stones[0].at = [-3, -3];
+    layout.scatter[0].at = [-3, -3];
     writeFileSync(file, JSON.stringify(layout));
     await expect(runRestyle([file], ctx)).rejects.toThrow(/nothing was exported/);
   });

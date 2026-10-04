@@ -3,6 +3,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { makeGrid, parseSquares } from "../battlemap/grid.js";
 import { generatePlateau } from "../battlemap/plateau/generate.js";
+import { plateauScene } from "../battlemap/plateau/scene.js";
 import { contactSheet } from "../battlemap/review.js";
 import { DEFAULT_LINE_STRENGTH } from "../battlemap/sidecar.js";
 import { EDGE_STYLES, type EdgeStyle } from "../style/edges.js";
@@ -93,10 +94,10 @@ export async function runMap(argv: string[], ctx: CliContext): Promise<string[]>
       ...(values.bridge !== undefined ? { bridge: values.bridge } : {}),
     });
     const name = folderName(seed, cols, rows, px, edge, values.bridge);
-    const files = await writeMap(out, name, layout, {
+    const files = await writeMap(out, name, plateauScene(layout), {
       px,
       lines,
-      edited: false,
+      redrawn: false,
       reference: referenceImage,
     });
     folders.push(files.folder);
