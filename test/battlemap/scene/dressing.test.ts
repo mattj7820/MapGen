@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { parseScene } from "../../../src/battlemap/scene/io.js";
 import { checkScene } from "../../../src/battlemap/scene/check.js";
 import { renderScene } from "../../../src/battlemap/scene/render.js";
 import { resolveScene } from "../../../src/battlemap/scene/resolve.js";
@@ -107,6 +108,46 @@ describe("dressing for a setting", () => {
     expect(stores.length).toBeGreaterThan(5);
     for (const p of stores) expect(p.spec.tags, p.prop.kind).toContain("warehouse");
     expect(new Set(stores.map((p) => p.prop.kind)).size).toBeGreaterThan(3);
+    expect(checkScene(scene)).toEqual([]);
+  });
+});
+
+describe("dressing round water inside a room", () => {
+  const scene = parseScene(
+    JSON.stringify({
+      type: "scene",
+      squares: [14, 10],
+      base: "bedrock",
+      rooms: [
+        {
+          id: "cave",
+          points: [
+            [1, 1],
+            [13, 1],
+            [13, 9],
+            [1, 9],
+          ],
+          floor: "dirt",
+          wall: "cave",
+        },
+      ],
+      ground: [{ id: "pool", kind: "water", rect: [5, 3, 9, 7] }],
+      props: [{ kind: "bridge", at: [7, 5], size: [1, 6], rotation: 90 }],
+      dressing: [
+        { kind: "litter", in: "cave", amount: 1, setting: "docks" },
+        { kind: "stores", in: "cave", amount: 1, setting: "docks" },
+      ],
+    }),
+  );
+
+  it("keeps everything off the water, and a bridge may cross it within the room", () => {
+    const r = resolveScene(scene);
+    const generated = r.props.filter((p) => p.generated);
+    expect(generated.length).toBeGreaterThan(5);
+    for (const p of generated) {
+      for (const q of p.footprint)
+        expect(contains(r.regions[1]!.outline, q), p.prop.kind).toBe(false);
+    }
     expect(checkScene(scene)).toEqual([]);
   });
 });

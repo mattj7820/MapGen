@@ -13,7 +13,8 @@ import { doorwayPath, placeProp, WALL_THICKNESS } from "./place.js";
 import { PROPS } from "./props/library.js";
 import type { Resolved, ResolvedProp } from "./resolve.js";
 import type { Setting } from "./props/catalogue.js";
-import { PASSABLE, type SurfaceDressing } from "./scene.js";
+import { groundAt } from "./ground.js";
+import { PASSABLE, type SurfaceDressing, UNWALKABLE } from "./scene.js";
 
 /**
  * Fill a scene in with small things, from seeds: laid tables, stores along the walls,
@@ -334,6 +335,18 @@ function edges(area: Area): { a: Pt; b: Pt; length: number; along: Pt; inward: P
 }
 
 /** Is a generated prop clear of walls, doorways, the area's edge and everything else? */
+/**
+ * Whether a dressed item lies wholly on the map and on ground people can stand on: a
+ * room can hold water or a drop (a cave's sea channel), and dressing must keep off it.
+ */
+function onFirmGround(r: Resolved, item: ResolvedProp): boolean {
+  const [cols, rows] = r.scene.squares;
+  return [item.prop.at, ...item.footprint].every(
+    ([x, y]) =>
+      x >= 0 && y >= 0 && x <= cols && y <= rows && !UNWALKABLE.includes(groundAt(r, [x, y])),
+  );
+}
+
 function fits(
   r: Resolved,
   area: Area,
@@ -344,7 +357,8 @@ function fits(
   if (
     !item.footprint.every(
       (q) => contains(area.outline, q) && edgeDistance(area.outline, q) >= area.wall - 1e-6,
-    )
+    ) ||
+    !onFirmGround(r, item)
   ) {
     return false;
   }
@@ -481,7 +495,8 @@ function litter(
     const inside = item.footprint.every(
       (q) => contains(area.outline, q) && edgeDistance(area.outline, q) >= area.wall + 0.05,
     );
-    if (!inside || r.pieces.some((p) => overlaps(p.outline, item.footprint))) continue;
+    if (!inside || !onFirmGround(r, item)) continue;
+    if (r.pieces.some((p) => overlaps(p.outline, item.footprint))) continue;
     if (out.some((o) => distance(o.prop.at, at) < 0.45)) continue;
     // Flat litter may lie under anything; solid litter (a broken barrel) needs room.
     if (spec.layer !== "floor" && !fits(r, area, item, [...earlier, ...out], 0.05)) continue;

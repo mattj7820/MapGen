@@ -237,8 +237,10 @@ export function underBridge(b: ResolvedProp, at: Pt, radius: number): boolean {
 }
 
 /**
- * A bridge must land fully on walkable ground at both ends, on two different pieces of
- * ground, with its middle over the drop and nothing else under it.
+ * A bridge must land fully on walkable ground at both ends, with its middle over the
+ * drop and nothing else under it. Its ends may be on one stretch of base ground or one
+ * room (two banks of a river, or of a sea channel through a cave), but not on one
+ * raised region: that's a bridge going nowhere.
  */
 function bridgeProblems(r: Resolved, b: ResolvedProp, name: string): string[] {
   const problems: string[] = [];
@@ -256,8 +258,8 @@ function bridgeProblems(r: Resolved, b: ResolvedProp, name: string): string[] {
     if (!sound) problems.push(`${name}: its ${end.name} isn't fully on solid ground`);
     return sound ? (region ?? "base") : undefined;
   });
-  // Two banks of the base ground are fine (a river); two ends on one region aren't.
-  if (landed[0] && landed[0] !== "base" && landed[0] === landed[1]) {
+  // Two banks of the base ground or of a room are fine; two ends on one raised region aren't.
+  if (landed[0] && landed[0] !== "base" && !landed[0].room && landed[0] === landed[1]) {
     problems.push(`${name}: both ends are on ${landed[0].id}`);
   }
   for (const g of r.regions) {
