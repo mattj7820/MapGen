@@ -6,13 +6,15 @@
   "license": "UNLICENSED",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.4"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mattj7820/MapGen.git"
   },
   "scripts": {
+    "map": "tsx src/cli/bin/map.ts",
+    "render": "tsx src/cli/bin/render.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

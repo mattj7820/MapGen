@@ -24,7 +24,7 @@ reliably give you:
 
 ## Requirements
 
-- Node 22 or newer
+- Node 22.4 or newer
 
 ## Usage
 
@@ -33,12 +33,34 @@ npm install
 npm run check   # typecheck, formatting and tests
 ```
 
-The map CLI arrives with the first map type. It will look like this:
+Make a map:
 
 ```sh
-npm run map -- plateau --seed 7 --squares 24x16 --px 256
+npm run map -- plateau --seed 7                  # 24x16 squares at 256 px per square
+npm run map -- plateau --seeds 1-6 --px 128      # several, plus a contact sheet
+npm run map -- plateau --seed 7 --edge brushed --bridge --squares 20x20
+npm run map -- --help                            # every option
 ```
 
-Each map is written to its own folder under `output/`, as a PNG plus a JSON sidecar
-describing the grid. Grid lines are never drawn on the image itself; the tabletop app
-draws them.
+Each map gets its own folder under `output/`:
+
+```
+output/plateau-s7-24x16-256/
+  plateau-s7.png     the map
+  plateau-s7.json    grid sidecar for the tabletop app (same name as the map)
+  layout.json        the map's geometry, in squares, editable
+  review.png         overview plus 1:1 crops, for judging the drawing
+```
+
+Grid lines are never drawn on the image; the sidecar tells the tabletop app where they
+go. To change one thing without redrawing the rest, edit `layout.json` and redraw it:
+
+```sh
+npm run render -- output/plateau-s7-24x16-256/layout.json
+```
+
+The layout is checked first (no stones hanging over the chasm, bridges landing on
+rock), and every item has its own seed, so the rest of the map stays pixel-identical.
+
+MapGen only ever writes inside `output/`. It refuses any other path, including
+`output/` being a link to somewhere else.

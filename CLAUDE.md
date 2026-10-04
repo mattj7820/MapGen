@@ -54,12 +54,27 @@ npm run typecheck   # tsc --noEmit
 npm run format      # prettier --write
 ```
 
-Planned (not built yet):
+Making maps (`--help` on either command lists every option):
 
 ```sh
-npm run map -- plateau --seed 7 [--squares 24x16] [--px 256] [--edge blocks|brushed] [--bridge | --no-bridge] [--seeds 1-6]
-npm run render -- output/<map-folder>/layout.json   # re-render after editing the layout
+npm run map -- plateau --seed 7                    # one map, 24x16 at 256 px
+npm run map -- plateau --seeds 1-6 --px 128        # several, plus a contact sheet
+npm run map -- plateau --seed 7 --edge brushed --bridge --squares 20x20
+npm run map -- plateau --seed 7 --reference references/MountainPath.png@2956,1906
+npm run render -- output/<map folder>/layout.json  # redraw after editing the layout
 ```
+
+- With no seed, `map` picks a random one; it appears in the folder name.
+- `render` runs `checkLayout` first and draws nothing if there are problems. It marks
+  the sidecar `"edited": true`, because the seed alone no longer reproduces the map.
+- `--reference` adds a 1:1 crop of another image to the review sheet, for comparing
+  line weight. `MountainPath.png@2956,1906` is a good rock-edge crop from Matt's
+  references.
+
+**The output guard** (`src/cli/paths.ts`, `OutputDir`): every write goes through it. It
+refuses any path outside `output/`, and refuses to write if `output/` or the target
+folder is a symlink or junction to somewhere else. Never write files any other way.
+Tests write only under `output/.test/` and clean up after themselves.
 
 ## Architecture
 
@@ -215,7 +230,7 @@ Checklist for every look review:
 3. Plateau layout generator writing `layout.json`, with rule tests. Minimum map size
    is 12x12; below that there is no room for chasm and neighbours.
 4. Renderer built on `style/`. Done; 24x16 at 256 px renders in about 3 s.
-5. CLI and output folder, with the output-path guard.
+5. CLI and output folder, with the output-path guard. Done.
 6. Look iteration, including multi-seed sheets. Noted so far:
    - Tone blotches can still look a little like camouflage at thumbnail size.
    - Lichen patches read as blurry smudges; they could use more definition.
