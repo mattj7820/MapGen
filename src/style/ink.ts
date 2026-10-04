@@ -18,13 +18,13 @@ export const WEIGHT = {
   /** Outlines of objects: stones, blocks, planks. */
   object: 0.02,
   /** Cracks at their boldest. */
-  crack: 0.022,
+  crack: 0.025,
   /** Small details: shrub twigs, grit, hatching. */
   detail: 0.014,
 } as const;
 
 // One shared noise field for brush wobble; each stroke reads a different row of it.
-const wobble = makeNoise(new Rng(0x1ce));
+const wobbleNoise = makeNoise(new Rng(0x1ce));
 
 export interface BrushOptions {
   closed?: boolean;
@@ -32,6 +32,8 @@ export interface BrushOptions {
   smooth?: boolean;
   /** Picks this stroke's wobble, so the same stroke always looks the same. */
   seed?: number;
+  /** How much the width swells and pinches, as a fraction of it. Cracks wobble more. */
+  wobble?: number;
   colour?: string;
 }
 
@@ -46,7 +48,7 @@ export function brush(
   width: number,
   options: BrushOptions = {},
 ): void {
-  const { closed = false, smooth = true, seed = 0, colour = INK } = options;
+  const { closed = false, smooth = true, seed = 0, wobble = 0.32, colour = INK } = options;
   if (path.length < 2) return;
   const pts = smooth ? chaikin(path, closed) : densify(path, closed, 0.08);
   const ns = vertexNormals(pts, closed);
@@ -69,7 +71,8 @@ export function brush(
         ? 1 / Math.max(0.45, nx * ((sign * sy) / sl) + ny * ((-sign * sx) / sl))
         : 1;
 
-    const w = (width / 2) * taper * mitre * (1 + 0.32 * wobble(travelled / 0.45, seed * 7.13));
+    const swell = 1 + wobble * wobbleNoise(travelled / 0.45, seed * 7.13);
+    const w = (width / 2) * taper * mitre * Math.max(0.25, swell);
     left.push([here[0] + nx * w, here[1] + ny * w]);
     right.push([here[0] - nx * w, here[1] - ny * w]);
   }

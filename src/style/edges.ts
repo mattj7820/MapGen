@@ -54,7 +54,11 @@ function blockEdge(paper: Paper, outline: readonly Pt[], colours: EdgeColours, r
   let k = 0;
   const block = (pts: Pt[], light: number): void => {
     const c = centroid(pts);
-    const shrunk = pts.map(([x, y]): Pt => [c[0] + (x - c[0]) * 0.93, c[1] + (y - c[1]) * 0.93]);
+    // Knock the corners off, so blocks read as chunks of stone rather than tiles.
+    const shrunk = chamfer(
+      pts.map(([x, y]): Pt => [c[0] + (x - c[0]) * 0.93, c[1] + (y - c[1]) * 0.93]),
+      rng.range(0.03, 0.07),
+    );
     const tone = light > 0.35 ? colours.rimShade : light < -0.35 ? colours.rimLight : colours.rim;
     fillPoly(g, shrunk, mix(tone, colours.rimShade, rng.range(0, 0.3)));
     if (light > 0.25 && rng.chance(0.5)) hatch(g, shrunk, 0.05, 0.009);
@@ -106,15 +110,40 @@ function blockEdge(paper: Paper, outline: readonly Pt[], colours: EdgeColours, r
   }
 }
 
+/**
+ * A dark lip just outside the edge, with stones tucked half under it here and there.
+ * The surface is drawn on top afterwards, so only their outer halves show.
+ */
 function brushedEdge(paper: Paper, outline: readonly Pt[], colours: EdgeColours, rng: Rng): void {
-  softPoly(paper, offsetOutline(outline, 0.14), colours.rimShade, 0.1);
+  softPoly(paper, offsetOutline(outline, 0.1), colours.rimShade, 0.06);
   const normals = vertexNormals(outline, true);
-  for (let i = 0; i < outline.length; i += rng.int(10, 22)) {
+  let k = 0;
+  for (let i = 0; i < outline.length; i += rng.int(4, 9)) {
     const [x, y] = outline[i]!;
     const [nx, ny] = normals[i]!;
-    const r = rng.range(0.08, 0.18);
-    fillPoly(paper.g, jagged(rng, [x + nx * r * 0.6, y + ny * r * 0.6], r), colours.rim);
+    const r = rng.range(0.07, 0.16);
+    const stone = jagged(rng, [x + nx * r * 0.35, y + ny * r * 0.35], r);
+    const light = facing(normals[i]!);
+    fillPoly(paper.g, stone, light > 0.3 ? colours.rimShade : colours.rim);
+    brush(paper.g, stone, WEIGHT.detail * 1.2, { closed: true, smooth: false, seed: k++ });
   }
+}
+
+/** Cut each corner of a polygon back by `cut` along both sides (but never past halfway). */
+export function chamfer(poly: readonly Pt[], cut: number): Pt[] {
+  const out: Pt[] = [];
+  for (let i = 0; i < poly.length; i++) {
+    const prev = poly[(i - 1 + poly.length) % poly.length]!;
+    const here = poly[i]!;
+    const next = poly[(i + 1) % poly.length]!;
+    const towards = (to: Pt): Pt => {
+      const d = Math.hypot(to[0] - here[0], to[1] - here[1]);
+      const t = Math.min(cut, d * 0.45) / (d || 1);
+      return [here[0] + (to[0] - here[0]) * t, here[1] + (to[1] - here[1]) * t];
+    };
+    out.push(towards(prev), towards(next));
+  }
+  return out;
 }
 
 /** Cumulative distance along a closed outline to each vertex, plus the closing one. */

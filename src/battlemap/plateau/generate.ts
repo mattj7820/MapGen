@@ -411,12 +411,12 @@ function drawCracks(rng: Rng, frame: Rect, p: Plateau): Crack[] {
 
   const area = visibleArea(p, frame);
   const edgePoints = p.outline.filter((pt) => inRect(pt, frame));
-  for (let c = countFor(rng, area, 30); c > 0 && edgePoints.length > 0; c--) {
+  for (let c = countFor(rng, area, 22); c > 0 && edgePoints.length > 0; c--) {
     const start = rng.pick(edgePoints);
     const inward = Math.atan2(centreOf(p.outline)[1] - start[1], centreOf(p.outline)[0] - start[0]);
     walk(start, inward + rng.range(-0.5, 0.5), rng.range(0.8, 1.8), 1, 0);
   }
-  for (let c = countFor(rng, area, 40); c > 0; c--) {
+  for (let c = countFor(rng, area, 28); c > 0; c--) {
     const start = pointOn(rng, frame, p, 1);
     if (start) walk(start, rng.range(0, Math.PI * 2), rng.range(0.8, 2), 0.85, 1);
   }

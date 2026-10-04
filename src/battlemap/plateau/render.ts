@@ -12,7 +12,7 @@ import {
 } from "../../geometry.js";
 import { Rng } from "../../rng.js";
 import { mix, withAlpha } from "../../style/colour.js";
-import { grit } from "../../style/details.js";
+import { grit, pebble } from "../../style/details.js";
 import { drawEdge, edgeOutlineWeight } from "../../style/edges.js";
 import { brush, offsetOutline, WEIGHT, INK } from "../../style/ink.js";
 import { shadowOffset } from "../../style/light.js";
@@ -90,17 +90,17 @@ function drawTop(
   drawSlabs(paper, pal, area, rng.fork("slabs"));
   // Broad, gentle tone steps: strong enough to read as painted, not as camouflage.
   const tones = [
-    { at: 0.3, colour: mix(pal.ground, pal.groundLight, 0.6) },
-    { at: -0.3, colour: mix(pal.ground, pal.groundShade, 0.6) },
+    { at: 0.38, colour: mix(pal.ground, pal.groundLight, 0.45) },
+    { at: -0.32, colour: mix(pal.ground, pal.groundShade, 0.5) },
   ];
-  toneSteps(paper, makeNoise(rng.fork("tone")), tones, 4.5, 0.05, area);
+  toneSteps(paper, makeNoise(rng.fork("tone")), tones, 5, 0.08, area);
   for (const l of layout.lichen) if (l.plateau === p.id) drawLichen(paper, pal, l);
   innerShade(paper, p.outline, pal.groundShade, 0.275, 0.14);
   drawCracks(
     paper,
     layout.cracks.filter((c) => c.plateau === p.id),
   );
-  drawGrit(paper, p, frame, rng.fork("grit"));
+  drawGrit(paper, pal, p, frame, rng.fork("grit"));
   g.restore();
 }
 
@@ -136,7 +136,7 @@ function drawSlabs(paper: Paper, pal: PlateauPalette, area: Rect, rng: Rng): voi
     const cell = cells.cellPolygon(i) as Pt[] | null;
     const show = rng.chance(0.55);
     const light = rng.chance(0.5);
-    const alpha = rng.range(0.25, 0.45);
+    const alpha = rng.range(0.12, 0.22);
     if (!cell || !show) continue;
     const c = centroid(cell);
     g.globalAlpha = alpha;
@@ -149,20 +149,33 @@ function drawSlabs(paper: Paper, pal: PlateauPalette, area: Rect, rng: Rng): voi
   g.globalAlpha = 1;
 }
 
+/** Lichen: a flat, slightly translucent patch of small overlapping spots, flecked darker. */
 function drawLichen(paper: Paper, pal: PlateauPalette, l: Feature): void {
   const { g } = paper;
   const rng = new Rng(l.seed);
+  const spots: Pt[] = [];
+  for (let i = rng.int(6, 11); i > 0; i--) {
+    spots.push([
+      l.at[0] + rng.range(-0.6, 0.6) * l.radius,
+      l.at[1] + rng.range(-0.6, 0.6) * l.radius,
+    ]);
+  }
   g.save();
+  // Muted towards the rock, so lichen reads as growth on it rather than a glow.
+  const colour = mix(pal.lichen, pal.groundShade, 0.3);
   g.globalAlpha = 0.5;
-  softPoly(paper, jagged(rng, l.at, l.radius), pal.lichen, 0.12);
-  g.globalAlpha = 0.8;
-  g.fillStyle = mix(pal.lichen, pal.foliage, 0.5);
-  for (let i = 0; i < 14; i++) {
+  for (const at of spots) {
+    softPoly(paper, lobed(rng, at, l.radius * rng.range(0.25, 0.45)), colour, 0.012);
+  }
+  g.globalAlpha = 0.9;
+  g.fillStyle = mix(pal.lichen, pal.foliage, 0.6);
+  for (let i = 0; i < 10; i++) {
+    const at = spots[i % spots.length]!;
     g.beginPath();
     g.arc(
-      l.at[0] + rng.range(-0.7, 0.7) * l.radius,
-      l.at[1] + rng.range(-0.7, 0.7) * l.radius,
-      rng.range(0.012, 0.03),
+      at[0] + rng.range(-0.1, 0.1),
+      at[1] + rng.range(-0.1, 0.1),
+      rng.range(0.012, 0.026),
       0,
       Math.PI * 2,
     );
@@ -171,29 +184,61 @@ function drawLichen(paper: Paper, pal: PlateauPalette, l: Feature): void {
   g.restore();
 }
 
-/** Cracks, with a pool of ink where a branch leaves its parent. */
+/**
+ * Cracks: hand-wavering lines that swell and pinch, with the odd tiny spur, and a pool
+ * of ink where a branch leaves its parent.
+ */
 function drawCracks(paper: Paper, cracks: Crack[]): void {
   const key = (p: Pt) => `${p[0]},${p[1]}`;
-  const branchPoints = new Map<string, number>();
-  cracks.forEach((c, i) => c.points.forEach((p) => branchPoints.set(key(p), i)));
+  const owners = new Map<string, Set<number>>();
+  cracks.forEach((c, i) =>
+    c.points.forEach((p) => owners.set(key(p), (owners.get(key(p)) ?? new Set()).add(i))),
+  );
   cracks.forEach((c, i) => {
     const width = WEIGHT.crack * c.weight;
     const seed = Math.round(c.points[0]![0] * 1000 + c.points[0]![1] * 7);
-    brush(paper.g, c.points, width, { smooth: false, seed });
-    const parent = branchPoints.get(key(c.points[0]!));
-    if (parent !== undefined && parent !== i) {
-      fillPoly(paper.g, jagged(new Rng(seed), c.points[0]!, width * 1.1), INK);
+    const rng = new Rng(seed);
+    // Nudge the inner points a touch, so the line wavers like a hand-drawn one.
+    const path = c.points.map((p, k): Pt =>
+      k === 0 || k === c.points.length - 1
+        ? p
+        : [p[0] + rng.range(-0.02, 0.02), p[1] + rng.range(-0.02, 0.02)],
+    );
+    brush(paper.g, path, width, { smooth: false, seed, wobble: 0.55 });
+    for (let k = 1; k < path.length - 1; k++) {
+      if (!rng.chance(0.18)) continue;
+      const [x, y] = path[k]!;
+      const along = Math.atan2(path[k + 1]![1] - y, path[k + 1]![0] - x);
+      const a = along + (rng.chance(0.5) ? 1 : -1) * rng.range(0.7, 1.2);
+      const len = rng.range(0.05, 0.11);
+      brush(
+        paper.g,
+        [
+          [x, y],
+          [x + Math.cos(a) * len, y + Math.sin(a) * len],
+        ],
+        width * 0.7,
+        {
+          smooth: false,
+          seed: seed + k,
+        },
+      );
     }
+    const isBranch = [...(owners.get(key(c.points[0]!)) ?? [])].some((j) => j !== i);
+    if (isBranch) fillPoly(paper.g, jagged(rng, c.points[0]!, width * 1.2), INK);
   });
 }
 
-/** About one group of grit ticks per three squares of visible rock. */
-function drawGrit(paper: Paper, p: Plateau, frame: Rect, rng: Rng): void {
+/** Grit ticks and little pebbles: about one of either per two squares of visible rock. */
+function drawGrit(paper: Paper, pal: PlateauPalette, p: Plateau, frame: Rect, rng: Rng): void {
   const area = visibleBounds(p.outline, frame);
-  const count = Math.round(areaInRect(p.outline, frame) * 0.3);
+  const count = Math.round(areaInRect(p.outline, frame) * 0.5);
   for (let i = 0; i < count; i++) {
     const at: Pt = [rng.range(area.x0, area.x1), rng.range(area.y0, area.y1)];
-    if (contains(p.outline, at) && edgeDistance(p.outline, at) > 0.2) grit(paper.g, rng, at);
+    const isPebble = rng.chance(0.35);
+    if (!contains(p.outline, at) || edgeDistance(p.outline, at) < 0.2) continue;
+    if (isPebble) pebble(paper.g, rng, at, mix(pal.ground, pal.groundLight, 0.5));
+    else grit(paper.g, rng, at);
   }
 }
 
