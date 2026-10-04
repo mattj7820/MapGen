@@ -73,6 +73,7 @@
       "dress": "kitchen"
     },
     { "kind": "pot", "at": [18.6, 4.9] },
+    { "kind": "lamp", "at": [18.1, 2.35] },
 
     { "kind": "crate", "at": [15.2, 9.3], "rotation": -8 },
     { "kind": "crate", "at": [16.05, 9.45], "size": [0.6, 0.6], "rotation": 14 },

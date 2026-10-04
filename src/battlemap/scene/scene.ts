@@ -41,6 +41,21 @@ export interface Scene {
   /** Small loose things: stones, shrubs, lichen. */
   scatter: Scatter[];
   cracks: Crack[];
+  /**
+   * How dark it is. Left out: `night` for scenes with rooms, `day` for the rest (see
+   * lighting.ts).
+   */
+  lighting?: Lighting;
+}
+
+export const LIGHTING_TIMES = ["day", "dusk", "night", "dark"] as const;
+export type LightingTime = (typeof LIGHTING_TIMES)[number];
+
+export interface Lighting {
+  time: LightingTime;
+  /** Override the ambient brightness inside rooms or outside them, 0 to 1. */
+  inside?: number;
+  outside?: number;
 }
 
 export const GROUND_KINDS = [

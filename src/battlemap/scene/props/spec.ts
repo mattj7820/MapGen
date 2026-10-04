@@ -11,6 +11,19 @@ import type { PropKit } from "./kit.js";
  */
 export type PropLayer = "floor" | "seat" | "solid" | "top" | "bridge" | "overhead";
 
+/** What colour a light is: firelight, a candle, something magical, the sky. */
+export type LightColour = "fire" | "candle" | "magic" | "daylight" | "dusk" | "moon";
+
+export interface PropLight {
+  /** Where the light comes from, as fractions of [width, depth] from the centre. */
+  at?: [number, number];
+  /** How far it reaches, in squares. */
+  radius: number;
+  /** How bright at the source, 0 to 1. */
+  strength: number;
+  colour: LightColour;
+}
+
 export interface PropSpec {
   /** One line for the catalogue (`npm run props`). */
   about: string;
@@ -25,6 +38,8 @@ export interface PropSpec {
   height: number;
   /** `top` props can stand on it. */
   surface?: boolean;
+  /** It gives light (see lighting.ts). */
+  light?: PropLight;
   /** Draw it centred on (0, 0), `size` across, its front facing +y (south). */
   draw: (kit: PropKit) => void;
 }

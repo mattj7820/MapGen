@@ -3,7 +3,6 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { palette, PALETTES } from "../battlemap/scene/palette.js";
 import { placeProp } from "../battlemap/scene/place.js";
-import { drawLight } from "../battlemap/scene/props/kit.js";
 import { PROPS } from "../battlemap/scene/props/library.js";
 import { drawProp } from "../battlemap/scene/render.js";
 import { createPaper } from "../style/paper.js";
@@ -80,7 +79,7 @@ export function propSheet(px: number, paletteName: string): Canvas {
       { kind, at, rotation: 0, seed: i + 1, ...(fit < 1 ? { size } : {}) },
       spec,
     );
-    for (const light of drawProp(paper, pal, placed)) drawLight(paper, light);
+    drawProp(paper, pal, placed);
   });
   const out = createCanvas(paper.canvas.width, paper.canvas.height);
   const g = out.getContext("2d");

@@ -9,6 +9,7 @@ import {
   FACING,
   SURFACE_DRESSINGS,
   GROUND_KINDS,
+  LIGHTING_TIMES,
   OPENING_KINDS,
   SCATTER_KINDS,
   type Scene,
@@ -163,6 +164,24 @@ export function parseScene(text: string): Scene {
         weight: o.weight === undefined ? 1 : positive(o.weight, `${n}.weight`),
       };
     }),
+    ...(s.lighting !== undefined ? { lighting: lighting(s.lighting) } : {}),
+  };
+}
+
+/** `"night"`, or `{ "time": "night", "inside": 0.4 }`. */
+function lighting(value: unknown): NonNullable<Scene["lighting"]> {
+  if (typeof value === "string") return { time: oneOf(value, LIGHTING_TIMES, "lighting") };
+  const o = obj(value, "lighting");
+  const level = (key: "inside" | "outside") => {
+    if (o[key] === undefined) return {};
+    const v = num(o[key], `lighting.${key}`);
+    if (v < 0 || v > 1) throw new Error(`lighting.${key} must be from 0 to 1`);
+    return { [key]: v };
+  };
+  return {
+    time: oneOf(o.time, LIGHTING_TIMES, "lighting.time"),
+    ...level("inside"),
+    ...level("outside"),
   };
 }
 

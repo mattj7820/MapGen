@@ -8,12 +8,11 @@ import type { PropSpec } from "./spec.js";
 
 /** Furniture for homes, churches and workshops, and things that give light. */
 
-/** A flame: an orange lobe with a yellow heart, and its light thrown round it. */
-function flame(k: PropKit, at: Pt, r: number, light: number): void {
+/** A flame: an orange lobe with a yellow heart. */
+function flame(k: PropKit, at: Pt, r: number): void {
   const outer = lobed(k.rng, at, r);
   k.soft(outer, k.pal.fire.base, r * 0.25);
   k.soft(k.lit(outer, 0, 0.5), k.pal.fire.light, r * 0.2);
-  if (light > 0) k.glow(at, light, k.pal.fire.light, 0.22);
 }
 
 export const bed: PropSpec = {
@@ -318,6 +317,7 @@ export const range: PropSpec = {
   layer: "solid",
   height: 0.7,
   surface: true,
+  light: { at: [0, 0.55], radius: 2.8, strength: 0.5, colour: "fire" },
   draw(k) {
     const [w, d] = [k.w, k.d];
     const body = k.rect(-w / 2, -d / 2, w / 2, d / 2);
@@ -345,7 +345,6 @@ export const range: PropSpec = {
         WEIGHT.detail,
       );
     k.outline(door, WEIGHT.detail);
-    k.glow([0, d / 2], 1.6, k.pal.fire.base, 0.22);
     k.line(
       [
         [-w / 2 + 0.06, -d / 2 + 0.06],
@@ -364,6 +363,7 @@ export const lamp: PropSpec = {
   round: true,
   layer: "top",
   height: 0.2,
+  light: { radius: 3.4, strength: 0.62, colour: "fire" },
   draw(k) {
     const base = k.ellipse(0, 0, k.w / 2, k.d / 2, 16);
     k.shadow(base, 0.2, 0.3);
@@ -372,7 +372,6 @@ export const lamp: PropSpec = {
     k.fill(glass, mix(k.pal.glass, k.pal.fire.light, 0.5));
     k.outline(glass, WEIGHT.detail * 0.7, true);
     k.dot([0, 0], 0.025, k.pal.fire.light);
-    k.glow([0, 0], 1.8, k.pal.fire.light, 0.24);
   },
 };
 
@@ -382,6 +381,7 @@ export const candelabra: PropSpec = {
   round: true,
   layer: "solid",
   height: 1,
+  light: { radius: 3.8, strength: 0.66, colour: "candle" },
   draw(k) {
     const foot = k.ellipse(0, 0, 0.12, 0.12, 14);
     k.shadow(foot, 1, 0.3);
@@ -393,9 +393,8 @@ export const candelabra: PropSpec = {
     for (const c of cups) k.line([[0, 0], c], 0.025, k.pal.brass.base);
     for (const c of cups) {
       k.solid(k.ellipse(c[0], c[1], 0.05, 0.05, 10), k.pal.linen, { band: 0.01, smooth: true });
-      flame(k, c, 0.03, 0);
+      flame(k, c, 0.03);
     }
-    k.glow([0, 0], 2.2, k.pal.fire.light, 0.26);
   },
 };
 
@@ -405,6 +404,7 @@ export const brazier: PropSpec = {
   round: true,
   layer: "solid",
   height: 0.8,
+  light: { radius: 4.8, strength: 0.78, colour: "fire" },
   draw(k) {
     const r = k.w / 2;
     const bowl = k.ellipse(0, 0, r, r, 28);
@@ -425,10 +425,9 @@ export const brazier: PropSpec = {
         k.rng.chance(0.5) ? k.pal.fire.base : k.pal.fire.shade,
       );
     }
-    flame(k, [0, 0], r * 0.4, 0);
+    flame(k, [0, 0], r * 0.4);
     k.outline(coals, WEIGHT.detail, true);
     k.outline(bowl, WEIGHT.object, true);
-    k.glow([0, 0], 3, k.pal.fire.base, 0.3);
   },
 };
 
