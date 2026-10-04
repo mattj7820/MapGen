@@ -3,10 +3,13 @@
 //
 //   npx tsx scripts/readme-images.ts
 import { type Canvas, createCanvas } from "@napi-rs/canvas";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { generatePlateau } from "../src/battlemap/plateau/generate.js";
 import { plateauScene } from "../src/battlemap/plateau/scene.js";
 import { contactSheet, reviewSheet } from "../src/battlemap/review.js";
 import { sceneCrops } from "../src/battlemap/scene/crops.js";
+import { parseScene } from "../src/battlemap/scene/io.js";
 import { renderScene } from "../src/battlemap/scene/render.js";
 import { resolveScene } from "../src/battlemap/scene/resolve.js";
 import type { Scene } from "../src/battlemap/scene/scene.js";
@@ -55,3 +58,17 @@ const seeds = [1, 2, 4, 5, 6, 8].map((seed) => ({
   canvas: renderScene(plateauScene(generatePlateau({ seed, cols: 24, rows: 16 })), 32),
 }));
 await save("seeds.jpg", contactSheet(seeds));
+
+// Scenes: the sample buildings in scripts/samples/, written the way the /map skill
+// writes them.
+const sample = (name: string) =>
+  parseScene(readFileSync(path.join(REPO_ROOT, "scripts", "samples", `${name}.json`), "utf8"));
+const tavern = sample("tavern");
+await save("tavern.jpg", renderScene(tavern, 80));
+const tavernFull = renderScene(tavern, 256);
+await save("tavern-detail.jpg", crop(tavernFull, 256, [4.9, 6.4], 1200, 700));
+const buildings = ["tavern", "chapel", "house"].map((name) => ({
+  label: name,
+  canvas: renderScene(sample(name), 32),
+}));
+await save("buildings.jpg", contactSheet(buildings));

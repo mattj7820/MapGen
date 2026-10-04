@@ -5,10 +5,12 @@ of pixels per 5 ft square, and reproducible from a seed.
 
 ![A generated plateau battle map: a flat-topped orange rock plateau with a broken stone lip, rubble, scrub and cracks, a plank bridge to a neighbouring plateau, and a deep chasm around it](docs/images/plateau.jpg)
 
-MapGen is built to be run together with an AI coding agent (Claude Code). The agent
-renders a map, looks at it through a review sheet, judges it against a written style
-checklist, and changes the code until the map looks right, the way an artist works
-from contact sheets.
+MapGen is built to be run together with an AI coding agent (Claude Code). Describe a
+map in a sentence and the agent writes it as a scene, renders it, looks at it through
+a review sheet, judges it against a written style checklist, and fixes what's wrong,
+the way an artist works from contact sheets.
+
+![A two-room tavern: wooden floor, stone walls, a bar with stools and shelves, laid tables with benches and chairs, a hearth with a rug, a flagstone kitchen, barrels and sacks along the walls](docs/images/tavern.jpg)
 
 ## Why code instead of an image model
 
@@ -22,24 +24,82 @@ reliably give you:
   everything else.
 - **Reproducibility.** The same seed always gives the same map.
 
+## Maps from a description
+
+> A two-room tavern on a cobbled street: bar along the north wall, hearth in the
+> corner, a kitchen behind with a back door to an alley.
+
+Type `/map` and a description like that in Claude Code. The `/map` skill
+(`.claude/skills/map/`) plans the map on the grid and writes it as a **scene**: a
+short, high-level `layout.json`, all in squares:
+
+```json
+{
+  "type": "scene",
+  "squares": [22, 14],
+  "base": "cobbles",
+  "rooms": [
+    { "id": "hall", "rect": [1, 1, 14, 13], "floor": "wood", "wall": "stone" },
+    { "id": "kitchen", "rect": [14, 1, 20, 8], "floor": "flagstone", "wall": "stone" }
+  ],
+  "openings": [
+    { "kind": "double-door", "at": [7.5, 13] },
+    { "kind": "door", "at": [14, 5] }
+  ],
+  "props": [
+    { "kind": "bar", "at": [6, 2.7], "size": [6, 0.9], "dress": "drinks" },
+    { "kind": "hearth", "at": [1.7, 10.8], "facing": "east" },
+    { "kind": "table-round", "at": [6.9, 6.3], "dress": "meal" },
+    { "kind": "chair", "at": [6.9, 5.2], "rotation": 6 }
+  ],
+  "dressing": [{ "kind": "stores", "in": "kitchen", "amount": 0.9 }]
+}
+```
+
+Code works out the rest:
+
+- **Walls**: rooms that share a wall line share one wall; corners and T-joins close
+  up; doors, windows and archways are cut into whichever wall they sit on.
+- **Props** come from a library of about fifty, each drawn once in the same hand:
+  furniture, a hearth and a cooking range, beds, pews and an altar, barrels and sacks,
+  and the small things that make a place feel used (plates with leftovers, mugs,
+  bottles, books, straw, spills, cobwebs).
+- **Dressing** fills in that clutter from seeds: `"dress": "meal"` lays a table with a
+  place setting in front of every chair; a room's `stores`, `litter` and `cobwebs`
+  stack sacks and crates along its walls, scatter the floor and web the corners, all
+  clear of doorways and furniture.
+- **Checks** run before anything is drawn: props in walls, blocked doorways, chairs
+  inside tables, a candle not on a surface, a door that isn't on a wall. Each problem
+  names the item and where it is.
+
+![Close-up at full size: a long table laid with plates of food, mugs and a wedge of cheese beside a bench, a round table with a candle, chairs pulled out at angles, straw and scraps on the floorboards](docs/images/tavern-detail.jpg)
+
+The same skill made a tavern, a small chapel and a city house from one-line
+descriptions (the scenes are in `scripts/samples/`):
+
+![Three buildings: a tavern on cobbles, a stone chapel with pews and an altar on grass, and a timber house with a bedroom, front room, kitchen and storeroom](docs/images/buildings.jpg)
+
 ## How it works
 
-Maps are made in two stages.
+Maps are made in two stages: a **scene** describes what's where, and a renderer draws
+it. Scenes come from the `/map` skill or from a generator. The plateau generator
+shows the generator side: it turns a seed into a scene.
 
-1. **Generate a layout.** A seed becomes a `layout.json` describing everything that
-   matters for play, measured in squares: plateau outlines, the bridge, cracks, and
-   each stone, shrub and lichen patch. Generation follows tested rules: the main
+1. **Generate a scene.** A seed becomes a `layout.json` describing everything that
+   matters for play, measured in squares: plateau outlines (raised rock over a void),
+   the bridge, cracks, and each stone, shrub and lichen patch. Generation follows tested rules: the main
    plateau covers 50–70% of the map with open chasm on at least two sides, neighbours
    sit across a real chasm, and a bridge always lands on rock at both ends.
-2. **Render it.** A small drawing toolkit (`src/style/`) turns the layout into ink and
+2. **Render it.** A small drawing toolkit (`src/style/`) turns the scene into ink and
    flat colour: a tapered, slightly wobbling brush; soft tone steps; shadows from a
    single top-left light; and two edge styles. Everything is drawn in square units, so
    a map looks the same at 140 or 256 px per square.
 
 ![Close-up at full size: angular grey stones with soft shadows, a branching crack with ink pooling at the forks, scrub, pebbles, and the broken stone lip at the plateau's edge](docs/images/detail.jpg)
 
-Every item carries its own seed. Removing one stone changes only the pixels around
-that stone, and the tests check it. That's what makes precise edits safe.
+Every item carries its own seed. Removing one stone, or moving a table with
+everything on it, changes only the pixels around it, and the tests check it. That's
+what makes precise edits safe.
 
 **Two edge styles**, shared by every map: `blocks`, a broken lip of chunky stones
 hatched on the shaded side, for hard rock edges; and `brushed`, a heavier ink line with
@@ -66,11 +126,15 @@ Requires Node 22.4 or newer.
 
 ```sh
 npm install
+npm run render -- output/tavern/layout.json      # draw a scene (checks it first)
+npm run props                                    # the prop catalogue, and a sheet of them all
 npm run map -- plateau --seed 7                  # 24x16 squares at 256 px per square
 npm run map -- plateau --seeds 1-6 --px 128      # several, plus a contact sheet
 npm run map -- plateau --seed 7 --edge brushed --bridge --squares 20x20
 npm run map -- --help                            # every option
 ```
+
+The scene format is documented in `.claude/skills/map/format.md`.
 
 Each map gets its own folder under `output/`:
 
@@ -78,7 +142,7 @@ Each map gets its own folder under `output/`:
 output/plateau-s7-24x16-256/
   plateau-s7.png     the map
   plateau-s7.json    grid sidecar for the tabletop app (same name as the map)
-  layout.json        the map's geometry, in squares, editable
+  layout.json        the scene, in squares, editable
   review.png         overview plus 1:1 crops, for judging the drawing
 ```
 
@@ -92,14 +156,16 @@ go:
 }
 ```
 
+A scene's map and sidecar are named after it (`tavern.png`, `tavern.json`).
+
 To change one thing without touching the rest, edit `layout.json` and redraw it:
 
 ```sh
 npm run render -- output/plateau-s7-24x16-256/layout.json
 ```
 
-The layout is checked first (nothing hanging over the chasm, bridges landing on rock),
-and nothing is drawn if there's a problem.
+The scene is checked first (nothing in a wall or hanging over the chasm, doorways
+clear, bridges landing on rock), and nothing is drawn if there's a problem.
 
 **MapGen only ever writes inside `output/`.** Every write goes through one guard that
 refuses any other path, including `output/` itself being a symlink or junction to
@@ -113,8 +179,8 @@ To try a different look without losing the layout, export it as flat shapes:
 npm run restyle -- output/plateau-s7-24x16-256/layout.json
 ```
 
-This writes `restyle.png` (every plateau, stone, scrub patch, crack and bridge in a
-plain colour that says what it is, about 2048 px wide) and `restyle-prompt.txt`, a
+This writes `restyle.png` (every region, wall, door, prop and stone in a plain colour
+that says what it is, about 2048 px wide) and `restyle-prompt.txt`, a
 ready-to-paste prompt with the colour key and the rules: keep every shape, strictly
 top-down, no grid lines. Give both to an image model along with a style reference.
 The grid sidecar is in fractions of the image, so it still lines up with the result
@@ -129,6 +195,10 @@ npm run check    # typecheck, formatting and tests: green before every commit
 The tests cover what matters without brittle pixel snapshots:
 
 - layout rules, checked across many seeds and map sizes
+- scene geometry: shared walls, joins, door cuts, facing
+- the scene checks, each one breaking a sound scene on purpose
+- dressing: always valid, and an added prop only removes what it lands on
+- every prop draws inside its own footprint and shadow, at any turn
 - the grid sidecar maths, by placing grid lines from the sidecar alone
 - pixel locality: editing one item changes only the pixels near it
 - the output guard, including real junctions pointing outside `output/`
@@ -139,9 +209,13 @@ src/
   geometry.ts, rng.ts      polygon maths, seeded randomness with per-feature forks
   style/                   the drawing toolkit shared by every map
   battlemap/               grid, sidecar, review sheets
-    plateau/               layout, generator, checks, renderer, palette
-  cli/                     the map, render and restyle commands, and the output guard
+    scene/                 the scene format, resolver, checks, dressing, renderer
+      props/               the prop library
+    plateau/               the plateau generator, which outputs a scene
+  cli/                     map, render, restyle and props commands, and the output guard
+.claude/skills/map/        the /map skill and the scene format reference
 scripts/readme-images.ts   makes the images in this README
+scripts/samples/           the sample scenes shown here
 ```
 
 The README images come from `npx tsx scripts/readme-images.ts`, which writes to

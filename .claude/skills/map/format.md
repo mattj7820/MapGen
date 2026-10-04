@@ -1,0 +1,170 @@
+# Scene format reference
+
+A scene is `output/<name>/layout.json`. Everything is in **squares** (one square is
+5 ft): x runs right, y runs down, (0, 0) is the map's top-left corner. Grid lines fall
+on whole numbers, so a room from (2, 2) to (12, 9) has its walls centred on grid lines.
+
+Anything marked _optional_ can be left out. Seeds are optional everywhere: an item
+without one gets a stable seed from its kind and position. Give an explicit `seed` only
+to try a different look for one item.
+
+```jsonc
+{
+  "type": "scene",
+  "name": "tavern", // optional: base name of the PNG and sidecar (plain words, no story names)
+  "squares": [22, 14], // [columns, rows]
+  "palette": "hearth", // optional: "hearth" (default; muted browns and greys) or "rust"
+  "base": "cobbles", // ground everywhere else; default "void"
+  "rooms": [],
+  "ground": [],
+  "walls": [],
+  "openings": [],
+  "props": [],
+  "dressing": [],
+  "scatter": [],
+  "cracks": [],
+}
+```
+
+## Ground
+
+Kinds: `wood`, `flagstone`, `cobbles`, `dirt`, `grass`, `rock`, `water`, `void`.
+`water` and `void` can't be stood on: props, scatter and doorways stay off them.
+
+- `base`: the whole map, under everything else. Use the ground outside the building
+  (`cobbles` for a street, `grass`, `dirt`), or `void` for a dungeon-style dark surround.
+- `ground`: regions painted over the base, in order, after room floors:
+
+```json
+{ "id": "yard", "kind": "dirt", "rect": [14, 8, 22, 14] }
+{ "kind": "water", "outline": [[3, 3], [6, 2.5], [8, 4], [7, 7], [4, 6.5]] }
+{ "id": "dais", "kind": "rock", "rect": [8, 2, 12, 4], "edge": "blocks" }
+```
+
+`rect` is `[x0, y0, x1, y1]`; `outline` is any closed list of points. `edge` draws a
+raised edge round the region: `blocks` (a broken lip of chunky stone) or `brushed` (a
+soft heavy line). `dirt`, `grass` and edgeless `rock` blend into what's round them;
+`wood`, `flagstone`, `cobbles` and `water` get a crisp ink edge. `id` is needed only if
+cracks or dressing refer to the region.
+
+## Rooms and walls
+
+A room is a floor plus a wall all round it:
+
+```json
+{ "id": "hall", "rect": [1, 1, 14, 13], "floor": "wood", "wall": "stone" }
+{ "id": "nave", "points": [[2, 2], [16, 2], [16, 6], [12, 6], [12, 10], [2, 10]], "floor": "flagstone", "wall": "stone" }
+```
+
+Wall kinds: `stone` (0.4 squares thick, a course of outlined blocks), `timber` (0.3,
+boards with posts at corners), `ruined` (broken blocks with rubble). Walls are centred
+on the line, so half of each wall's thickness is inside the room.
+
+Rooms that share a wall line share one wall: put them edge to edge
+(`[1,1,14,13]` and `[14,1,20,8]`). Corners and T-joins are closed by code.
+
+Free walls are lines of points (`closed` makes a loop):
+
+```json
+{
+  "kind": "ruined",
+  "points": [
+    [3, 10],
+    [9, 10],
+    [9, 13]
+  ]
+}
+```
+
+## Openings
+
+Each opening is centred on a point on a wall's centre line. Code finds the wall and
+cuts the gap.
+
+```json
+{ "kind": "door", "at": [7.5, 13] }
+{ "kind": "double-door", "at": [14, 5] }
+{ "kind": "window", "at": [1, 4] }
+{ "kind": "archway", "at": [10, 6], "width": 3 }
+```
+
+Default widths: door 1, double-door 2, window 1, archway 2. An opening must sit
+wholly on one straight wall, clear of corners and of walls joining it. Doors and
+archways need 0.75 squares of clear floor each side, and must lead onto walkable
+ground (or off the map).
+
+## Props
+
+```json
+{ "kind": "table-long", "at": [10.9, 6.4], "size": [3.2, 1.1], "rotation": 90, "dress": "meal" }
+{ "kind": "chair", "at": [6.9, 5.2], "rotation": 6 }
+{ "kind": "hearth", "at": [1.7, 10.8], "facing": "east" }
+```
+
+- `at` is the prop's centre.
+- At rotation 0 a prop's **front faces south** (down the map); its back is to the
+  north. `rotation` is degrees clockwise: 90 faces west, 180 north, 270 east. Or give
+  `facing`: `"north"`, `"east"`, `"south"`, `"west"`. A chair's front is the way the
+  sitter looks; a hearth's or shelf's back goes against the wall.
+- `size` is `[width, depth]` before turning, for resizable props only.
+- `dress` fills a surface (tables, counters, shelves, desks, chests, altars) with
+  small things: `meal`, `drinks`, `kitchen`, `study` or `clutter`. Laid tables get a
+  place setting in front of every seat within 0.9 squares of them.
+
+Run `npm run props` for the full catalogue (kinds, sizes, layers) and a sheet of every
+prop drawn in `output/props/props.png`.
+
+Layers decide what may overlap:
+
+| layer      | examples                         | rule                                                         |
+| ---------- | -------------------------------- | ------------------------------------------------------------ |
+| `floor`    | rug, stairs, straw, spill, broom | lies flat; anything may stand on it                          |
+| `seat`     | chair, stool, bench, pew         | may tuck under a table's edge, but its centre must be clear  |
+| `solid`    | tables, bar, barrel, bed, hearth | must not overlap other solid props                           |
+| `top`      | candle, lamp, plate, mug, book   | must stand on a solid prop that's a surface                  |
+| `overhead` | cobweb                           | hangs over everything                                        |
+| `bridge`   | bridge                           | spans water or void; both ends on two separate solid grounds |
+
+Every prop must be inside the map, on walkable ground, and out of the walls (touching
+is fine).
+
+## Dressing
+
+Fills a room or region (by `id`) with small things from its seed. Everything placed
+keeps clear of walls, doorways, props and scatter, so it never breaks the checks.
+
+```json
+{ "kind": "stores", "in": "kitchen", "amount": 0.9 }
+{ "kind": "litter", "in": "hall", "amount": 0.7 }
+{ "kind": "cobwebs", "in": "hall", "amount": 0.5 }
+```
+
+- `stores`: sacks, crates, barrels, baskets, buckets, firewood, pots and brooms in
+  clusters along the walls.
+- `litter`: straw, spills and dropped food on the floor.
+- `cobwebs`: in the inside corners.
+
+`amount` runs from 0 to 1 (default 0.5).
+
+## Scatter and cracks
+
+For outdoor ground: loose `stone`s, `shrub`s and `lichen`, each with a `radius` in
+squares (a rubble stone is 0.1–0.5; a boulder 0.5–0.8).
+
+```json
+{ "kind": "stone", "at": [4.2, 9.1], "radius": 0.3 }
+```
+
+Cracks are point lists on a region (by `id`), with an optional `weight` (1 for main
+cracks, less for branches):
+
+```json
+{
+  "region": "dais",
+  "points": [
+    [8.5, 2.5],
+    [9.2, 2.9],
+    [9.8, 3.6]
+  ]
+}
+```

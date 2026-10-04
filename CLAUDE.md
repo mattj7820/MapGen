@@ -1,8 +1,9 @@
 # MapGen: guide for Claude
 
 A local tool for making true top-down D&D battle maps in code. Matt runs it with
-Claude Code as the operator: Claude renders a map, looks at the PNG, judges it against
-the style checklist below, and iterates. Finished maps are copied into Matt's Obsidian
+Claude Code as the operator: Matt describes a map, Claude writes it as a scene (the
+`/map` skill), renders it, looks at the PNG, judges it against the style checklist
+below, and iterates. Finished maps are copied into Matt's Obsidian
 vault **by hand**; his separate app, Guildhall, turns them into interactive maps.
 
 ## Hard rules
@@ -18,8 +19,8 @@ vault **by hand**; his separate app, Guildhall, turns them into interactive maps
   samples come from anonymous seeds.
 - **No third-party map art.** Everything is drawn by code. Never copy assets or
   textures from Dungeondraft or the reference images.
-- **Keep it small.** Build only the map types that exist. No plugin systems or
-  speculative abstractions for future map types.
+- **Keep it small.** Build only what maps actually use. No plugin systems or
+  speculative abstractions for future map kinds.
 
 ## References are style, not content
 
@@ -54,20 +55,23 @@ npm run typecheck   # tsc --noEmit
 npm run format      # prettier --write
 ```
 
-Making maps (`--help` on either command lists every option):
+Making maps (`--help` on any command lists every option):
 
 ```sh
+npm run render -- output/<map folder>/layout.json  # draw a scene (checks it first)
+npm run props                                      # prop catalogue + output/props/props.png
 npm run map -- plateau --seed 7                    # one map, 24x16 at 256 px
 npm run map -- plateau --seeds 1-6 --px 128        # several, plus a contact sheet
 npm run map -- plateau --seed 7 --edge brushed --bridge --squares 20x20
 npm run map -- plateau --seed 7 --reference references/MountainPath.png@2956,1906
-npm run render -- output/<map folder>/layout.json  # redraw after editing the layout
 npm run restyle -- output/<map folder>/layout.json # flat export + prompt for an image model
 ```
 
 - With no seed, `map` picks a random one; it appears in the folder name.
-- `render` runs `checkLayout` first and draws nothing if there are problems. It marks
-  the sidecar `"edited": true`, because the seed alone no longer reproduces the map.
+- `render` runs `checkScene` first and draws nothing if there are problems. For a
+  generated map (`"generator": "plateau"`) it marks the sidecar `"edited": true`,
+  because the seed alone no longer reproduces it. Old plateau-format `layout.json`
+  files still render: they're converted on read.
 - `--reference` adds a 1:1 crop of another image to the review sheet, for comparing
   line weight. `MountainPath.png@2956,1906` is a good rock-edge crop from Matt's
   references.
@@ -81,15 +85,17 @@ Tests write only under `output/.test/` and clean up after themselves.
 
 - **Stack:** TypeScript (strict, ESM) on Node, run with `tsx`, tested with `vitest`.
   Drawing uses `@napi-rs/canvas` (Skia, with prebuilt Windows binaries).
-- **Two stages:** `generatePlateau()` turns a seed into a layout (all geometry in
-  squares); `renderPlateau()` draws a layout. Edits such as "widen that chasm" are
-  precise changes to the layout followed by a re-render. Every plateau and item has
-  its own seed, so editing one leaves the rest of the image pixel-identical (tested).
+- **Two stages:** a **scene** (`layout.json`, type `Scene`) says what's where, in
+  squares; `renderScene()` draws it. Scenes come from the `/map` skill (written by
+  Claude from a description) or from a generator (`generatePlateau()` →
+  `plateauScene()`). Edits such as "widen that chasm" or "move the bar" are precise
+  changes to the scene followed by a re-render. Every item has its own seed, so
+  editing one leaves the rest of the image pixel-identical (tested).
 - **`src/geometry.ts`**, **`src/rng.ts`:** polygon maths and seeded randomness.
 - **`src/style/`:** the drawing toolkit shared by every kind of map, so everything
   looks like it came from the same hand:
   - `paper.ts`: a canvas scaled so one unit is one square, plus the fast soft-shape
-    helpers (`softPoly`, `lowres`)
+    helpers (`softPoly`, `softShapes`, `softStroke`, `lowres`)
   - `ink.ts`: the ink colour, line weights (in squares), the brush, hatching
   - `edges.ts`: the `blocks` and `brushed` edge styles
   - `shading.ts`: tone steps and the inner edge shade
@@ -97,12 +103,26 @@ Tests write only under `output/.test/` and clean up after themselves.
   - `shapes.ts`, `details.ts`, `colour.ts`, `noise.ts`: helpers
 - **`src/battlemap/`:** what battlemaps share: `grid.ts`, `sidecar.ts`, `review.ts`
   (review and contact sheets).
-- **Battlemap types** (only `src/battlemap/plateau/` for now) own their layout
-  (`layout.ts`, `generate.ts`, `check.ts`), drawing (`render.ts`), palette
-  (`palette.ts`) and review crops (`crops.ts`).
+- **`src/battlemap/scene/`:** the scene, for every battlemap:
+  - `scene.ts`: the format (types and kinds); `io.ts` parses it with defaults
+  - `resolve.ts`: works out geometry once for checks and drawing alike: room floors,
+    merged walls, joins, opening cuts, prop footprints, then dressing
+  - `place.ts`: shared shapes (prop footprints, wall rects, doorway clearance)
+  - `dressing.ts`: surface dressing and room dressing, from seeds
+  - `check.ts`: `checkScene()`, every rule as a readable sentence
+  - `ground.ts`, `walls.ts`, `scatter.ts`, `render.ts`: drawing
+  - `palette.ts`: palettes (colour roles for every ground, wall and material)
+  - `crops.ts`: review crops; `flat.ts`: the restyle export
+  - `props/`: the prop library (`library.ts` lists them; `kit.ts` is what props draw
+    with; `materials.ts` shared wood tones and wear)
+- **`src/battlemap/plateau/`:** the plateau generator (`generate.ts`, its rules in
+  `layout.ts`, outline shapes in `shape.ts`), `scene.ts` to turn its output into a
+  scene, and `io.ts` to read old plateau layouts.
+- **`.claude/skills/map/`:** the `/map` skill (`SKILL.md`) and the scene format
+  reference (`format.md`).
 - **Other kinds of map** (region and world maps) are expected later. They'll reuse
-  `style/` but not the grid or sidecar. Don't build a "map kinds" layer until the
-  first one is actually being built.
+  `style/` but not the grid, sidecar or scenes. Don't build a "map kinds" layer until
+  the first one is actually being built.
 
 ## Decisions so far
 
@@ -110,8 +130,31 @@ Tests write only under `output/.test/` and clean up after themselves.
   outlined blocks, hatched on the shadow side) suits hard rock edges and broken walls;
   `brushed` (a heavier ink edge that blends softly) suits grass banks, dunes and
   shorelines. The plateau defaults to `blocks`, and `--edge` switches it.
-- **Plateau palette:** `rust` from the prototype (warm orange-tan top, brown rim,
-  dark red-brown void). Palettes belong to the map type, not to `style/`.
+- **Palettes:** `rust` from the plateau prototype (warm orange-tan top, brown rim,
+  dark red-brown void), and `hearth` (the default: muted browns and greys) for
+  buildings. A palette gives every ground, wall and material its tones. Palettes
+  belong to scenes, not to `style/`.
+- **Scenes (this round):**
+  - One format, `layout.json`, for every battlemap; the file keeps its old name.
+  - Hand-written scenes may leave out seeds and lists; a missing seed comes from the
+    item's kind and position (`io.ts`), so it's stable.
+  - Rotation: a prop's front faces south at 0, degrees clockwise (90 west, 180 north,
+    270 east); `facing` is accepted too. Size is `[width, depth]` before turning.
+  - Walls are centred on their lines: stone 0.4, timber 0.3, ruined 0.4 squares thick.
+    Collinear walls of one kind merge; ends that touch another wall reach into it by
+    half the thicker wall. Drawn as one joined shape: ink round every piece first,
+    then every fill on top.
+  - Room floors are painted before `ground` regions, so a region can sit inside a room
+    (a flagstone patch on a wooden floor).
+  - Prop layers (`floor`, `seat`, `solid`, `top`, `bridge`, `overhead`) decide what may
+    overlap; the checks enforce them.
+  - Doorways need 0.75 squares clear each side and must lead onto walkable ground.
+  - Dressing keeps clear of everything by construction: candidates come from the
+    owner's seed regardless of the rest of the scene, then colliders are dropped. So
+    adding a prop only removes the dressing it lands on (tested).
+  - Firelight is a soft screen-blended glow, clipped to the room it's in so it never
+    leaks through walls. A real lighting pass (ambient darkness, pools of light) is
+    deferred: Matt asked for density and detail first.
 - **Prototype findings to carry forward:**
   - Tone blotches were too contrasty ("camouflage") at overview size. Use softer
     steps and larger shapes.
@@ -141,9 +184,12 @@ One folder per map:
 output/plateau-s7-24x16-256/
   plateau-s7.png     the map: copy this and the .json into the vault
   plateau-s7.json    sidecar (same base name)
-  layout.json        editable geometry
+  layout.json        the scene: editable
   review.png         Claude's inspection sheet, not for the vault
 ```
+
+A scene's base name is its `name` (a plain description like `tavern`), or its folder's
+name. `/map` scenes go in `output/<name>/`.
 
 The image is exactly `squares × px` in size, with the grid aligned to the top-left
 corner. Sidecar:
@@ -163,29 +209,45 @@ corner. Sidecar:
 
 `grid` matches Guildhall's grid shape exactly: `square` is one square's side as a
 fraction of the image **width**, `origin` is a point where two grid lines cross (as
-fractions of the image), and `lines` is line strength from 0 to 1.
+fractions of the image), and `lines` is line strength from 0 to 1. `source.generator`
+is `plateau` for generated maps and `scene` for scenes written by hand.
 
-## Editing layouts
+## Scenes and editing them
 
-`layout.json` (type `PlateauLayout` in `src/battlemap/plateau/layout.ts`) is in squares:
-x right, y down, origin at the map's top-left corner. Plateau 0 is the main plateau.
-Outlines are closed point lists about a quarter of a square apart. Every stone, shrub,
-lichen patch, plateau and bridge has its own `seed` for drawing detail.
+The full format is in `.claude/skills/map/format.md`; read it before writing a scene.
+In short: `base` ground, `ground` regions, `rooms` (a rect or points, a floor kind and
+a wall kind), free `walls`, `openings` placed on a wall's centre line, `props` by kind,
+position and facing (with optional `size` and `dress`), room `dressing`, outdoor
+`scatter` and `cracks`. All in squares: x right, y down, origin at the top-left corner.
 
-To make a change Matt asks for ("widen that chasm", "add a bridge here"), edit the
-layout with a small script rather than regenerating it, so everything else stays put:
+To make a change Matt asks for, edit the scene rather than regenerating it, so
+everything else stays put:
 
-- **Widen a chasm:** move the outline points of one plateau that face the other
-  plateau away from it, fading the move out along the outline so the edge stays
-  smooth.
-- **Add a bridge:** add an entry to `bridges` with `width: 1` and each end reaching
-  0.5–1 square onto rock.
-- **Remove clutter:** delete entries.
+- **Move, add or remove a prop or opening:** change its entry. Dressing round it
+  adjusts itself.
+- **Widen a chasm (plateau maps):** move the outline points of one rock region that
+  face the other away from it, fading the move out along the outline so the edge
+  stays smooth.
+- **Add a bridge:** a `bridge` prop with `size: [1, length]`, turned to point from
+  one bank to the other, each end reaching 0.5–1 square onto rock.
+- **Change one item's look:** give it a new `seed`.
 
-Then run `checkLayout()` (`src/battlemap/plateau/check.ts`). It catches items left
-hanging over the chasm, bridge ends off rock, overlapping plateaus and cracks running
-off edges. Fix what it reports (usually by deleting the stranded items) before
-rendering.
+Then render: it runs `checkScene()` first (props in walls or off the ground, blocked
+doorways, overlapping furniture, a candle not on a surface, items hanging over the
+chasm, bridge ends off rock, cracks running off edges) and lists what to fix.
+
+## Adding a prop
+
+1. Write a `PropSpec` in the right file under `src/battlemap/scene/props/`
+   (`tavern.ts`, `furnishings.ts`, `tableware.ts`, `stores.ts`): an `about` line, a
+   default `size` in squares, `layer`, `height` (for its shadow), and whether it's
+   `resizable`, `round` or a `surface`.
+2. Draw it in `draw(k)`, in its own coordinates: centred on (0, 0), `k.w` wide and
+   `k.d` deep, front towards +y. Use the kit: `shadow`, then `body`/`solid` for flat
+   colour with soft shading, `boards` and `line` for detail, `outline` last.
+   `k.rng` gives variety from the prop's seed. Colours come from `k.pal` roles, never
+   literals. Keep everything inside the footprint plus its shadow; a test checks it.
+3. List it in `props/library.ts`. Run `npm run props` and look at the sheet at 1:1.
 
 ## Looking at renders
 
@@ -258,11 +320,26 @@ Checklist for every look review:
    the edge style, rules, and how the sidecar still lines up). The prompt describes
    drawing only, never story or setting.
 
-All planned steps are done. New work: more map types, or the ideas below.
+9. Scenes: a general scene format written by Claude from a description, walls with
+   joins and openings, a prop library with dressing for a lived-in feel, scene checks,
+   the plateau generator outputting scenes, and the `/map` skill. Done. Proof maps (a
+   tavern, a chapel, a city house) are in `scripts/samples/`. Matt's feedback after
+   the first prototype: density and small detail matter most, lighting can wait.
+
+New work: more props and map kinds as Matt asks, or the ideas below.
 
 ## Future ideas
 
 Not planned yet; raise them with Matt before starting.
+
+- **Lighting pass** (Matt: "nice to have, can come later"): an ambient darkness level
+  per scene, with pools of warm light round every lamp, candle, hearth and window, as
+  in the painted tavern reference he shared.
+- **Cave walls**, for mines and caverns: an irregular rock-mass wall kind round a
+  walkable floor, plus mine props (timber supports, rails, carts, ore, lanterns) and
+  `rubble`/`ore` dressing. The scene format and dressing already fit this.
+- **Material wear on floors**: worn paths, scuffs and damaged boards on top of the
+  spills and straw that `litter` gives now.
 
 - **Slight variation in terrain height** across a plateau top (Matt, after step 6).
   It's hard to show convincingly in a true top-down view. A possible approach:
