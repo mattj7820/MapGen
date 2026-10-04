@@ -15,6 +15,7 @@ import {
   wardrobe,
 } from "./furnishings.js";
 import { single } from "./family.js";
+import { BOOKS } from "./families/books.js";
 import { CONTAINERS } from "./families/containers.js";
 import { DEBRIS } from "./families/debris.js";
 import { FURNITURE } from "./families/furniture.js";
@@ -26,6 +27,7 @@ import { STRUCTURE } from "./families/structure.js";
 import { GRAVEYARD } from "./families/graveyard.js";
 import { PRISON } from "./families/prison.js";
 import { RELIGIOUS } from "./families/religious.js";
+import { MAGIC } from "./families/magic.js";
 import type { LibraryProp } from "./spec.js";
 import {
   basket,
@@ -139,6 +141,8 @@ export const PROPS: Record<string, LibraryProp> = merge(
   RELIGIOUS,
   GRAVEYARD,
   PRISON,
+  MAGIC,
+  BOOKS,
 );
 
 /** Join groups of props, refusing a kind that two of them define. */
