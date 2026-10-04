@@ -247,5 +247,18 @@ Checklist for every look review:
 
    Further rounds are driven by Matt's feedback on real maps.
 
-7. README polish with anonymous sample images.
+7. README polish with anonymous sample images. Done. The images come from
+   `npx tsx scripts/readme-images.ts` (seeds only, never references), which writes to
+   `output/readme/`; copy them into `docs/images/` by hand. Regenerate them when the
+   look changes noticeably.
 8. Later: a flat-colour layout export for restyling with an image model.
+
+## Future ideas
+
+Not planned yet; raise them with Matt before starting.
+
+- **Slight variation in terrain height** across a plateau top (Matt, after step 6).
+  It's hard to show convincingly in a true top-down view. A possible approach:
+  layout-level "rises" (soft polygons a little higher than the ground around them),
+  drawn as a faint lighter tone on the side facing the light, a darker one on the far
+  side, and a short `blocks`-style step edge along their downhill side.

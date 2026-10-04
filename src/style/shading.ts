@@ -26,7 +26,9 @@ export function toneSteps(
   softness: number,
   area: Rect,
 ): void {
-  const perSquare = paper.px / 8; // low-res pixels per square
+  // Low-res pixels per square. The floor keeps small maps from showing blocky steps,
+  // since the grid would otherwise get coarse enough to see at under ~100 px per square.
+  const perSquare = Math.max(paper.px / 8, 16);
   const w = Math.ceil(paper.cols * perSquare);
   const h = Math.ceil(paper.rows * perSquare);
   const c = createCanvas(w, h);
@@ -53,7 +55,7 @@ export function toneSteps(
   lg.putImageData(img, 0, 0);
   const soft = createCanvas(w, h);
   const sg = soft.getContext("2d");
-  sg.filter = `blur(${softness * perSquare}px)`;
+  sg.filter = `blur(${Math.max(softness * perSquare, 1)}px)`;
   sg.drawImage(c, 0, 0);
   drawScaledUp(paper, soft);
 }
