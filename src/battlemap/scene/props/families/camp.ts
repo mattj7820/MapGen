@@ -641,6 +641,6 @@ export const CAMP: Record<string, LibraryProp> = {
   ...furs,
   ...cooking,
   ...renamed(seats, { "log-seat-stool": "camp-stool" }),
-  ...renamed(packs, { "pack-gear": "gear-pile" }),
+  ...renamed(packs, { "pack-gear": "camp-gear" }),
   ...leanTos,
 };

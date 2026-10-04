@@ -455,33 +455,6 @@ const gardenBenches = family({
   }),
 });
 
-const hitchingRails = family({
-  base: "hitching-rail",
-  category: "outdoors",
-  tags: "stable tavern market farm wood",
-  axes: {},
-  spec: () => ({
-    about: "a hitching rail for horses: a pole on two posts, east to west at rotation 0",
-    size: [2, 0.3],
-    resizable: true,
-    layer: "solid",
-    height: 0.9,
-    draw: (k) => {
-      const [w] = [k.w];
-      rail(k, [-w / 2 + 0.05, 0], [w / 2 - 0.05, 0], 0.08);
-      for (const s of [-1, 1]) post(k, [s * (w / 2 - 0.15), 0], 0.07, 1);
-      k.line(
-        [
-          [-w * 0.1, 0],
-          [-w * 0.05, 0.13],
-        ],
-        0.02,
-        k.pal.burlap.shade,
-      );
-    },
-  }),
-});
-
 const milestones = family({
   base: "milestone",
   category: "outdoors",
@@ -705,7 +678,6 @@ export const OUTDOORS: Record<string, LibraryProp> = {
     ]),
   ),
   ...gardenBenches,
-  ...hitchingRails,
   ...milestones,
   ...outhouses,
   ...woodpiles,

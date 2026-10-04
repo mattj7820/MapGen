@@ -193,60 +193,6 @@ const haystacks = family({
   }),
 });
 
-const bales = family({
-  base: "hay-bale",
-  category: "farm",
-  tags: "farm stable",
-  axes: { count: ["one", "stack"] },
-  spec: ({ count }) => ({
-    about:
-      count === "one"
-        ? "a tied rectangular bale of hay"
-        : "a stack of hay bales, the top ones crosswise",
-    size: count === "one" ? [1, 0.55] : [1.6, 1.2],
-    layer: "solid",
-    height: count === "one" ? 0.4 : 1,
-    surface: count === "one",
-    draw: (k) => {
-      const hay = k.tones(mix(k.pal.straw, k.pal.food.bread, 0.15));
-      const bale = (at: Pt, a: number, bw: number, bd: number, h: number) => {
-        const body = turn(k.rect(-bw / 2, -bd / 2, bw / 2, bd / 2), at, a);
-        k.shadow(body, h);
-        k.body(body, hay, 0.05);
-        k.clip(body);
-        for (let i = 0; i < 26; i++) {
-          const p: Pt = [k.rng.range(-0.48, 0.48) * bw, k.rng.range(-0.48, 0.48) * bd];
-          k.line(
-            turn([p, [p[0] + k.rng.range(0.05, 0.12), p[1] + k.rng.range(-0.02, 0.02)]], at, a),
-            WEIGHT.detail * 0.45,
-            k.rng.chance(0.5) ? hay.shade : hay.light,
-          );
-        }
-        k.unclip();
-        for (const f of [-0.25, 0.25])
-          k.line(
-            turn(
-              [
-                [f * bw, -bd / 2],
-                [f * bw, bd / 2],
-              ],
-              at,
-              a,
-            ),
-            0.02,
-            mix(k.pal.burlap.shade, INK, 0.3),
-          );
-        k.outline(body, WEIGHT.object);
-      };
-      if (count === "one") return bale([0, 0], 0, k.w, k.d, 0.4);
-      const [w, d] = [k.w, k.d];
-      bale([-w * 0.2, d * 0.22], 0, w * 0.6, d * 0.42, 0.4);
-      bale([w * 0.2, d * 0.22], 0.03, w * 0.6, d * 0.42, 0.4);
-      bale([0, -d * 0.18], -0.05, w * 0.62, d * 0.44, 0.8);
-    },
-  }),
-});
-
 const stooks = family({
   base: "stook",
   category: "farm",
@@ -547,49 +493,6 @@ const querns = family({
   }),
 });
 
-const hives = family({
-  base: "beehive",
-  category: "farm",
-  tags: "farm forest wicker",
-  axes: { kind: ["skep", "box"] },
-  spec: ({ kind }) => ({
-    about:
-      kind === "skep" ? "a domed straw beehive (skep)" : "a wooden box beehive with a pitched lid",
-    size: kind === "skep" ? [0.6, 0.6] : [0.6, 0.5],
-    round: kind === "skep",
-    layer: "solid",
-    height: 0.5,
-    draw: (k) => {
-      const [w, d] = [k.w, k.d];
-      if (kind === "skep") {
-        const r = w / 2;
-        const dome = k.ellipse(0, 0, r, r, 28);
-        const straw = k.tones(mix(k.pal.straw, k.pal.wood.light, 0.3));
-        k.shadow(dome, 0.5);
-        k.body(dome, straw, r * 0.3);
-        for (let i = 1; i <= 4; i++)
-          k.outline(k.ellipse(0, 0, r * i * 0.22, r * i * 0.22, 24), WEIGHT.detail * 0.6, true);
-        k.outline(dome, WEIGHT.object, true);
-      } else {
-        const lid = k.rect(-w / 2, -d / 2, w / 2, d / 2);
-        k.shadow(lid, 0.5);
-        k.body(lid, paleWood(k), 0.03);
-        k.soft(k.rect(-w / 2, -d / 2, w / 2, 0), withAlpha(paleWood(k).light, 0.6), 0.03);
-        k.line(
-          [
-            [-w / 2, 0],
-            [w / 2, 0],
-          ],
-          WEIGHT.detail,
-        );
-        k.outline(lid);
-      }
-      for (let i = 0; i < 5; i++)
-        k.dot([k.rng.range(-0.6, 0.6) * w, k.rng.range(-0.6, 0.6) * d], 0.012, INK);
-    },
-  }),
-});
-
 const compost = family({
   base: "compost-heap",
   category: "farm",
@@ -676,13 +579,11 @@ const ploughs = family({
 export const FARM: Record<string, LibraryProp> = {
   ...crops,
   ...haystacks,
-  ...bales,
   ...stooks,
   ...scarecrows,
   ...tools,
   ...churns,
   ...querns,
-  ...hives,
   ...compost,
   ...ploughs,
 };

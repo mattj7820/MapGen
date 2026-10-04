@@ -3,7 +3,7 @@ import { checkScene } from "../../../src/battlemap/scene/check.js";
 import { parseScene } from "../../../src/battlemap/scene/io.js";
 import { lightSources, occluders, visibility } from "../../../src/battlemap/scene/lighting.js";
 import { resolveScene } from "../../../src/battlemap/scene/resolve.js";
-import { contains, distance, edgeDistance } from "../../../src/geometry.js";
+import { contains, edgeDistance } from "../../../src/geometry.js";
 
 /** Two cave chambers that run into each other, and a third one apart from them. */
 const caves = (props: object[] = []) =>

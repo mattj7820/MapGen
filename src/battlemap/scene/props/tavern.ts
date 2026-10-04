@@ -1,5 +1,5 @@
 import type { Pt } from "../../../geometry.js";
-import { mix, withAlpha } from "../../../style/colour.js";
+import { mix } from "../../../style/colour.js";
 import { INK, WEIGHT } from "../../../style/ink.js";
 import { lobed } from "../../../style/shapes.js";
 import { darkWood, paleWood, wear } from "./materials.js";

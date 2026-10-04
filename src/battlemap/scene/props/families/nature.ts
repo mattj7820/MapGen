@@ -581,47 +581,6 @@ const boulders = family({
   }),
 });
 
-const standingStones = family({
-  base: "standing-stone",
-  category: "nature",
-  tags: "forest graveyard cult ruins snow stone",
-  axes: { state: ["plain", "carved", "fallen"] },
-  spec: ({ state }) => ({
-    about:
-      state === "fallen"
-        ? "a standing stone fallen flat, lying east to west at rotation 0"
-        : `a tall standing stone${state === "carved" ? " cut with spiral marks" : ""}`,
-    size: state === "fallen" ? [2.2, 0.8] : [0.9, 0.6],
-    layer: "solid",
-    height: state === "fallen" ? 0.5 : 2,
-    draw: (k) => {
-      const [w, d] = [k.w, k.d];
-      const stone = k
-        .rounded(-w / 2, -d / 2, w / 2, d / 2, Math.min(w, d) * 0.3)
-        .map(([x, y]): Pt => [x + k.rng.range(-0.02, 0.02), y + k.rng.range(-0.02, 0.02)]);
-      k.shadow(stone, state === "fallen" ? 0.5 : 2, state === "fallen" ? 0.4 : 0.3);
-      k.body(stone, k.tones(mix(k.pal.stone.base, k.pal.ore.base, 0.4)), Math.min(w, d) * 0.2);
-      k.soft(k.lit(stone, 0.04, 0.6), withAlpha(k.pal.stone.light, 0.6), 0.04);
-      if (state === "carved") {
-        const spiral: Pt[] = [];
-        for (let i = 0; i < 30; i++) {
-          const a = i * 0.45;
-          const r = 0.01 + i * 0.006;
-          spiral.push([Math.cos(a) * r, Math.sin(a) * r]);
-        }
-        k.line(spiral, WEIGHT.detail * 0.9, mix(k.pal.stone.shade, INK, 0.4));
-      }
-      for (let i = 0; i < 4; i++) {
-        k.fill(
-          lobed(k.rng, [k.rng.range(-0.4, 0.4) * w, k.rng.range(-0.3, 0.3) * d], 0.04),
-          withAlpha(mix(k.pal.lichen, k.pal.stone.shade, 0.3), 0.55),
-        );
-      }
-      k.outline(stone, WEIGHT.object * 1.1, true);
-    },
-  }),
-});
-
 const outcrops = family({
   base: "rock-outcrop",
   category: "nature",
@@ -1177,7 +1136,6 @@ export const NATURE: Record<string, LibraryProp> = {
   ...logs,
   ...bushes,
   ...boulders,
-  ...standingStones,
   ...outcrops,
   ...reeds,
   ...ferns,

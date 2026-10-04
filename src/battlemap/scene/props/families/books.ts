@@ -4,7 +4,7 @@ import { INK, WEIGHT } from "../../../../style/ink.js";
 import type { Tones } from "../../palette.js";
 import { family } from "../family.js";
 import type { PropKit } from "../kit.js";
-import { darkWood, paleWood } from "../materials.js";
+import { darkWood } from "../materials.js";
 import type { LibraryProp } from "../spec.js";
 import { ring } from "./parts.js";
 
