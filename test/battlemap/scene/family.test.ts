@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CATEGORIES, TAGS } from "../../../src/battlemap/scene/props/catalogue.js";
 import { family } from "../../../src/battlemap/scene/props/family.js";
 import { PROPS } from "../../../src/battlemap/scene/props/library.js";
+import { MENUS } from "../../../src/battlemap/scene/dressing.js";
 
 const draw = () => {};
 
@@ -58,6 +59,17 @@ describe("the library's catalogue", () => {
       for (const t of spec.tags) expect(TAGS as readonly string[], kind).toContain(t);
       expect(spec.about.length, kind).toBeGreaterThan(5);
       expect(kind, kind).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+    }
+  });
+});
+
+describe("surface dressing menus", () => {
+  it("only set out small things that exist and stand on surfaces", () => {
+    for (const [name, menu] of Object.entries(MENUS)) {
+      for (const kind of [...menu.place, ...menu.middle]) {
+        expect(PROPS[kind], `${name}: ${kind}`).toBeDefined();
+        expect(PROPS[kind]!.layer, `${name}: ${kind}`).toBe("top");
+      }
     }
   });
 });

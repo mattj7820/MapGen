@@ -112,7 +112,10 @@ ground (or off the map).
   sitter looks; a hearth's or shelf's back goes against the wall.
 - `size` is `[width, depth]` before turning, for resizable props only.
 - `dress` fills a surface (tables, counters, shelves, desks, chests, altars) with
-  small things: `meal`, `drinks`, `kitchen`, `study` or `clutter`. Laid tables get a
+  small things: `meal`, `drinks`, `kitchen`, `study`, `clutter`, `alchemy` (glassware
+  and ingredients), `arcane` (tomes, scrolls, a skull, a crystal ball), `workshop`
+  (hand tools), `maps` (charts and letters), `treasure` (coin, coffers, gems) or
+  `offerings` (candles and offering bowls, for altars and shrines). Laid tables get a
   place setting in front of every seat within 0.9 squares of them.
 
 The library has hundreds of props, many in families of variants named from their

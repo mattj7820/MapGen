@@ -77,7 +77,89 @@ function radius(p: ResolvedProp): number {
 // ---------------------------------------------------------------- on surfaces
 
 /** What each kind of dressing sets out: per place at the table, and in the middle. */
-const MENUS: Record<SurfaceDressing, { place: string[]; middle: string[]; perSquare: number }> = {
+export const MENUS: Record<
+  SurfaceDressing,
+  { place: string[]; middle: string[]; perSquare: number }
+> = {
+  // An alchemist's bench: glassware, jars of ingredients, a mortar, notes.
+  alchemy: {
+    place: [],
+    middle: [
+      "flask",
+      "flask-green-bubbling",
+      "flask-red-vial",
+      "flask-amber-square",
+      "flask-violet",
+      "jar-glass-herbs",
+      "jar-glass-powder",
+      "specimen-jar",
+      "mortar",
+      "papers",
+      "candle-stub",
+      "flask-green",
+      "flask-red",
+    ],
+    perSquare: 3,
+  },
+  // A wizard's table: tomes and scrolls, an hourglass, a skull, a crystal ball.
+  arcane: {
+    place: [],
+    middle: [
+      "open-book",
+      "book-stack",
+      "scroll-open",
+      "scroll",
+      "hourglass",
+      "skull",
+      "candles",
+      "crystal-ball",
+      "quill-and-ink",
+      "specimen-jar-creature",
+      "wand",
+      "papers",
+    ],
+    perSquare: 2.2,
+  },
+  // A workbench: hand tools laid out.
+  workshop: {
+    place: [],
+    middle: ["hammer", "mallet", "chisel", "saw", "tongs", "hand-plane", "box", "candle-stub"],
+    perSquare: 2,
+  },
+  // A planning table: charts, letters and something to weigh them down.
+  maps: {
+    place: [],
+    middle: ["map", "letter", "quill-and-ink", "candle-stub", "map-sea", "letter-open", "mug"],
+    perSquare: 1.2,
+  },
+  // A counting table or hoard: coin, coffers, open boxes of gems, a ledger.
+  treasure: {
+    place: [],
+    middle: [
+      "coins",
+      "coins",
+      "coffer-open",
+      "box-open-gems",
+      "ledger",
+      "coffer",
+      "box-open-gold",
+      "candle",
+    ],
+    perSquare: 2.4,
+  },
+  // An altar or shrine: candles, offering bowls, a reliquary.
+  offerings: {
+    place: [],
+    middle: [
+      "candles",
+      "offering-bowl",
+      "offering-bowl-coins",
+      "reliquary",
+      "candle",
+      "offering-bowl-ash",
+    ],
+    perSquare: 2,
+  },
   meal: {
     place: ["plate", "mug", "cutlery"],
     middle: ["bread", "roast", "cheese", "jug", "fruit", "bowl", "candle-stub", "bottle", "bowl"],

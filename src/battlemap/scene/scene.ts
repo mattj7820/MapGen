@@ -161,7 +161,19 @@ export interface Prop {
 }
 
 /** What `dress` lays on a table, counter or other surface. */
-export const SURFACE_DRESSINGS = ["meal", "drinks", "kitchen", "study", "clutter"] as const;
+export const SURFACE_DRESSINGS = [
+  "meal",
+  "drinks",
+  "kitchen",
+  "study",
+  "clutter",
+  "alchemy",
+  "arcane",
+  "workshop",
+  "maps",
+  "treasure",
+  "offerings",
+] as const;
 export type SurfaceDressing = (typeof SURFACE_DRESSINGS)[number];
 
 /**
