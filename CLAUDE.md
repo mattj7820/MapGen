@@ -57,7 +57,7 @@ npm run format      # prettier --write
 Planned (not built yet):
 
 ```sh
-npm run map -- plateau --seed 7 [--squares 24x16] [--px 256] [--bridge | --no-bridge] [--seeds 1-6]
+npm run map -- plateau --seed 7 [--squares 24x16] [--px 256] [--edge blocks|brushed] [--bridge | --no-bridge] [--seeds 1-6]
 npm run render -- output/<map-folder>/layout.json   # re-render after editing the layout
 ```
 
@@ -69,11 +69,44 @@ npm run render -- output/<map-folder>/layout.json   # re-render after editing th
   squares); `render` draws a layout. Edits such as "widen that chasm" are precise
   changes to `layout.json` followed by a re-render. Each feature has its own texture
   seed, so editing one feature doesn't reshuffle the rest.
-- **`style/`:** the reusable drawing tools: ink brush, tone-stepped shading, inner
-  edge shadow, hatched edge blocks, drop shadow, grit, palettes. Shared by every map
-  type.
-- **Map types** (only `plateau` for now) own their layout generator, their content
-  (rubble, vegetation, bridge and so on) and their palette.
+- **`src/style/`:** the reusable drawing tools: ink brush, tone-stepped shading,
+  inner edge shadow, edge treatments, drop shadow, grit, palettes. Shared by every
+  kind of map, so everything looks like it came from the same hand.
+- **`src/battlemap/`:** what battlemaps share: grid, sidecar, review sheets.
+- **Battlemap types** (only `src/battlemap/plateau/` for now) own their layout
+  generator, their content (rubble, vegetation, bridge and so on) and their palette.
+- **Other kinds of map** (region and world maps) are expected later. They'll reuse
+  `style/` but not the grid or sidecar. Don't build a "map kinds" layer until the
+  first one is actually being built.
+
+## Decisions so far
+
+- **Edge treatments:** both are style tools. `blocks` (a broken lip of chunky
+  outlined blocks, hatched on the shadow side) suits hard rock edges and broken walls;
+  `brushed` (a heavier ink edge that blends softly) suits grass banks, dunes and
+  shorelines. The plateau defaults to `blocks`, and `--edge` switches it.
+- **Plateau palette:** `rust` from the prototype (warm orange-tan top, brown rim,
+  dark red-brown void). Palettes belong to the map type, not to `style/`.
+- **Prototype findings to carry forward:**
+  - Tone blotches were too contrasty ("camouflage") at overview size. Use softer
+    steps and larger shapes.
+  - Scatter (rubble, shrubs) must scale with the _visible_ area, not per plateau, or
+    slivers at the frame edge get crammed.
+  - Every feature needs its own forked RNG, so changing one thing (like the edge
+    style) doesn't reshuffle everything else.
+
+## Rendering performance
+
+`@napi-rs/canvas` defers drawing until the image is encoded, so timing individual
+draw calls tells you nothing; time the encode. Never blur the full-size canvas
+(`ctx.filter = "blur(…)"` on the main context costs seconds per call at 256 px). Do
+this instead:
+
+- **Small soft shapes:** use the canvas shadow (`shadowBlur`), which only blurs the
+  shape's own bounds.
+- **Large soft layers:** paint them on a low-res canvas, blur there, then scale up.
+
+A 24×16 map at 256 px should render in a few seconds.
 
 ## Output
 
@@ -145,6 +178,8 @@ Checklist for every look review:
 0. Scaffold: tooling, README, this file.
 1. Prototype: a hand-placed plateau, two edge treatments × 2–3 candidate palettes,
    with review sheets. Matt picks a direction. The prototype code is thrown away.
+   Done: see "Decisions so far". The code lives on the `prototype` branch for
+   reference.
 2. Core: seeded RNG, grid and sidecar maths, with tests.
 3. Plateau layout generator writing `layout.json`, with rule tests.
 4. Renderer built on `style/`.
