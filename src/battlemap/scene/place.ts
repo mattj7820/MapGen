@@ -1,5 +1,5 @@
 import type { Pt } from "../../geometry.js";
-import type { PropSpec } from "./props/spec.js";
+import type { LibraryProp } from "./props/spec.js";
 import type { ResolvedOpening, ResolvedProp, WallSegment } from "./resolve.js";
 import type { Prop, WallKind } from "./scene.js";
 
@@ -28,7 +28,7 @@ export function wallRect(s: WallSegment, from: number, to: number): Pt[] {
   return [onSegment(s, from, h), onSegment(s, to, h), onSegment(s, to, -h), onSegment(s, from, -h)];
 }
 
-export function placeProp(prop: Prop, spec: PropSpec): ResolvedProp {
+export function placeProp(prop: Prop, spec: LibraryProp): ResolvedProp {
   const size = prop.size ?? spec.size;
   const angle = (prop.rotation * Math.PI) / 180;
   const [w, d] = size;

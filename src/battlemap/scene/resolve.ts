@@ -4,7 +4,7 @@ import { densify } from "../../style/ink.js";
 import { dress } from "./dressing.js";
 import { onSegment, placeProp, rectOutline, WALL_THICKNESS, wallRect } from "./place.js";
 import { PROPS } from "./props/library.js";
-import type { PropSpec } from "./props/spec.js";
+import type { LibraryProp } from "./props/spec.js";
 import {
   type EdgeStyle,
   type GroundKind,
@@ -87,7 +87,7 @@ export interface ResolvedOpening {
 
 export interface ResolvedProp {
   prop: Prop;
-  spec: PropSpec;
+  spec: LibraryProp;
   size: [number, number];
   /** Radians, clockwise. */
   angle: number;
