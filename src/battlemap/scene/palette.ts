@@ -97,7 +97,7 @@ const SHARED = {
   straw: "#cdb26a",
   gold: { base: "#c9a03e", light: "#e6c766", shade: "#94712a" },
   bone: { base: "#d6cbb0", light: "#e8dfc9", shade: "#aea185" },
-  marble: { base: "#c9c5bb", light: "#dedad0", shade: "#a29e94" },
+  marble: { base: "#b8b3a8", light: "#cac5ba", shade: "#938e84" },
   leather: { base: "#7a4f32", light: "#916244", shade: "#5c3a24" },
   copper: { base: "#a8653e", light: "#c27d52", shade: "#6f8a74" },
   arcane: { base: "#6f7fc8", light: "#a9b6f0", shade: "#46519a" },
