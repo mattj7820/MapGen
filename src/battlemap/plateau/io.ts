@@ -91,8 +91,9 @@ function arr(value: unknown, name: string): unknown[] {
 }
 
 function num(value: unknown, name: string): number {
-  if (typeof value !== "number" || !Number.isFinite(value))
+  if (typeof value !== "number" || !Number.isFinite(value)) {
     throw new Error(`${name} must be a number`);
+  }
   return value;
 }
 
@@ -103,8 +104,9 @@ function int(value: unknown, name: string): number {
 }
 
 function str(value: unknown, name: string): string {
-  if (typeof value !== "string" || value === "")
+  if (typeof value !== "string" || value === "") {
     throw new Error(`${name} must be a non-empty string`);
+  }
   return value;
 }
 

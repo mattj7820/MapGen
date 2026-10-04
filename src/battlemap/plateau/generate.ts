@@ -404,8 +404,9 @@ function drawCracks(rng: Rng, frame: Rect, p: Plateau): Crack[] {
         walk(next, h + turn, length * 0.35, weight * 0.8, depth + 1);
       }
     }
-    if (points.length >= 3)
+    if (points.length >= 3) {
       out.push({ plateau: p.id, points, weight: Math.round(weight * 100) / 100 });
+    }
   };
 
   const area = visibleArea(p, frame);
