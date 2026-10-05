@@ -442,27 +442,13 @@ Done after step 9 (one branch, `lighting-and-props`):
     - **Dressing that knows the setting:** surface and room dressings for the new
       places (a forge's tools, a library's books, a lab's glassware, a mine's ore and
       rubble), so density keeps up with the library.
-    - **Cave walls** for mines and caverns (see Future ideas): many of the new
+    - **Cave walls** for mines and caverns (done): many of the new
       settings need them.
 
-Other new work: map kinds as Matt asks, or the ideas below.
+What's next is in `docs/roadmap.md`: every idea Matt wants to get to, in a suggested
+order. Tick items off there and record decisions here as they land. New map kinds
+(region and world maps) come as Matt asks.
 
 ## Future ideas
 
-Not planned yet; raise them with Matt before starting.
-
-- **More props:** `machinery` (gears, winches, mills, levers) is still empty, and
-  wall hangings (banners, tapestries) need a way to read from above. Grow the rest
-  through the wishlist.
-- **Props casting light shadows:** tall props (pillars, bookcases) could stop light
-  too; for now only walls, doors and cave faces do.
-- **Water and caves blending:** water inside a cave meets the floor with a plain
-  edge; a wet margin or shingle would read better.
-- **Material wear on floors**: worn paths, scuffs and damaged boards on top of the
-  spills and straw that `litter` gives now.
-
-- **Slight variation in terrain height** across a plateau top (Matt, after step 6).
-  It's hard to show convincingly in a true top-down view. A possible approach:
-  layout-level "rises" (soft polygons a little higher than the ground around them),
-  drawn as a faint lighter tone on the side facing the light, a darker one on the far
-  side, and a short `blocks`-style step edge along their downhill side.
+All moved to `docs/roadmap.md`, which is the one list of what's next.
