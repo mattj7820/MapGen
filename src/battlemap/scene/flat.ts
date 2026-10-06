@@ -40,6 +40,7 @@ const GROUND: Record<GroundKind, keyof typeof FLAT> = {
   grass: "grass",
   rock: "rock",
   water: "water",
+  shallows: "water",
   void: "chasm",
   bedrock: "bedrock",
 };

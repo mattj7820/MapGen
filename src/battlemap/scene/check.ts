@@ -19,6 +19,7 @@ import {
   resolveScene,
 } from "./resolve.js";
 import { PASSABLE, type Scene, UNWALKABLE } from "./scene.js";
+import { WET } from "./terrain.js";
 
 /** Things may touch walls and each other by this much without it counting. */
 const TOUCH = 0.04;
@@ -67,6 +68,14 @@ export function checkScene(scene: Scene): string[] {
     );
     if (off) problems.push(`crack on ${region.id} runs off the edge at ${fmt(off)}`);
   }
+
+  // Paths, roads and rivers run off the map freely, but not far: it's likely a typo.
+  for (const g of scene.ground) {
+    const far = g.line?.find((p) => !inMap(p, 3));
+    const name = `the ${g.kind} line${g.id ? ` "${g.id}"` : ""}`;
+    if (far) problems.push(`${name} runs far off the map at ${fmt(far)}`);
+  }
+  const paths = r.regions.filter((g) => g.line && !WET.includes(g.kind));
 
   // ------------------------------------------------------------ walls and openings
   for (const s of r.segments) {
@@ -180,6 +189,10 @@ export function checkScene(scene: Scene): string[] {
       (p) => contains(p.footprint, s.at) || edgeDistance(p.footprint, s.at) < s.radius,
     );
     if (cover) problems.push(`${name} is under the ${propName(cover)}`);
+    if (s.kind === "shrub") {
+      const way = paths.find((g) => contains(g.outline, s.at));
+      if (way) problems.push(`${name} grows in the middle of ${way.id}; move it to the side`);
+    }
   }
   return problems;
 }
@@ -266,8 +279,9 @@ function bridgeProblems(r: Resolved, b: ResolvedProp, name: string): string[] {
     if (!sound) problems.push(`${name}: its ${end.name} isn't fully on solid ground`);
     return sound ? (region ?? "base") : undefined;
   });
-  // Two banks of the base ground or of a room are fine; two ends on one raised region aren't.
-  if (landed[0] && landed[0] !== "base" && !landed[0].room && landed[0] === landed[1]) {
+  // Two banks of one ground are fine (a road on both sides of a stream); two ends on
+  // one raised region aren't.
+  if (landed[0] && landed[0] !== "base" && landed[0].edge && landed[0] === landed[1]) {
     problems.push(`${name}: both ends are on ${landed[0].id}`);
   }
   for (const g of r.regions) {

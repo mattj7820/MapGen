@@ -644,16 +644,47 @@ const steppingStones = family({
   base: "stepping-stones",
   category: "outdoors",
   tags: "forest noble swamp farm stone",
-  axes: {},
-  spec: () => ({
+  axes: { in: ["ground", "water"] },
+  spec: ({ in: where }) => ({
     about:
-      "a path of flat stepping stones set in the ground, running north to south at rotation 0; lies flat",
-    size: [0.8, 3],
+      where === "water"
+        ? "stepping stones across a stream or shallows, north to south at rotation 0; placed like a bridge, both ends on the banks"
+        : "a path of flat stepping stones set in the ground, running north to south at rotation 0; lies flat",
+    size: where === "water" ? [0.9, 3] : [0.8, 3],
     resizable: true,
-    layer: "floor",
+    layer: where === "water" ? "bridge" : "floor",
     height: 0.02,
     draw: (k) => {
       const [w, d] = [k.w, k.d];
+      if (where === "water") {
+        // Low stones a short stride apart, set unevenly, half sunk: a wet dark skirt
+        // round a dry top, and a pale ring where the water laps them.
+        const n = Math.max(3, Math.round(d / 0.7));
+        const water = k.pal.ground.shallows;
+        for (let i = 0; i < n; i++) {
+          const y = -d / 2 + ((i + 0.5) * d) / n + k.rng.range(-0.03, 0.03) * (d / n);
+          const x = k.rng.range(-0.1, 0.1) * w;
+          // Sized so the lumpiest stone and its ring stay inside the footprint.
+          const r = Math.min(w * 0.26, (d / n) * 0.33) * k.rng.range(0.7, 1);
+          const ry = r * k.rng.range(0.6, 0.95);
+          k.soft(k.blob(x, y, r * 1.3, ry * 1.3, 0.15, 12), withAlpha(water.light, 0.6), 0.05);
+          // Few points and big lumps: a rough slab, not a pebble.
+          const stone = k.blob(x, y, r, ry, 0.4, 8);
+          k.fill(stone, mix(k.pal.stone.shade, water.shade, 0.5));
+          const top = stone.map(([px, py]): Pt => [
+            x + (px - x) * 0.78 - 0.02,
+            y + (py - y) * 0.75 - 0.02,
+          ]);
+          k.body(top, k.pal.stone, 0.04);
+          k.outline(stone, WEIGHT.object, false);
+          k.line(
+            k.ellipse(x, y, r * 1.25, ry * 1.25, 24).slice(14, 22),
+            WEIGHT.detail,
+            water.light,
+          );
+        }
+        return;
+      }
       const n = Math.max(2, Math.round(d / 0.6));
       for (let i = 0; i < n; i++) {
         const at: Pt = [k.rng.range(-0.12, 0.12) * w, -d / 2 + ((i + 0.5) * d) / n];

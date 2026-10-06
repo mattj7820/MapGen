@@ -1,0 +1,153 @@
+{
+  "type": "scene",
+  "name": "coast",
+  "squares": [26, 18],
+  "base": "grass",
+  "lighting": "day",
+  "ground": [
+    {
+      "id": "beach",
+      "kind": "dirt",
+      "outline": [
+        [27, 4],
+        [21, 7],
+        [16, 10.5],
+        [10, 13.5],
+        [5, 15.5],
+        [2, 19],
+        [27, 19]
+      ]
+    },
+    {
+      "id": "sea",
+      "kind": "water",
+      "surf": true,
+      "outline": [
+        [27, 8],
+        [22.5, 10],
+        [18.5, 12.5],
+        [13.5, 15],
+        [10, 16.8],
+        [8.5, 19],
+        [27, 19]
+      ]
+    },
+    {
+      "id": "stream",
+      "kind": "water",
+      "line": [
+        [3, -1],
+        [5, 3],
+        [9.5, 6.5],
+        [13, 10.5],
+        [15.5, 14]
+      ],
+      "width": 1.6
+    },
+    {
+      "id": "road",
+      "kind": "cobbles",
+      "line": [
+        [19, -1],
+        [16, 3],
+        [11, 6.5],
+        [6, 8.5],
+        [-1, 9.5]
+      ],
+      "width": 1.8
+    },
+    {
+      "id": "track",
+      "kind": "dirt",
+      "line": [
+        [14.2, 4.6],
+        [17, 8],
+        [18.6, 9.6]
+      ],
+      "width": 1.1
+    }
+  ],
+  "props": [
+    {
+      "kind": "bridge",
+      "at": [9.64, 7.04],
+      "rotation": 64,
+      "size": [1.4, 3.4]
+    },
+    {
+      "kind": "rowboat-overturned",
+      "at": [20.5, 9.3],
+      "rotation": 65
+    },
+    {
+      "kind": "rowboat",
+      "at": [17.3, 11.2],
+      "rotation": 110
+    },
+    {
+      "kind": "broken-cart",
+      "at": [6, 13.5],
+      "rotation": 200
+    },
+    {
+      "kind": "tree-pine",
+      "at": [22, 2.5]
+    },
+    {
+      "kind": "tree-pine",
+      "at": [24.5, 4.2],
+      "rotation": 60
+    },
+    {
+      "kind": "tree",
+      "at": [2.5, 13],
+      "rotation": 300
+    },
+    {
+      "kind": "barrel-broken",
+      "at": [22.6, 7.8],
+      "rotation": 30
+    },
+    {
+      "kind": "milestone",
+      "at": [3, 8]
+    }
+  ],
+  "scatter": [
+    {
+      "kind": "stone",
+      "at": [23.5, 8.2],
+      "radius": 0.5
+    },
+    {
+      "kind": "stone",
+      "at": [24.3, 8.6],
+      "radius": 0.3
+    },
+    {
+      "kind": "stone",
+      "at": [16.4, 12.7],
+      "radius": 0.25
+    },
+    {
+      "kind": "stone",
+      "at": [8.5, 14.6],
+      "radius": 0.35
+    },
+    {
+      "kind": "shrub",
+      "at": [13, 2],
+      "radius": 0.8
+    },
+    {
+      "kind": "shrub",
+      "at": [8, 1.8],
+      "radius": 0.6
+    },
+    {
+      "kind": "shrub",
+      "at": [19.5, 5.4],
+      "radius": 0.6
+    }
+  ]
+}

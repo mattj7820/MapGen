@@ -1,0 +1,167 @@
+{
+  "type": "scene",
+  "name": "ford",
+  "squares": [26, 18],
+  "base": "grass",
+  "lighting": "day",
+  "ground": [
+    {
+      "id": "stream",
+      "kind": "water",
+      "line": [
+        [10, -1],
+        [11.5, 4],
+        [10.5, 9],
+        [12.5, 13.5],
+        [12, 19]
+      ],
+      "width": 2.8
+    },
+    {
+      "id": "road",
+      "kind": "dirt",
+      "line": [
+        [-1, 10.5],
+        [5, 9.6],
+        [11, 9.3],
+        [17, 10.4],
+        [27, 10]
+      ],
+      "width": 2,
+      "ruts": true
+    },
+    {
+      "id": "ford",
+      "kind": "shallows",
+      "line": [
+        [9, 9.3],
+        [13, 9.6]
+      ],
+      "width": 2.3
+    },
+    {
+      "id": "path",
+      "kind": "dirt",
+      "line": [
+        [17.5, 10.2],
+        [19.5, 6.5],
+        [21, 4],
+        [23.5, -1]
+      ],
+      "width": 0.9
+    },
+    {
+      "id": "footpath",
+      "kind": "dirt",
+      "line": [
+        [4, 9.8],
+        [5, 6],
+        [8.5, 3.2]
+      ],
+      "width": 0.8
+    }
+  ],
+  "props": [
+    {
+      "kind": "stepping-stones-water",
+      "at": [11.1, 3.4],
+      "rotation": 90,
+      "size": [0.8, 4.4]
+    },
+    {
+      "kind": "signpost",
+      "at": [16.4, 8.3]
+    },
+    {
+      "kind": "milestone",
+      "at": [3, 11.6]
+    },
+    {
+      "kind": "tree",
+      "at": [2.5, 3],
+      "rotation": 40
+    },
+    {
+      "kind": "tree",
+      "at": [15.5, 3.5],
+      "rotation": 200
+    },
+    {
+      "kind": "tree-pine",
+      "at": [23, 14],
+      "rotation": 10
+    },
+    {
+      "kind": "tree",
+      "at": [7, 15],
+      "rotation": 120
+    },
+    {
+      "kind": "fence-rail",
+      "at": [20.5, 13],
+      "size": [5, 0.3]
+    },
+    {
+      "kind": "fence-rail-broken",
+      "at": [17.4, 14.8],
+      "rotation": 90,
+      "size": [3.2, 0.3]
+    },
+    {
+      "kind": "log",
+      "at": [16.2, 16.2],
+      "rotation": 25
+    },
+    {
+      "kind": "woodpile",
+      "at": [19.6, 15.6]
+    }
+  ],
+  "scatter": [
+    {
+      "kind": "stone",
+      "at": [8.2, 6.4],
+      "radius": 0.45
+    },
+    {
+      "kind": "stone",
+      "at": [8.9, 6.9],
+      "radius": 0.25
+    },
+    {
+      "kind": "stone",
+      "at": [14.2, 7.2],
+      "radius": 0.35
+    },
+    {
+      "kind": "stone",
+      "at": [9.4, 12.8],
+      "radius": 0.3
+    },
+    {
+      "kind": "shrub",
+      "at": [5.5, 13.2],
+      "radius": 0.8
+    },
+    {
+      "kind": "shrub",
+      "at": [21.5, 8.2],
+      "radius": 0.7
+    },
+    {
+      "kind": "shrub",
+      "at": [15.4, 12.4],
+      "radius": 0.6
+    },
+    {
+      "kind": "shrub",
+      "at": [24.5, 6],
+      "radius": 0.9
+    },
+    {
+      "kind": "lichen",
+      "at": [8.2, 6.4],
+      "radius": 0.3
+    }
+  ]
+}

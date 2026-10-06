@@ -30,8 +30,9 @@ to try a different look for one item.
 
 ## Ground
 
-Kinds: `wood`, `flagstone`, `cobbles`, `dirt`, `grass`, `rock`, `water`, `void`.
-`water` and `void` can't be stood on: props, scatter and doorways stay off them.
+Kinds: `wood`, `flagstone`, `cobbles`, `dirt`, `grass`, `rock`, `water`, `shallows`,
+`void` (and `bedrock` round caves). `water` and `void` can't be stood on: props,
+scatter and doorways stay off them. `shallows` is water you can wade: a ford.
 
 - `base`: the whole map, under everything else. Use the ground outside the building
   (`cobbles` for a street, `grass`, `dirt`), or `void` for a dungeon-style dark surround.
@@ -46,8 +47,46 @@ Kinds: `wood`, `flagstone`, `cobbles`, `dirt`, `grass`, `rock`, `water`, `void`.
 `rect` is `[x0, y0, x1, y1]`; `outline` is any closed list of points. `edge` draws a
 raised edge round the region: `blocks` (a broken lip of chunky stone) or `brushed` (a
 soft heavy line). `dirt`, `grass` and edgeless `rock` blend into what's round them;
-`wood`, `flagstone`, `cobbles` and `water` get a crisp ink edge. `id` is needed only if
-cracks or dressing refer to the region.
+`wood`, `flagstone` and `cobbles` get a crisp ink edge. `id` is needed only if cracks,
+dressing or a check message refer to the region; give paths and rivers one anyway, so
+messages can name them.
+
+Water outside built rooms (a pond, a river, the sea, a pool in a cave) gets a bank: a
+dark wet margin, stones tucked under the edge, reeds where the bank is grass, paler
+shallows inside, and a smooth ink line. Its outline is smoothed, so a few points are
+enough; corners off the map stay put. `"surf": true` adds foam along a coast.
+
+### Paths, roads, rivers and streams
+
+Any region can be a `line` of points with a `width` instead of a rect or outline:
+
+```json
+{ "id": "road", "kind": "dirt", "line": [[-1, 9.5], [8, 8.6], [27, 9]], "width": 2, "ruts": true }
+{ "id": "lane", "kind": "cobbles", "line": [[19, -1], [11, 6.5], [-1, 9.5]], "width": 1.8 }
+{ "id": "stream", "kind": "water", "line": [[10, -1], [10.5, 9], [12, 19]], "width": 2.6 }
+{ "id": "ford", "kind": "shallows", "line": [[9, 9.3], [13, 9.6]], "width": 2.3 }
+{ "id": "sea", "kind": "water", "surf": true, "outline": [[27, 8], [18, 12], [9, 19], [27, 19]] }
+```
+
+- The line is smoothed into a curve, and dirt, grass and water lines **wander** a
+  little from side to side (up to about 0.3 + 0.08 × width squares), so they don't run
+  dead straight; cobbled roads hardly wander, shallows not at all. Its width wanders a
+  little too.
+- Run a line **off the map** (a square or two past the edge) to have it carry on out of
+  view. Where it **stops inside the map**, it stays where you wrote it, narrows, and
+  fades into the ground with loose stones about: a road petering out on a beach.
+- A path whose end runs **into another path or road** goes under it, whichever is
+  written first: write the busier way and let side paths end inside it.
+- Dirt paths get a darker packed middle, stones along the sides and grass creeping in
+  at the edges. `"ruts": true` adds cart ruts.
+- **Crossing water:** a dry path or road stops at the bank. Cross with a **ford** (a
+  `shallows` line across the water, a little wider than the road: it's drawn only over
+  the water, between the banks) or a **bridge** prop (`size: [width, length]`, turned
+  along the road, each end 0.75 or more onto the banks). `stepping-stones-water` (a
+  prop, placed like a bridge) makes a footway across a stream.
+- Water running into water (a stream into a lake or the sea) joins it with no line
+  across the mouth: end the stream's line inside the other water.
+- Scatter `shrub`s stay off paths and roads (a check); stones may lie on them.
 
 ## Rooms and walls
 

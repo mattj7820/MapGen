@@ -2,6 +2,7 @@ import { Delaunay } from "d3-delaunay";
 import {
   areaInRect,
   bounds,
+  overlaps,
   centroid,
   contains,
   edgeDistance,
@@ -9,12 +10,20 @@ import {
   type Rect,
 } from "../../geometry.js";
 import { Rng } from "../../rng.js";
-import { mix } from "../../style/colour.js";
+import { mix, withAlpha } from "../../style/colour.js";
 import { grit, pebble } from "../../style/details.js";
 import { drawEdge, edgeOutlineWeight } from "../../style/edges.js";
 import { brush, chaikin, INK, offsetOutline, WEIGHT } from "../../style/ink.js";
 import { makeNoise } from "../../style/noise.js";
-import { clipTo, fillPoly, lowres, type Paper, softPoly } from "../../style/paper.js";
+import {
+  clipTo,
+  fillPoly,
+  lowres,
+  type Paper,
+  softPoly,
+  softStroke,
+  tracePath,
+} from "../../style/paper.js";
 import { innerShade, toneSteps } from "../../style/shading.js";
 import { jagged } from "../../style/shapes.js";
 import { drawCaveFace, drawCaveLine } from "./cave.js";
@@ -22,9 +31,20 @@ import type { Palette, Tones } from "./palette.js";
 import type { Resolved, ResolvedRegion } from "./resolve.js";
 import type { Crack, GroundKind, Scatter } from "./scene.js";
 import { drawLichen } from "./scatter.js";
+import {
+  drawBank,
+  drawEndFades,
+  drawFord,
+  drawPathWear,
+  drawRoadFringe,
+  drawReeds,
+  drawShore,
+  inkRoad,
+  WET,
+} from "./terrain.js";
 
 /** Built ground with a definite edge, which gets an ink line; the rest blends. */
-const PAVED: readonly GroundKind[] = ["wood", "flagstone", "cobbles", "water"];
+const PAVED: readonly GroundKind[] = ["wood", "flagstone", "cobbles"];
 
 /** The base ground, over the whole map. */
 export function drawBase(paper: Paper, pal: Palette, r: Resolved): void {
@@ -50,12 +70,58 @@ export function drawBase(paper: Paper, pal: Palette, r: Resolved): void {
 
 /** One ground region: its raised edge if it has one, its surface, and its outline. */
 export function drawRegion(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved): void {
+  // Shallows over water (a ford) are drawn only on that water, fading into it.
+  const water = waterUnder(r, region);
+  if (region.kind === "shallows" && water.length > 0) {
+    drawFord(paper, pal, region, water);
+    return;
+  }
+  // A dry path or road stops at the bank of any water it crosses (it takes a ford or a
+  // bridge to get over), and goes under the paths it joins: just into a dirt path's
+  // soft edge so the two blend, or up to a paved road's hard one. Water running into
+  // water painted earlier (a stream into the sea) reaches just past the other's bank,
+  // covering its ink, so the two join with no line across the mouth.
+  const dry = region.line && !WET.includes(region.kind);
+  const joins = (region.line?.joins ?? []).map((id) => r.regions.find((o) => o.id === id)!);
+  const cuts = dry
+    ? [
+        ...water.map((w) => w.outline),
+        ...joins.map((j) => offsetOutline(j.outline, PAVED.includes(j.kind) ? 0.04 : -0.15)),
+      ]
+    : region.kind === "water" && !region.room
+      ? water.map((w) => offsetOutline(w.outline, -0.12))
+      : [];
+  const { g } = paper;
+  for (const cut of cuts) {
+    g.save();
+    g.beginPath();
+    g.rect(-1, -1, paper.cols + 2, paper.rows + 2);
+    tracePath(g, cut, true);
+    g.clip("evenodd");
+  }
+  drawSurface(paper, pal, region, r);
+  for (let i = 0; i < cuts.length; i++) g.restore();
+  // Soften the seam where it meets each dirt path it joins, with that path's colour.
+  for (const join of joins.filter((j) => !PAVED.includes(j.kind))) {
+    g.save();
+    clipTo(g, offsetOutline(region.outline, 0.3));
+    softStroke(paper, offsetOutline(join.outline, -0.15), pal.ground[join.kind].base, 0.35, 0.18);
+    g.restore();
+    g.restore();
+  }
+}
+
+function drawSurface(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved): void {
   const frame: Rect = { x0: 0, y0: 0, x1: paper.cols, y1: paper.rows };
   const rng = new Rng(region.seed);
   // A room's floor ends under its walls, so it needs no edge of its own.
   const open = !region.room;
+  const wet = open && WET.includes(region.kind);
+  const below = (p: Pt) => groundBelow(r, region, p);
   if (region.cave) drawCaveFace(paper, pal, region, r);
   if (region.edge) drawEdge(paper, region.edge, region.outline, pal.rim, rng.fork("edge"));
+  else if (wet) drawBank(paper, pal, region);
+  else if (open && region.line && PAVED.includes(region.kind)) drawRoadFringe(paper, pal, region);
   else if (open && !PAVED.includes(region.kind)) {
     // Natural ground fades into what's round it rather than stopping at a hard line.
     softPoly(paper, region.outline, pal.ground[region.kind].base, 0.25);
@@ -67,6 +133,18 @@ export function drawRegion(paper: Paper, pal: Palette, region: ResolvedRegion, r
       closed: true,
       seed: region.seed % 1000,
     });
+  } else if (wet && region.kind === "water") {
+    brush(paper.g, region.outline, WEIGHT.heavy, { closed: true, seed: region.seed % 1000 });
+    drawReeds(paper, pal, region, below);
+  } else if (wet) {
+    // Shallows fade into the water or bank round them under a light line.
+    brush(paper.g, region.outline, WEIGHT.detail * 1.4, {
+      closed: true,
+      seed: region.seed % 1000,
+      colour: withAlpha(INK, 0.6),
+    });
+  } else if (open && region.line && PAVED.includes(region.kind)) {
+    inkRoad(paper, region, WEIGHT.object);
   } else if (open && PAVED.includes(region.kind)) {
     // Sharp corners: built ground is laid in straight lines.
     brush(paper.g, region.outline, WEIGHT.object, {
@@ -75,6 +153,7 @@ export function drawRegion(paper: Paper, pal: Palette, region: ResolvedRegion, r
       seed: region.seed % 1000,
     });
   }
+  if (open) drawEndFades(paper, pal, region, below);
 }
 
 /** The surface of a region, clipped to its outline. */
@@ -110,7 +189,9 @@ function paint(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved, 
       drawGrass(paper, pal, tones, region, area, frame, rng);
       break;
     case "water":
+    case "shallows":
       drawWater(paper, tones, region, area, rng);
+      if (!region.room) drawShore(paper, pal, region);
       break;
     case "bedrock":
       toneSteps(
@@ -137,6 +218,7 @@ function paint(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved, 
       innerShade(paper, region.outline, tones.shade, 0.4, 0.2);
       break;
   }
+  if (region.line) drawPathWear(paper, pal, region, (p) => groundBelow(r, region, p));
   if (region.kind !== "rock") {
     for (const l of lichen) drawLichen(paper, pal, l);
     drawCracks(paper, cracks);
@@ -144,10 +226,34 @@ function paint(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved, 
   g.restore();
 }
 
-/** The topmost region at a point, if any. */
+/** The deep-water regions painted before a region that it overlaps. */
+function waterUnder(r: Resolved, region: ResolvedRegion): ResolvedRegion[] {
+  const before = r.regions.slice(0, r.regions.indexOf(region));
+  return before.filter((g) => g.kind === "water" && overlaps(g.outline, region.outline));
+}
+
+/** The ground at a point under a region: what was painted before it there. */
+function groundBelow(r: Resolved, region: ResolvedRegion, p: Pt): GroundKind {
+  const i = r.regions.indexOf(region);
+  for (let j = (i < 0 ? r.regions.length : i) - 1; j >= 0; j--) {
+    if (contains(r.regions[j]!.outline, p)) return r.regions[j]!.kind;
+  }
+  return r.scene.base;
+}
+
+/**
+ * The topmost region at a point, if any. A dry path or road doesn't cover water
+ * painted before it (it's drawn stopping at the bank), so there the water counts.
+ */
 export function regionAt(r: Resolved, p: Pt): ResolvedRegion | undefined {
   for (let i = r.regions.length - 1; i >= 0; i--) {
-    if (contains(r.regions[i]!.outline, p)) return r.regions[i];
+    const g = r.regions[i]!;
+    if (!contains(g.outline, p)) continue;
+    const dry = g.line && !WET.includes(g.kind);
+    if (dry && r.regions.slice(0, i).some((w) => w.kind === "water" && contains(w.outline, p))) {
+      continue;
+    }
+    return g;
   }
   return undefined;
 }
