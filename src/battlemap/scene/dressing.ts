@@ -679,6 +679,7 @@ function forest(
   // (crowns touching all round).
   const spacing = 4.4 - 3 * amount;
   const trunks: ResolvedProp[] = [];
+  const crowns: { at: Pt; r: number }[] = [];
   for (let y = Math.floor(b.y0 / spacing); y * spacing < b.y1; y++) {
     for (let x = Math.floor(b.x0 / spacing); x * spacing < b.x1; x++) {
       const cell = rng.fork(`tree ${x} ${y}`);
@@ -702,11 +703,13 @@ function forest(
       if (!own(trunk) || !fits(r, area, trunk, [...earlier, ...out], 0.15)) continue;
       if (trunks.some((o) => distance(o.prop.at, at) < spacing * 0.55)) continue;
       trunks.push(trunk);
+      crowns.push({ at, r: crown / 2 });
       out.push(trunk, make(kind, at, turn, seeds[1]!, [crown, crown]));
     }
   }
   // Undergrowth, a square at a time from each square's own seed (so taking one tree
-  // out moves nothing elsewhere), kept more often close to a trunk.
+  // out moves nothing elsewhere): never hidden under a canopy, and kept more often
+  // just round a canopy's edge, where it would grow.
   for (let y = Math.floor(b.y0); y < b.y1; y++) {
     for (let x = Math.floor(b.x0); x < b.x1; x++) {
       const cell = rng.fork(`under ${x} ${y}`);
@@ -716,9 +719,10 @@ function forest(
       const turn = cell.range(0, 360);
       const seed = cell.int(0, 2 ** 31 - 1);
       const keep = cell.range(0, 1);
-      const nearTrunk = trunks.some((t) => distance(t.prop.at, at) < 1.6);
-      const chance = amount * (nearTrunk ? 0.9 : 0.35) * (0.2 + 0.8 * depth(at));
-      if (keep > chance) continue;
+      const under = crowns.some((c) => distance(c.at, at) < c.r * 0.8);
+      const fringe = crowns.some((c) => distance(c.at, at) < c.r * 1.25);
+      const chance = amount * (fringe ? 0.9 : 0.4) * (0.2 + 0.8 * depth(at));
+      if (under || keep > chance) continue;
       const spec = PROPS[kind]!;
       const size: [number, number] | undefined = spec.resizable
         ? [spec.size[0] * scale, spec.size[1] * scale]

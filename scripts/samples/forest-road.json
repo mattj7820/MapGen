@@ -1,0 +1,61 @@
+{
+  "type": "scene",
+  "name": "forest-road",
+  "squares": [26, 18],
+  "base": "grass",
+  "lighting": "day",
+  "ground": [
+    {
+      "id": "wood",
+      "kind": "forest-floor",
+      "outline": [
+        [-1, -1],
+        [27, -1],
+        [27, 19],
+        [-1, 19]
+      ]
+    },
+    {
+      "id": "clearing",
+      "kind": "grass",
+      "outline": [
+        [15, 3],
+        [19, 2.2],
+        [22.5, 3.6],
+        [23, 7],
+        [20.5, 9],
+        [16.5, 8.6],
+        [14.5, 6]
+      ]
+    },
+    {
+      "id": "road",
+      "kind": "dirt",
+      "line": [
+        [-1, 11],
+        [6, 10.2],
+        [13, 11.6],
+        [20, 12.4],
+        [27, 11.2]
+      ],
+      "width": 2,
+      "ruts": true
+    },
+    {
+      "id": "footpath",
+      "kind": "dirt",
+      "line": [
+        [13.5, 11.4],
+        [15, 9],
+        [17.5, 7]
+      ],
+      "width": 0.9
+    }
+  ],
+  "props": [
+    { "kind": "campfire-out", "at": [19, 5.4] },
+    { "kind": "log-seat", "at": [19, 3.9] },
+    { "kind": "log-seat", "at": [20.8, 5.8], "rotation": 70 }
+  ],
+  "dressing": [{ "kind": "forest", "in": "wood", "amount": 0.8 }]
+}

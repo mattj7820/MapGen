@@ -31,8 +31,9 @@ to try a different look for one item.
 
 ## Ground
 
-Kinds: `wood`, `flagstone`, `cobbles`, `dirt`, `grass`, `rock`, `water`, `shallows`,
-`void` (and `bedrock` round caves). `water` and `void` can't be stood on: props,
+Kinds: `wood`, `flagstone`, `cobbles`, `dirt`, `grass`, `forest-floor`, `rock`,
+`water`, `shallows`, `void` (and `bedrock` round caves). `forest-floor` is the ground
+of a wood: dark, mossy, with fallen leaves and twigs (see Forests). `water` and `void` can't be stood on: props,
 scatter and doorways stay off them. `shallows` is water you can wade: a ford.
 
 - `base`: the whole map, under everything else. Use the ground outside the building
@@ -245,6 +246,7 @@ keeps clear of walls, doorways, props and scatter, so it never breaks the checks
   clusters along the walls.
 - `litter`: straw, spills and dropped food on the floor.
 - `cobwebs`: in the inside corners.
+- `forest`: trees and undergrowth across a ground region (see Forests).
 
 `amount` runs from 0 to 1 (default 0.5).
 
@@ -261,6 +263,33 @@ barracks, prison, sewer, ship, docks, market, camp, graveyard, farm, stable, kit
 warehouse, shop, noble, workshop, ruins, forest, swamp, desert, snow, underdark, cult,
 bath, vault. A setting with nothing tagged for the role falls back to household
 things; `npm run props -- --search <setting>` shows what's there.
+
+### Forests
+
+A wood is a `forest-floor` region with `forest` dressing in it:
+
+```json
+{ "id": "wood", "kind": "forest-floor", "outline": [[-1, -1], [27, -1], [27, 19], [-1, 19]] }
+{ "kind": "forest", "in": "wood", "amount": 0.8 }
+```
+
+- Each tree is a `tree-trunk` (solid: it blocks the way) under an opaque canopy (which
+  may hang over anything, including the map's edge). Undergrowth (ferns, bushes,
+  stumps, mossy logs, mushrooms, small boulders) grows round the canopies' edges and
+  in the gaps, never hidden under them.
+- `amount` from the description: about 0.3 for scattered trees or the edge of a wood,
+  0.5 for open woodland, 0.7–0.8 for a wood, 1 for dense forest with crowns touching.
+  Trees thin out over the last couple of squares to the region's edge.
+- **Clearings, paths and streams** are regions painted after the forest region: trees
+  only stand where the forest's own ground shows, so a `grass` clearing or a road
+  `line` through the wood stays open. Natural ground fades into what it's painted
+  over, so a clearing thins softly into the forest floor.
+- `setting` picks the mix: `forest` (or none) a mixed broadleaf and pine wood,
+  `swamp` dead trees, reeds and moss, `snow` snowy pines and drifts, `desert` palms
+  and dry scrub, `graveyard` dead trees.
+- A tree is one item in `labels.txt` (its canopy): removing it takes the trunk too. To
+  move one, remove it and write both a `tree-trunk` and the canopy as props at the
+  new spot.
 
 ### Removing one generated item
 
