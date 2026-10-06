@@ -114,6 +114,8 @@ Tests write only under `output/.test/` and clean up after themselves.
   - `dressing.ts`: surface dressing (menus) and room dressing, from seeds
   - `check.ts`: `checkScene()`, every rule as a readable sentence
   - `ground.ts`, `walls.ts`, `scatter.ts`, `render.ts`: drawing
+  - `terrain.ts`: paths, roads, rivers and shores: lines into outlines, banks, fords,
+    surf, path wear and fading ends
   - `cave.ts`: cave rooms: the roughened outline, the rock face, which faces stop light
   - `lighting.ts`: ambient light by time of day, light sources, visibility polygons,
     the light layer
@@ -180,6 +182,21 @@ Tests write only under `output/.test/` and clean up after themselves.
   written props doesn't renumber them. Tags that would overlap move aside with a
   leader line; room letters go on open floor. Drawn on a copy: the map PNG is
   byte-identical with or without it (tested).
+- **Paths and rivers** (`terrain.ts`): a ground region can be a `line` with a
+  `width`, smoothed (Chaikin), wandering from its seed (natural kinds by about 0.3 +
+  0.08 × width squares, cobbles hardly, shallows not at all), widening and narrowing a
+  little. Ends inside the map are held where written, taper, and fade into the ground
+  under them with loose stones; a path ending inside another goes under it (just into a
+  dirt path's soft edge, up to a paved road's hard one), whichever is written first.
+  Dry lines stop at water painted before them, in drawing and in `groundAt` alike, so
+  crossings need a ford (`shallows` over water, drawn only on the water) or a bridge.
+  Water outside rooms has a bank (wet margin, stones, reeds by grass, shallows, smooth
+  heavy ink) instead of an outline, which also fixed cave pools; water outlines are
+  smoothed in resolve, keeping corners off the map. `surf` adds foam. Water running
+  into earlier water reaches just past its bank, so no ink crosses the mouth. A bridge
+  may have both ends on one region unless it's raised (a road either side of a
+  stream). Matt's notes: no paths dead straight, side paths merge under the busier
+  track, roads mustn't stop abruptly.
 - **Removing generated items:** a scene's `remove` list (`{ kind, at }`, matched
   within 0.01) drops one dressing item. Removed items are still made, then dropped,
   so nothing moves into the gap and they keep their numbers. To move or turn one,
@@ -458,6 +475,10 @@ Done after step 9 (one branch, `lighting-and-props`):
       rubble), so density keeps up with the library.
     - **Cave walls** for mines and caverns (done): many of the new
       settings need them.
+
+Done from the roadmap since: the numbered review overlay (2.1), and paths and rivers
+(the first two parts of 3.1), with outdoor proof maps (a ford, a coast) in
+`scripts/samples/`. Decisions are under "Decisions so far".
 
 What's next is in `docs/roadmap.md`: every idea Matt wants to get to, in a suggested
 order. Tick items off there and record decisions here as they land. New map kinds

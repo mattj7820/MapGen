@@ -80,10 +80,10 @@ the wishlist loop).
 
 The thinnest area now: outdoor maps are base ground plus scattered stones.
 
-- [ ] **Paths and roads:** a line of points with a width, worn into the ground
+- [x] **Paths and roads:** a line of points with a width, worn into the ground
       (dirt through grass, cobbles through a town), soft at the edges, ruts and
       stones along it.
-- [ ] **Rivers, streams and shores:** a water line with banks (`brushed` edges),
+- [x] **Rivers, streams and shores:** a water line with banks (`brushed` edges),
       shallows and a wet margin; fords and stepping stones; a coastline with surf
       marks. (Also fixes water meeting a cave floor with a plain edge.)
 - [ ] **Cliffs and ridges:** a raised edge between two ground levels on open ground,
@@ -137,7 +137,7 @@ The thinnest area now: outdoor maps are base ground plus scattered stones.
 
 1. Numbered review overlay (2.1): small, and speeds up every round of feedback after.
    Done.
-2. Outdoor terrain (3.1), paths and rivers first.
+2. Outdoor terrain (3.1), paths and rivers first. Paths and rivers done.
 3. Walls, doors and lights in the sidecar (1.1): small, and turns every map into a
    playable one in Guildhall. Start when Matt has said what Guildhall reads.
 4. State variants (1.2), then multi-level buildings (1.3).

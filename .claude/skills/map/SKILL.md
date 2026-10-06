@@ -26,7 +26,8 @@ truly changes the map and the description gives no hint: usually the **size**. A
 "small" house or "two-room" tavern is a hint; pick a size that fits it. Typical sizes
 in squares: one room 10x8 to 14x12, a two- or three-room building 18x14 to 24x18. Add
 a margin of 1–3 squares of outside ground round a building, so its walls and doors
-read and there's room outside to fight.
+read and there's room outside to fight. Outdoor maps (a crossing, a coast, a camp)
+are usually 24x16 to 30x20.
 
 ## 2. Plan on the grid
 
@@ -60,7 +61,11 @@ Sketch the plan in squares before writing JSON:
    every room in use its own light (candles or lamps on tables, a hearth, braziers,
    torches): walls and shut doors stop light, so a lamp in one room leaves the next
    dark. Open a door (`"open": true`) where light should spill out.
-6. **Make it lived in**: nothing perfectly lined up. Turn chairs and stools by 3–15
+6. **Outside**: lay roads, paths, streams and shores as `line` regions (see "Paths,
+   roads, rivers and streams" in `format.md`): run main roads and rivers off the map,
+   end side paths inside the road they leave, and cross water with a ford, a bridge or
+   stepping stones. Trees, shrubs, stones and the odd log or fence break up open ground.
+7. **Make it lived in**: nothing perfectly lined up. Turn chairs and stools by 3–15
    degrees, pull some out from their tables, set a crate askew, put a rug in front of
    the hearth, a broom or bucket where work happens. Vary table sizes.
 
