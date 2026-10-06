@@ -27,7 +27,9 @@ import { PASSABLE, type SurfaceDressing, UNWALKABLE } from "./scene.js";
 export function dress(r: Resolved): ResolvedProp[] {
   const out: ResolvedProp[] = [];
   for (const p of r.props) {
-    if (p.prop.dress && p.spec.surface) out.push(...dressSurface(r, p, p.prop.dress));
+    if (!p.prop.dress || !p.spec.surface) continue;
+    const from = `${p.prop.dress} on props[${r.scene.props.indexOf(p.prop)}]`;
+    out.push(...dressSurface(r, p, p.prop.dress).map((item) => ({ ...item, from })));
   }
   for (const d of r.scene.dressing) {
     const region = r.regions.find((g) => g.id === d.in);
@@ -36,13 +38,14 @@ export function dress(r: Resolved): ResolvedProp[] {
     const wall = room ? WALL_THICKNESS[room.wall] / 2 : 0;
     const rng = new Rng(d.seed);
     const area = { outline: region.outline, wall };
-    if (d.kind === "stores") {
-      out.push(...stores(r, area, d.amount, rng, out, choices("stores", d.setting, STORES)));
-    }
-    if (d.kind === "litter") {
-      out.push(...litter(r, area, d.amount, rng, out, choices("litter", d.setting, LITTER)));
-    }
-    if (d.kind === "cobwebs") out.push(...cobwebs(area, d.amount, rng));
+    const from = `${d.kind} in ${d.in}`;
+    const made =
+      d.kind === "stores"
+        ? stores(r, area, d.amount, rng, out, choices("stores", d.setting, STORES))
+        : d.kind === "litter"
+          ? litter(r, area, d.amount, rng, out, choices("litter", d.setting, LITTER))
+          : cobwebs(area, d.amount, rng);
+    out.push(...made.map((item) => ({ ...item, from })));
   }
   return out;
 }
