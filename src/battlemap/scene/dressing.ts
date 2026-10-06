@@ -695,33 +695,40 @@ function forest(
       const t = depth(at);
       if (keep > 0.15 + 0.85 * t * t * (3 - 2 * t)) continue;
       const stem = Math.min(0.75, Math.max(0.4, crown * 0.17));
-      const trunk = make(stemKind, at, turn, seeds[0]!, [stem, stem]);
+      const trunk = {
+        ...make(stemKind, at, turn, seeds[0]!, [stem, stem]),
+        underCanopy: true as const,
+      };
       if (!own(trunk) || !fits(r, area, trunk, [...earlier, ...out], 0.15)) continue;
       if (trunks.some((o) => distance(o.prop.at, at) < spacing * 0.55)) continue;
       trunks.push(trunk);
       out.push(trunk, make(kind, at, turn, seeds[1]!, [crown, crown]));
     }
   }
-  const count = Math.round((b.x1 - b.x0) * (b.y1 - b.y0) * 0.6 * amount);
-  for (let i = 0; i < count; i++) {
-    const near = rng.chance(0.55) && trunks.length > 0 ? rng.pick(trunks) : undefined;
-    const a = rng.range(0, Math.PI * 2);
-    const d = rng.range(0.5, 1.5);
-    const at: Pt = near
-      ? [near.prop.at[0] + Math.cos(a) * d, near.prop.at[1] + Math.sin(a) * d]
-      : [rng.range(b.x0, b.x1), rng.range(b.y0, b.y1)];
-    const kind = weighted(rng, mix.undergrowth);
-    const spec = PROPS[kind]!;
-    const scale = rng.range(0.7, 1.3);
-    const size: [number, number] | undefined = spec.resizable
-      ? [spec.size[0] * scale, spec.size[1] * scale]
-      : undefined;
-    const keep = rng.range(0, 1);
-    const item = make(kind, at, rng.range(0, 360), rng.int(0, 2 ** 31 - 1), size);
-    if (keep > 0.2 + 0.8 * depth(at) || !own(item) || !onFirmGround(r, item)) continue;
-    if (out.some((o) => o.spec.layer === "floor" && distance(o.prop.at, at) < 0.5)) continue;
-    if (spec.layer !== "floor" && !fits(r, area, item, [...earlier, ...out], 0.1)) continue;
-    out.push(item);
+  // Undergrowth, a square at a time from each square's own seed (so taking one tree
+  // out moves nothing elsewhere), kept more often close to a trunk.
+  for (let y = Math.floor(b.y0); y < b.y1; y++) {
+    for (let x = Math.floor(b.x0); x < b.x1; x++) {
+      const cell = rng.fork(`under ${x} ${y}`);
+      const at: Pt = [x + cell.range(0, 1), y + cell.range(0, 1)];
+      const kind = weighted(cell, mix.undergrowth);
+      const scale = cell.range(0.7, 1.3);
+      const turn = cell.range(0, 360);
+      const seed = cell.int(0, 2 ** 31 - 1);
+      const keep = cell.range(0, 1);
+      const nearTrunk = trunks.some((t) => distance(t.prop.at, at) < 1.6);
+      const chance = amount * (nearTrunk ? 0.9 : 0.35) * (0.2 + 0.8 * depth(at));
+      if (keep > chance) continue;
+      const spec = PROPS[kind]!;
+      const size: [number, number] | undefined = spec.resizable
+        ? [spec.size[0] * scale, spec.size[1] * scale]
+        : undefined;
+      const item = make(kind, at, turn, seed, size);
+      if (!own(item) || !onFirmGround(r, item)) continue;
+      if (out.some((o) => o.spec.layer === "floor" && distance(o.prop.at, at) < 0.5)) continue;
+      if (spec.layer !== "floor" && !fits(r, area, item, [...earlier, ...out], 0.1)) continue;
+      out.push(item);
+    }
   }
   return out;
 }

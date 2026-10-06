@@ -58,6 +58,8 @@ export function sceneLabels(r: Resolved): Label[] {
   });
   let g = (Math.floor(n / 100) + 1) * 100;
   for (const p of r.dressed) {
+    // A forest tree is one item: its canopy is numbered, and the trunk goes with it.
+    if (p.underCanopy) continue;
     ++g;
     if (removedBy(s, p)) continue;
     out.push({

@@ -130,6 +130,11 @@ export interface ResolvedProp {
   generated?: true;
   /** For a generated item, what made it: "stores in hall", "meal on props[3]". */
   from?: string;
+  /**
+   * A forest tree's trunk, under the canopy at the same point: the two are one tree,
+   * so it gets no label of its own and goes when its canopy is removed.
+   */
+  underCanopy?: true;
 }
 
 /** Painting order of prop layers: seats go under table edges. */
@@ -246,7 +251,11 @@ function joinPaths(regions: ResolvedRegion[]): void {
 
 /** The `remove` rule that takes out a generated item, if there is one. */
 export function removedBy(scene: Scene, p: ResolvedProp): Removal | undefined {
-  return scene.remove?.find((m) => m.kind === p.prop.kind && distance(m.at, p.prop.at) < 0.01);
+  return scene.remove?.find(
+    (m) =>
+      (m.kind === p.prop.kind || (p.underCanopy && PROPS[m.kind]?.family === "tree")) &&
+      distance(m.at, p.prop.at) < 0.01,
+  );
 }
 
 function hasLongSides(outline: readonly Pt[]): boolean {
