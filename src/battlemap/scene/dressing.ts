@@ -14,6 +14,7 @@ import { PROPS } from "./props/library.js";
 import type { Resolved, ResolvedProp, ResolvedRegion } from "./resolve.js";
 import type { Setting } from "./props/catalogue.js";
 import { onFace } from "./cliff.js";
+import { inBuilding } from "./roof.js";
 import { groundAt, regionAt } from "./ground.js";
 import { PASSABLE, type SurfaceDressing, UNWALKABLE } from "./scene.js";
 
@@ -358,7 +359,8 @@ function onFirmGround(r: Resolved, item: ResolvedProp): boolean {
       x <= cols &&
       y <= rows &&
       !UNWALKABLE.includes(groundAt(r, [x, y])) &&
-      !onFace(r.cliffs, [x, y]),
+      !onFace(r.cliffs, [x, y]) &&
+      !inBuilding(r.buildings, [x, y]),
   );
 }
 

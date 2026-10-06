@@ -3,6 +3,7 @@ import { hash } from "../../rng.js";
 import { densify } from "../../style/ink.js";
 import { caveOutline } from "./cave.js";
 import { type ResolvedCliff, resolveCliffs } from "./cliff.js";
+import { type ResolvedBuilding, resolveBuilding } from "./roof.js";
 import { dress } from "./dressing.js";
 import {
   type Ends,
@@ -57,6 +58,7 @@ export interface Resolved {
    */
   dressed: ResolvedProp[];
   cliffs: ResolvedCliff[];
+  buildings: ResolvedBuilding[];
 }
 
 export interface ResolvedRegion {
@@ -223,6 +225,7 @@ export function resolveScene(scene: Scene): Resolved {
     unknownProps,
     dressed: [],
     cliffs: resolveCliffs(scene, regions),
+    buildings: scene.buildings.map(resolveBuilding),
   };
   // Removed items are still made, then dropped, so nothing else moves into their space.
   resolved.dressed = dress(resolved);
