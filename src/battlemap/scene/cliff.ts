@@ -1,4 +1,5 @@
 import { contains, distance, type Pt } from "../../geometry.js";
+import { createCanvas } from "@napi-rs/canvas";
 import { Rng } from "../../rng.js";
 import { mix, withAlpha } from "../../style/colour.js";
 import { pebble } from "../../style/details.js";
@@ -48,6 +49,8 @@ export interface ResolvedCliff {
   /** The same, but 0 where a path or river crosses the brink: for shadow and scree. */
   depth: number[];
   crossings: Crossing[];
+  /** The face's outline, brink then foot: ground nobody can stand on, but for its crossings. */
+  face: Pt[];
 }
 
 /** The band of blocks is this deep for a cliff of `height` squares. */
@@ -104,7 +107,14 @@ export function resolveCliffs(scene: Scene, regions: readonly ResolvedRegion[]):
       const open = crossings.some((x) => (k >= x.from && k <= x.to) || contains(x.cut, foot));
       return open ? 0 : d;
     });
+    const face = [
+      ...brink,
+      ...brink
+        .map((p, k): Pt => [p[0] + down[k]![0] * full[k]!, p[1] + down[k]![1] * full[k]!])
+        .reverse(),
+    ];
     return {
+      face,
       id: c.id ?? `cliff${i + 1}`,
       seed: c.seed,
       height: c.height,
@@ -115,6 +125,11 @@ export function resolveCliffs(scene: Scene, regions: readonly ResolvedRegion[]):
       crossings,
     };
   });
+}
+
+/** The cliff whose face is at a point, if any: a ramp or steps through it don't count. */
+export function onFace(cliffs: readonly ResolvedCliff[], p: Pt): ResolvedCliff | undefined {
+  return cliffs.find((c) => contains(c.face, p) && !c.crossings.some((x) => contains(x.cut, p)));
 }
 
 // ---------------------------------------------------------------- drawing
@@ -260,22 +275,29 @@ function drawFace(paper: Paper, pal: Palette, c: ResolvedCliff, rng: Rng): void 
   g.beginPath();
   tracePath(g, strip(c, 0, 1), true);
   g.clip();
-  lowres(paper, Math.max(1, paper.px / 24), 0.05, (lg) => {
-    const steps = 8;
-    for (let i = 0; i < steps; i++) {
-      for (let k = 0; k < c.brink.length - 1; k++) {
-        if (c.full[k]! <= 0.01 && c.full[k + 1]! <= 0.01) continue;
-        const f0 = i === 0 ? -0.2 : i / steps;
-        const f1 = i === steps - 1 ? 1.2 : (i + 1) / steps;
-        const colour = tone(k, (i + 0.5) / steps);
-        fillPoly(lg, strip(c, f0, f1, k, k + 1), colour);
-        // Stroked in its own colour too, so neighbouring quads leave no seam.
-        lg.strokeStyle = colour;
-        lg.lineWidth = 0.05;
-        lg.stroke();
-      }
+  // The quads go on an unfiltered canvas first and are blurred once as a whole: a blur
+  // filter applies to every single draw call, which for hundreds of quads is slow.
+  const perSquare = 24;
+  const flat = createCanvas(Math.ceil(paper.cols * perSquare), Math.ceil(paper.rows * perSquare));
+  const fg = flat.getContext("2d");
+  fg.scale(perSquare, perSquare);
+  fg.lineWidth = 0.05;
+  const steps = 8;
+  for (let i = 0; i < steps; i++) {
+    for (let k = 0; k < c.brink.length - 1; k++) {
+      if (c.full[k]! <= 0.01 && c.full[k + 1]! <= 0.01) continue;
+      const f0 = i === 0 ? -0.2 : i / steps;
+      const f1 = i === steps - 1 ? 1.2 : (i + 1) / steps;
+      const colour = tone(k, (i + 0.5) / steps);
+      fillPoly(fg, strip(c, f0, f1, k, k + 1), colour);
+      // Stroked in its own colour too, so neighbouring quads leave no seam.
+      fg.strokeStyle = colour;
+      fg.stroke();
     }
-  });
+  }
+  lowres(paper, paper.px / perSquare, 0.05, (lg) =>
+    lg.drawImage(flat, 0, 0, paper.cols, paper.rows),
+  );
   g.restore();
 
   const s = arcLengths(c.brink);

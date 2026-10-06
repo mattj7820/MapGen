@@ -13,6 +13,7 @@ import { doorwayPath, placeProp, WALL_THICKNESS } from "./place.js";
 import { PROPS } from "./props/library.js";
 import type { Resolved, ResolvedProp } from "./resolve.js";
 import type { Setting } from "./props/catalogue.js";
+import { onFace } from "./cliff.js";
 import { groundAt } from "./ground.js";
 import { PASSABLE, type SurfaceDressing, UNWALKABLE } from "./scene.js";
 
@@ -340,13 +341,19 @@ function edges(area: Area): { a: Pt; b: Pt; length: number; along: Pt; inward: P
 /** Is a generated prop clear of walls, doorways, the area's edge and everything else? */
 /**
  * Whether a dressed item lies wholly on the map and on ground people can stand on: a
- * room can hold water or a drop (a cave's sea channel), and dressing must keep off it.
+ * room can hold water or a drop (a cave's sea channel), or a cliff's face can run
+ * through it, and dressing must keep off them.
  */
 function onFirmGround(r: Resolved, item: ResolvedProp): boolean {
   const [cols, rows] = r.scene.squares;
   return [item.prop.at, ...item.footprint].every(
     ([x, y]) =>
-      x >= 0 && y >= 0 && x <= cols && y <= rows && !UNWALKABLE.includes(groundAt(r, [x, y])),
+      x >= 0 &&
+      y >= 0 &&
+      x <= cols &&
+      y <= rows &&
+      !UNWALKABLE.includes(groundAt(r, [x, y])) &&
+      !onFace(r.cliffs, [x, y]),
   );
 }
 
