@@ -7,6 +7,7 @@ import {
   segmentDistance,
 } from "../../geometry.js";
 import { onFace } from "./cliff.js";
+import { doorNormal, inBuilding, squareCornered } from "./roof.js";
 import { groundAt, regionAt } from "./ground.js";
 import { PALETTES } from "./palette.js";
 import { doorwayPath, onSegment } from "./place.js";
@@ -43,11 +44,13 @@ export function checkScene(scene: Scene): string[] {
   const r = resolveScene(scene);
   const inMap = ([x, y]: Pt, margin = 0) =>
     x >= -margin && y >= -margin && x <= cols + margin && y <= rows + margin;
-  const walkable = (p: Pt) => !UNWALKABLE.includes(groundAt(r, p)) && !onFace(r.cliffs, p);
-  /** What's under a point, for messages: its ground, or a cliff's face. */
+  const walkable = (p: Pt) =>
+    !UNWALKABLE.includes(groundAt(r, p)) && !onFace(r.cliffs, p) && !inBuilding(r.buildings, p);
+  /** What's under a point, for messages: its ground, a cliff's face or a building. */
   const what = (p: Pt) => {
     const c = onFace(r.cliffs, p);
-    return c ? `the face of ${c.id}` : groundAt(r, p);
+    const b = inBuilding(r.buildings, p);
+    return c ? `the face of ${c.id}` : b ? `the building ${b.id}` : groundAt(r, p);
   };
 
   // ------------------------------------------------------------ ground
@@ -82,6 +85,37 @@ export function checkScene(scene: Scene): string[] {
     if (far) problems.push(`${name} runs far off the map at ${fmt(far)}`);
   }
   const paths = r.regions.filter((g) => g.line && !WET.includes(g.kind));
+
+  // ------------------------------------------------------------ buildings
+  r.buildings.forEach((b, i) => {
+    const name = `building "${b.id}"`;
+    if (!squareCornered(b.outline)) {
+      problems.push(`${name}: every side must run straight across or down the map`);
+    }
+    for (const c of b.chimneys) {
+      if (!contains(b.outline, c)) problems.push(`${name}: chimney at ${fmt(c)} isn't on its roof`);
+    }
+    for (const d of b.doors) {
+      const out = doorNormal(b, d);
+      if (!out) {
+        problems.push(`${name}: door at ${fmt(d)} isn't on its outline`);
+        continue;
+      }
+      const step: Pt = [d[0] + out[0] * 0.6, d[1] + out[1] * 0.6];
+      if (inMap(step) && !walkable(step)) {
+        problems.push(`${name}: door at ${fmt(d)} opens onto ${what(step)}`);
+      }
+    }
+    const room = r.regions.find((g) => g.room && overlaps(g.outline, shrink(b.outline, TOUCH)));
+    if (room) problems.push(`${name} overlaps the room ${room.id}`);
+    for (const o of r.buildings.slice(i + 1)) {
+      if (overlaps(shrink(b.outline, TOUCH), shrink(o.outline, TOUCH))) {
+        problems.push(`${name} overlaps building "${o.id}"`);
+      }
+    }
+    const cliff = r.cliffs.find((c) => overlaps(c.outline, b.outline));
+    if (cliff) problems.push(`cliff "${cliff.id}" runs through ${name}`);
+  });
 
   // ------------------------------------------------------------ cliffs
   const cliffIds = r.cliffs.map((c) => c.id);

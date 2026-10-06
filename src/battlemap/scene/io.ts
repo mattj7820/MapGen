@@ -17,6 +17,7 @@ import {
   BUILT_WALLS,
   CLIMBS,
   FACE_KINDS,
+  ROOF_KINDS,
   WALL_KINDS,
 } from "./scene.js";
 
@@ -176,6 +177,25 @@ export function parseScene(text: string): Scene {
         region: str(o.region, `${n}.region`),
         points: points(o.points, `${n}.points`),
         weight: o.weight === undefined ? 1 : positive(o.weight, `${n}.weight`),
+      };
+    }),
+    buildings: list(s.buildings, "buildings").map((b, i) => {
+      const n = `buildings[${i}]`;
+      const o = obj(b, n);
+      const shape = rectOrPoints(o, n, "points");
+      return {
+        ...(o.id !== undefined ? { id: str(o.id, `${n}.id`) } : {}),
+        ...shape,
+        roof: oneOf(o.roof, ROOF_KINDS, `${n}.roof`),
+        shape:
+          o.shape === undefined ? "gable" : oneOf(o.shape, ["gable", "hip"] as const, `${n}.shape`),
+        ...(o.ridge !== undefined
+          ? { ridge: oneOf(o.ridge, ["ew", "ns"] as const, `${n}.ridge`) }
+          : {}),
+        ...(o.chimneys !== undefined ? { chimneys: points(o.chimneys, `${n}.chimneys`) } : {}),
+        ...(o.snow !== undefined ? { snow: bool(o.snow, `${n}.snow`) } : {}),
+        ...(o.doors !== undefined ? { doors: points(o.doors, `${n}.doors`) } : {}),
+        seed: seedFor(o.seed, `${n}.seed`, "building", shape),
       };
     }),
     cliffs: list(s.cliffs, "cliffs").map((c, i) => {

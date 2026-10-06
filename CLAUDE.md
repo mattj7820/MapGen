@@ -119,6 +119,7 @@ Tests write only under `output/.test/` and clean up after themselves.
   - `cliff.ts`: cliffs and ridges: the brink, the face, its shadow and scree, and the
     ramps, steps, waterfalls and rapids where paths and rivers cross it
   - `biomes.ts`: sand, cracked earth, snow, ice, mud and bog surfaces
+  - `roof.ts`: buildings from outside: roof geometry, materials, chimneys, doorsteps
   - `cave.ts`: cave rooms: the roughened outline, the rock face, which faces stop light
   - `lighting.ts`: ambient light by time of day, light sources, visibility polygons,
     the light layer
@@ -249,6 +250,23 @@ Tests write only under `output/.test/` and clean up after themselves.
   textures; and a region of the same natural kind as the ground under it draws
   nothing (it only marks an area), which removed a seam round a pine wood on snow.
   Snow-capped library props still use cream linen for snow; Matt left them as they are.
+- **Buildings from outside** (`roof.ts`): a scene's `buildings` are unmapped
+  footprints drawn as roofs. Matt chose: roofs only on buildings whose inside isn't
+  mapped (a mapped interior stays a room, drawn open; roofed-and-open versions of one
+  map wait for variants, 1.2); a `buildings` list rather than a flag on rooms; six
+  materials (thatch, slate, tile, shingle, turf, canvas) plus `snow`.
+  - Geometry: the outline must be square-cornered; it's covered by its maximal
+    rectangles, each a gable or hip along its long side, and the roof is the highest
+    face at each point. Smaller wings are cut off at the ridge of the longer wing they
+    join, with no hip at that end; without that cut an L's corner showed a star of
+    creases. Creases (ridge, hip, valley) are found where two faces are equal and
+    highest; faces are clipped with canvas clips, no polygon library.
+  - Look: each face's tone by the way it faces the light, courses along its eave,
+    faint weathering (moss and lichen from the eaves, rain streaks on slate and tile;
+    Matt: clean is fine, minor weather only), shadow down-right at 0.38 (Matt: a touch
+    lighter than first drawn). Doors are points on the outline: a step and worn earth.
+  - Buildings block props, scatter, dressing and doorways (`inBuilding`); they don't
+    stop light and aren't in the sidecar.
 - **Removing generated items:** a scene's `remove` list (`{ kind, at }`, matched
   within 0.01) drops one dressing item. Removed items are still made, then dropped,
   so nothing moves into the gap and they keep their numbers. To move or turn one,
@@ -365,7 +383,7 @@ The full format is in `.claude/skills/map/format.md`; read it before writing a s
 In short: `base` ground, `ground` regions, `rooms` (a rect or points, a floor kind and
 a wall kind), free `walls`, `openings` placed on a wall's centre line, `props` by kind,
 position and facing (with optional `size` and `dress`), room `dressing` (optionally for
-a `setting`), `lighting`, outdoor `scatter`, `cracks` and `cliffs`. Caves are rooms with
+a `setting`), `lighting`, outdoor `scatter`, `cracks`, `cliffs` and `buildings`. Caves are rooms with
 `"wall": "cave"` over a `bedrock` base. All in squares: x right, y down, origin at the top-left corner.
 
 To make a change Matt asks for, edit the scene rather than regenerating it, so
@@ -529,9 +547,9 @@ Done after step 9 (one branch, `lighting-and-props`):
       settings need them.
 
 Done from the roadmap since: the numbered review overlay (2.1), paths and rivers, and
-cliffs and ridges, forests and biomes (all of 3.1 but buildings from outside), with
+cliffs and ridges, forests, biomes and buildings from outside (all of 3.1), with
 outdoor proof maps (a ford, a coast, a ridge, a sea cliff, a forest road, a desert, a
-snowfield and a swamp) in `scripts/samples/`. Decisions are under "Decisions so far".
+snowfield, a swamp, a village street and a snowy hamlet) in `scripts/samples/`. Decisions are under "Decisions so far".
 
 What's next is in `docs/roadmap.md`: every idea Matt wants to get to, in a suggested
 order. Tick items off there and record decisions here as they land. New map kinds

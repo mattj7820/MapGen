@@ -44,6 +44,8 @@ export interface Scene {
   cracks: Crack[];
   /** Raised edges across open ground: a ridge across a field, a cliff above a beach. */
   cliffs: Cliff[];
+  /** Buildings seen from outside, roofed: their insides aren't mapped. */
+  buildings: Building[];
   /**
    * How dark it is. Left out: `night` for scenes with rooms, `day` for the rest (see
    * lighting.ts).
@@ -243,6 +245,31 @@ export interface Scatter {
   kind: ScatterKind;
   at: Pt;
   radius: number;
+  seed: number;
+}
+
+export const ROOF_KINDS = ["thatch", "slate", "tile", "shingle", "turf", "canvas"] as const;
+export type RoofKind = (typeof ROOF_KINDS)[number];
+
+/**
+ * A roofed building whose inside isn't mapped: a rect, or `points` for any
+ * square-cornered outline (an L, T or U). It blocks the way like a wall all round.
+ */
+export interface Building {
+  id?: string;
+  rect?: [number, number, number, number];
+  points?: Pt[];
+  roof: RoofKind;
+  /** `gable` (default): ends straight up from the walls; `hip`: sloping on every side. */
+  shape: "gable" | "hip";
+  /** For a plain rect, which way the ridge runs (default: along the longer side). */
+  ridge?: "ew" | "ns";
+  /** Where chimney stacks stand on the roof. */
+  chimneys?: Pt[];
+  /** Doors, as points on the outline: each gets a step outside. */
+  doors?: Pt[];
+  /** Snow lying on the roof. */
+  snow?: boolean;
   seed: number;
 }
 

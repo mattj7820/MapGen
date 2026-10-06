@@ -53,6 +53,8 @@ export interface Palette {
   copper: Tones;
   /** Arcane glow: crystals, runes, potions. */
   arcane: Tones;
+  /** Roofing slate. */
+  slate: Tones;
   /** Rough ore and raw rock in a mine. */
   ore: Tones;
   /** Moss, mould and fungus. */
@@ -109,6 +111,7 @@ const SHARED = {
   leather: { base: "#7a4f32", light: "#916244", shade: "#5c3a24" },
   copper: { base: "#a8653e", light: "#c27d52", shade: "#6f8a74" },
   arcane: { base: "#6f7fc8", light: "#a9b6f0", shade: "#46519a" },
+  slate: { base: "#5e6670", light: "#737b85", shade: "#484f58" },
   ore: { base: "#6b625a", light: "#857b70", shade: "#4d4640" },
   moss: { base: "#6a7a45", light: "#86955a", shade: "#4c5a31" },
   food: {

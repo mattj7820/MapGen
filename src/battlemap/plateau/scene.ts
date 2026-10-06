@@ -50,5 +50,6 @@ export function plateauScene(layout: PlateauLayout): Scene {
     ],
     cracks: layout.cracks.map((c) => ({ region: c.plateau, points: c.points, weight: c.weight })),
     cliffs: [],
+    buildings: [],
   };
 }

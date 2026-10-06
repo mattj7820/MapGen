@@ -1,0 +1,108 @@
+{
+  "type": "scene",
+  "name": "hamlet",
+  "squares": [24, 16],
+  "base": "snow",
+  "lighting": "day",
+  "ground": [
+    {
+      "id": "pines",
+      "kind": "snow",
+      "outline": [
+        [-1, -1],
+        [25, -1],
+        [25, 4],
+        [16, 5],
+        [8, 3.5],
+        [-1, 5]
+      ]
+    },
+    {
+      "id": "track",
+      "kind": "dirt",
+      "line": [
+        [-1, 10],
+        [7, 9.4],
+        [15, 10.4],
+        [25, 9.6]
+      ],
+      "width": 1.6,
+      "ruts": true
+    },
+    {
+      "id": "pond",
+      "kind": "ice",
+      "outline": [
+        [17, 12],
+        [21, 11.5],
+        [22.5, 14],
+        [19, 15.4],
+        [16.5, 14.2]
+      ]
+    }
+  ],
+  "buildings": [
+    {
+      "id": "longhouse",
+      "rect": [2, 5.5, 11, 8.5],
+      "roof": "turf",
+      "snow": true,
+      "chimneys": [[6.5, 7]],
+      "doors": [[6.5, 8.5]]
+    },
+    {
+      "id": "byre",
+      "roof": "shingle",
+      "snow": true,
+      "doors": [[16, 8.5]],
+      "rect": [12.5, 5.5, 17, 8.5]
+    },
+    {
+      "id": "hut",
+      "rect": [3, 12, 7, 15],
+      "roof": "thatch",
+      "snow": true,
+      "shape": "hip",
+      "chimneys": [[5, 13.5]],
+      "doors": [[5, 12]]
+    },
+    {
+      "id": "store",
+      "points": [
+        [9, 11.5],
+        [14, 11.5],
+        [14, 13],
+        [12, 13],
+        [12, 15.5],
+        [9, 15.5]
+      ],
+      "roof": "slate",
+      "snow": true,
+      "doors": [[11, 11.5]]
+    }
+  ],
+  "props": [
+    {
+      "kind": "woodpile",
+      "at": [12, 4.9],
+      "size": [2, 0.6]
+    },
+    {
+      "kind": "sled",
+      "at": [19.5, 8.2],
+      "rotation": 80
+    },
+    {
+      "kind": "boulder-snow",
+      "at": [22.5, 6.5]
+    }
+  ],
+  "dressing": [
+    {
+      "kind": "forest",
+      "in": "pines",
+      "amount": 0.75,
+      "setting": "snow"
+    }
+  ]
+}

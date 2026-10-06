@@ -1,6 +1,7 @@
 import type { Canvas } from "@napi-rs/canvas";
 import { createPaper, type Paper } from "../../style/paper.js";
 import { drawCliff } from "./cliff.js";
+import { drawBuilding } from "./roof.js";
 import { drawBase, drawRegion } from "./ground.js";
 import { drawLighting } from "./lighting.js";
 import { palette, type Palette } from "./palette.js";
@@ -31,7 +32,9 @@ export function renderScene(scene: Scene, px: number): Canvas {
   };
   props((p) => p.spec.layer === "floor");
   drawScatter(paper, pal, scene.scatter);
-  props((p) => p.spec.layer !== "floor");
+  props((p) => p.spec.layer !== "floor" && p.spec.layer !== "overhead");
+  for (const b of r.buildings) drawBuilding(paper, pal, b);
+  props((p) => p.spec.layer === "overhead");
   drawWalls(paper, pal, r);
   drawLighting(paper, r);
   return paper.canvas;

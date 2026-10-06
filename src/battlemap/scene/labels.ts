@@ -10,7 +10,7 @@ import { removedBy, type Resolved } from "./resolve.js";
  */
 export interface Label {
   tag: string;
-  type: "room" | "opening" | "prop" | "dressing";
+  type: "room" | "building" | "opening" | "prop" | "dressing";
   kind: string;
   /** Where to find it in layout.json, or what made it. */
   ref: string;
@@ -36,6 +36,17 @@ export function sceneLabels(r: Resolved): Label[] {
         at: openFloor(r, g.outline),
       });
     });
+  // Buildings are lettered after the rooms.
+  const rooms = out.length;
+  r.buildings.forEach((b, i) => {
+    out.push({
+      tag: letters(rooms + i),
+      type: "building",
+      kind: `${s.buildings[i]!.roof} roof`,
+      ref: `buildings[${i}] "${b.id}"`,
+      at: centroid(b.outline),
+    });
+  });
   let n = 0;
   s.openings.forEach((o, i) => {
     out.push({
@@ -131,6 +142,7 @@ export const LABEL_PX = 128;
 
 const STYLE: Record<Label["type"], { font: string; fill: string; text: string; edge: string }> = {
   room: { font: "bold 34px sans-serif", fill: "#f0c419", text: "#1a1a1a", edge: "#1a1a1a" },
+  building: { font: "bold 34px sans-serif", fill: "#f0c419", text: "#1a1a1a", edge: "#1a1a1a" },
   opening: { font: "bold 17px sans-serif", fill: "#2459b8", text: "#ffffff", edge: "#0b1d40" },
   prop: { font: "bold 17px sans-serif", fill: "#1a1a1a", text: "#ffffff", edge: "#ffffff" },
   dressing: { font: "bold 15px sans-serif", fill: "#f4f0e4", text: "#1a1a1a", edge: "#5a5a5a" },
@@ -160,13 +172,13 @@ export function labelSheet(map: Canvas, px: number, labels: Label[]): Canvas {
   const drawn: { label: Label; box: Box; anchor: Pt; moved: boolean }[] = [];
   // Rooms last, so items keep the spots on themselves and the letters fit round them.
   const order = [
-    ...labels.filter((l) => l.type !== "room"),
-    ...labels.filter((l) => l.type === "room"),
+    ...labels.filter((l) => l.type !== "room" && l.type !== "building"),
+    ...labels.filter((l) => l.type === "room" || l.type === "building"),
   ];
   for (const label of order) {
     const style = STYLE[label.type];
     g.font = style.font;
-    const room = label.type === "room";
+    const room = label.type === "room" || label.type === "building";
     const h = room ? 44 : 22;
     const w = Math.max(h, g.measureText(label.tag).width + (room ? 16 : 8));
     const anchor: Pt = [label.at[0] * unit, label.at[1] * unit];
@@ -203,7 +215,7 @@ export function labelSheet(map: Canvas, px: number, labels: Label[]): Canvas {
     g.font = style.font;
     g.fillStyle = style.fill;
     g.strokeStyle = style.edge;
-    g.lineWidth = label.type === "room" ? 2.5 : 1;
+    g.lineWidth = label.type === "room" || label.type === "building" ? 2.5 : 1;
     g.beginPath();
     g.roundRect(box.x, box.y, box.w, box.h, box.h / 2);
     g.fill();

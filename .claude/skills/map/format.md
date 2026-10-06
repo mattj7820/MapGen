@@ -25,6 +25,7 @@ to try a different look for one item.
   "scatter": [],
   "cracks": [],
   "cliffs": [], // optional: ridges and cliffs on open ground (see Cliffs and ridges)
+  "buildings": [], // optional: roofed buildings whose insides aren't mapped (see Buildings from outside)
   "remove": [], // optional: generated items taken out by hand (see Dressing)
 }
 ```
@@ -178,6 +179,30 @@ Free walls are lines of points (`closed` makes a loop):
   ]
 }
 ```
+
+## Buildings from outside
+
+For a street or village, a building whose inside isn't mapped is drawn as its roof:
+
+```json
+{ "id": "inn", "points": [[1, 1], [10, 1], [10, 8], [7, 8], [7, 4.5], [1, 4.5]], "roof": "slate", "chimneys": [[3, 2.75]], "doors": [[5, 4.5]] }
+{ "id": "smithy", "rect": [19, 1.5, 24, 7], "roof": "tile", "shape": "hip" }
+```
+
+- `rect`, or `points` for any outline whose sides all run straight across or down the
+  map (an L, T or U). Wings get their own ridge along their long side; a smaller wing
+  runs into the main roof in a pair of valleys.
+- `roof`: `thatch`, `slate`, `tile`, `shingle` (timber), `turf` or `canvas` (a stall or
+  tent). `shape`: `gable` (default) or `hip` (sloping on every side). `ridge`: `ew` or
+  `ns` turns a plain rect's ridge (default: along its longer side).
+- `chimneys`: points on the roof. `doors`: points on the outline; each gets a stone
+  step and worn ground outside, and must open onto walkable ground. `"snow": true`
+  lays snow on the roof.
+- A building blocks the way: props, scatter, doorways and dressing keep off it, and it
+  mustn't overlap a room, another building or a cliff. It doesn't stop light.
+- A building whose inside **is** mapped is a room as usual (drawn open). Showing one
+  map both roofed and open waits for map variants.
+- In `labels.txt`, buildings are lettered after the rooms.
 
 ## Openings
 
