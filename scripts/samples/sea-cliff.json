@@ -1,0 +1,102 @@
+{
+  "type": "scene",
+  "name": "sea-cliff",
+  "squares": [26, 18],
+  "base": "grass",
+  "lighting": "day",
+  "ground": [
+    {
+      "id": "beach",
+      "kind": "dirt",
+      "outline": [
+        [-1, 8.6],
+        [6, 8.2],
+        [12, 7.4],
+        [18, 5.6],
+        [27, 3.6],
+        [27, 19],
+        [-1, 19]
+      ]
+    },
+    {
+      "id": "sea",
+      "kind": "water",
+      "surf": true,
+      "outline": [
+        [-1, 15.5],
+        [5, 14.6],
+        [11, 13.8],
+        [16, 12],
+        [21, 9.6],
+        [27, 8.4],
+        [27, 19],
+        [-1, 19]
+      ]
+    },
+    {
+      "id": "stream",
+      "kind": "water",
+      "line": [
+        [5, -1],
+        [7, 3],
+        [8.5, 7],
+        [9.6, 11],
+        [10.4, 14.6]
+      ],
+      "width": 1.4
+    },
+    {
+      "id": "track",
+      "kind": "dirt",
+      "line": [
+        [-1, 4.2],
+        [4, 3.6],
+        [11, 2.6],
+        [16, 1.6],
+        [20, 1.2],
+        [27, 0.6]
+      ],
+      "width": 1.3
+    },
+    {
+      "id": "stair",
+      "kind": "dirt",
+      "line": [
+        [18.5, 1.4],
+        [19.2, 4],
+        [20.3, 7],
+        [21, 8.6]
+      ],
+      "width": 1.1,
+      "climb": "steps"
+    }
+  ],
+  "cliffs": [
+    {
+      "id": "cliff",
+      "line": [
+        [-1, 7.8],
+        [5, 7.2],
+        [10, 6.4],
+        [15, 5.2],
+        [20, 3.8],
+        [27, 2.4]
+      ],
+      "high": "left",
+      "height": 3
+    }
+  ],
+  "props": [
+    { "kind": "rowboat-overturned", "at": [15.5, 10.4], "rotation": 70 },
+    { "kind": "tree", "at": [2.5, 1.6], "rotation": 30 },
+    { "kind": "tree-pine", "at": [13, 4.4] },
+    { "kind": "boulder", "at": [4, 10.6] },
+    { "kind": "boulder-small", "at": [5.1, 11.4] }
+  ],
+  "scatter": [
+    { "kind": "shrub", "at": [23.5, 2.2], "radius": 0.5 },
+    { "kind": "shrub", "at": [11, 4.4], "radius": 0.6 },
+    { "kind": "stone", "at": [18, 9.2], "radius": 0.3 },
+    { "kind": "stone", "at": [24, 6.6], "radius": 0.4 }
+  ]
+}

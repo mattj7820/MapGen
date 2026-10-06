@@ -1,0 +1,114 @@
+{
+  "type": "scene",
+  "name": "ridge",
+  "squares": [28, 18],
+  "base": "grass",
+  "lighting": "day",
+  "ground": [
+    {
+      "id": "stream",
+      "kind": "water",
+      "line": [
+        [15, -1],
+        [15.5, 4],
+        [14.5, 9],
+        [16, 13],
+        [15, 19]
+      ],
+      "width": 1.8
+    },
+    {
+      "id": "road",
+      "kind": "dirt",
+      "line": [
+        [-1, 13],
+        [8, 12.2],
+        [20, 13.5],
+        [29, 12.5]
+      ],
+      "width": 2,
+      "ruts": true
+    },
+    {
+      "id": "ford",
+      "kind": "shallows",
+      "line": [
+        [13.8, 13.1],
+        [17.8, 13.3]
+      ],
+      "width": 2.3
+    },
+    {
+      "id": "ramp-path",
+      "kind": "dirt",
+      "line": [
+        [6, 12.3],
+        [6.5, 9],
+        [5.5, 4],
+        [3, -1]
+      ],
+      "width": 1.1
+    },
+    {
+      "id": "stair-path",
+      "kind": "dirt",
+      "line": [
+        [22, 13.2],
+        [22.5, 9],
+        [23, 4],
+        [25, -1]
+      ],
+      "width": 1.2,
+      "climb": "steps"
+    }
+  ],
+  "cliffs": [
+    {
+      "id": "ridge",
+      "line": [
+        [-1, 7],
+        [6, 6],
+        [12, 7.5],
+        [18, 6.5],
+        [24, 8],
+        [29, 7]
+      ],
+      "high": "left",
+      "height": 3
+    },
+    {
+      "id": "bank",
+      "line": [
+        [9, 19],
+        [12, 16],
+        [19, 15.6],
+        [24, 17],
+        [27, 19]
+      ],
+      "high": "left",
+      "height": 1
+    },
+    {
+      "id": "rise",
+      "line": [
+        [8, 3.2],
+        [10.5, 2],
+        [12.8, 3.4]
+      ],
+      "high": "right",
+      "height": 1.5
+    }
+  ],
+  "props": [
+    { "kind": "tree", "at": [2, 3], "rotation": 40 },
+    { "kind": "tree-pine", "at": [19.5, 2.5] },
+    { "kind": "tree", "at": [26, 15], "rotation": 120 },
+    { "kind": "boulder", "at": [10, 9.5] },
+    { "kind": "tree", "at": [3, 16], "rotation": 200 }
+  ],
+  "scatter": [
+    { "kind": "shrub", "at": [11, 5], "radius": 0.7 },
+    { "kind": "shrub", "at": [26.5, 4], "radius": 0.8 },
+    { "kind": "stone", "at": [19, 10], "radius": 0.35 }
+  ]
+}

@@ -65,6 +65,9 @@ Sketch the plan in squares before writing JSON:
    roads, rivers and streams" in `format.md`): run main roads and rivers off the map,
    end side paths inside the road they leave, and cross water with a ford, a bridge or
    stepping stones. Trees, shrubs, stones and the odd log or fence break up open ground.
+   Where the ground changes level (a ridge, a sea cliff, a valley side) add a `cliff`
+   along the brink (see "Cliffs and ridges"): paths through it become ramps or steps,
+   streams over it waterfalls.
 7. **Make it lived in**: nothing perfectly lined up. Turn chairs and stools by 3–15
    degrees, pull some out from their tables, set a crate askew, put a rug in front of
    the hearth, a broom or bucket where work happens. Vary table sizes.
