@@ -111,7 +111,7 @@ Tests write only under `output/.test/` and clean up after themselves.
   - `resolve.ts`: works out geometry once for checks and drawing alike: room floors,
     merged walls, joins, opening cuts, prop footprints, then dressing
   - `place.ts`: shared shapes (prop footprints, wall rects, doorway clearance)
-  - `dressing.ts`: surface dressing (menus) and room dressing, from seeds
+  - `dressing.ts`: surface dressing (menus), room dressing and forests, from seeds
   - `check.ts`: `checkScene()`, every rule as a readable sentence
   - `ground.ts`, `walls.ts`, `scatter.ts`, `render.ts`: drawing
   - `terrain.ts`: paths, roads, rivers and shores: lines into outlines, banks, fords,
@@ -221,6 +221,21 @@ Tests write only under `output/.test/` and clean up after themselves.
     doorways and dressing respect it. Cliffs don't stop light.
   - Don't paint many small shapes inside `lowres`: its blur filter applies per draw
     call. Paint them on a plain canvas and blur that once.
+- **Forests** (`forest` dressing in `dressing.ts`, `forest-floor` ground): Matt chose
+  opaque canopies (60% see-through looked muddy) and a ground of its own for woods.
+  - A tree is a `tree-trunk` (solid) under a canopy (overhead), both at one point. The
+    pair is one item: labelled once (the canopy), and a `remove` of the canopy takes
+    the trunk (`underCanopy`). Canopies may overhang the map's edge (a check allows
+    overhead props whose centre is on the map).
+  - Trees on a jittered grid, one seeded cell each, spacing `4.4 - 3 × amount`;
+    undergrowth one seeded square at a time, never under a crown (it'd be hidden),
+    likelier round a crown's edge. Everything stands where the forest's own region is
+    the top ground, so paths and clearings painted later stay open.
+  - Mixes are a table per setting (woodland, swamp, snow, desert, graveyard), not a
+    tag lookup: snow variants share their family's `forest` tag.
+  - Natural ground outlines (grass, dirt, forest floor) are rounded like water's, and
+    fade into the ground under them over about half a square instead of a fringe
+    outside; a clearing's edge looked rough before.
 - **Removing generated items:** a scene's `remove` list (`{ kind, at }`, matched
   within 0.01) drops one dressing item. Removed items are still made, then dropped,
   so nothing moves into the gap and they keep their numbers. To move or turn one,
@@ -501,8 +516,8 @@ Done after step 9 (one branch, `lighting-and-props`):
       settings need them.
 
 Done from the roadmap since: the numbered review overlay (2.1), paths and rivers, and
-cliffs and ridges (the first three parts of 3.1), with outdoor proof maps (a ford, a
-coast, a ridge, a sea cliff) in `scripts/samples/`. Decisions are under "Decisions so far".
+cliffs and ridges, forests (the first four parts of 3.1), with outdoor proof maps (a
+ford, a coast, a ridge, a sea cliff, a forest road) in `scripts/samples/`. Decisions are under "Decisions so far".
 
 What's next is in `docs/roadmap.md`: every idea Matt wants to get to, in a suggested
 order. Tick items off there and record decisions here as they land. New map kinds

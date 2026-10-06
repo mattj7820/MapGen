@@ -134,7 +134,10 @@ export function checkScene(scene: Scene): string[] {
   for (const p of r.props) {
     const name = propName(p);
     if (p.prop.size && !p.spec.resizable) problems.push(`${name} can't be resized`);
-    if (!p.footprint.every((q) => inMap(q, 0.001))) problems.push(`${name} sticks out of the map`);
+    // A canopy may hang off the edge of the map, as a wood runs on out of view.
+    const out =
+      p.spec.layer === "overhead" ? !inMap(p.prop.at) : !p.footprint.every((q) => inMap(q, 0.001));
+    if (out) problems.push(`${name} sticks out of the map`);
     const inner = shrink(p.footprint, TOUCH);
     if (walls.some((w) => overlaps(w, inner))) problems.push(`${name} is in a wall`);
     if (p.spec.layer === "bridge") {

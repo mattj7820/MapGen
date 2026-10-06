@@ -22,6 +22,18 @@ import type { GroundKind } from "./scene.js";
 /** Ground that's water: it gets a bank rather than an ink rule. */
 export const WET: readonly GroundKind[] = ["water", "shallows"];
 
+/**
+ * Ground whose written outline is rounded off: water, and natural ground (a clearing,
+ * a patch of earth), which would otherwise show the straight sides of its outline.
+ */
+export const ROUNDED: readonly GroundKind[] = [
+  "water",
+  "shallows",
+  "dirt",
+  "grass",
+  "forest-floor",
+];
+
 /** Built ground: roads of it hardly wander, and keep an inked edge. */
 const BUILT: readonly GroundKind[] = ["wood", "flagstone", "cobbles"];
 

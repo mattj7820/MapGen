@@ -38,6 +38,7 @@ const GROUND: Record<GroundKind, keyof typeof FLAT> = {
   cobbles: "cobbles",
   dirt: "dirt",
   grass: "grass",
+  "forest-floor": "grass",
   rock: "rock",
   water: "water",
   shallows: "water",

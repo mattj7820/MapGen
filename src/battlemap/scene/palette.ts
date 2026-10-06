@@ -68,6 +68,7 @@ const EARTH: Record<GroundKind, Tones> = {
   cobbles: { base: "#8a8378", light: "#9d968a", shade: "#706a60" },
   dirt: { base: "#927a5a", light: "#a38a67", shade: "#7a6448" },
   grass: { base: "#7d8a4f", light: "#8f9c5c", shade: "#67743f" },
+  "forest-floor": { base: "#66683f", light: "#77784a", shade: "#4f5232" },
   rock: { base: "#9a8f80", light: "#aba08f", shade: "#82786a" },
   water: { base: "#4f7480", light: "#6a8f98", shade: "#3c5c67" },
   shallows: { base: "#6f9097", light: "#86a6aa", shade: "#5a7a80" },
