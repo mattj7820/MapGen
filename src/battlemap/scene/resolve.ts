@@ -9,6 +9,7 @@ import {
   freeEnds,
   lineCentre,
   lineOutline,
+  raggedOutline,
   ROUNDED,
   smoothWater,
   wanderFor,
@@ -158,9 +159,11 @@ export function resolveScene(scene: Scene): Resolved {
       // Water and natural ground have no corners: smoothed once here, so checks agree.
       const raw = centre
         ? lineOutline(centre, g.width!, g.seed, ends)
-        : g.outline && ROUNDED.includes(g.kind)
+        : g.outline && WET.includes(g.kind)
           ? smoothWater(g.outline, scene.squares)
-          : (g.outline ?? rectOutline(g.rect!));
+          : g.outline && ROUNDED.includes(g.kind)
+            ? raggedOutline(smoothWater(g.outline, scene.squares), g.seed, scene.squares)
+            : (g.outline ?? rectOutline(g.rect!));
       return {
         id: g.id ?? `ground${i + 1}`,
         kind: g.kind,

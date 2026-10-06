@@ -10,8 +10,8 @@ import { fillPoly, lowres, type Paper, softPoly, tracePath } from "../../style/p
 import { jagged, lobed } from "../../style/shapes.js";
 import type { Palette } from "./palette.js";
 import type { ResolvedRegion } from "./resolve.js";
-import type { Scene } from "./scene.js";
-import { freeEnds, lineCentre, WET } from "./terrain.js";
+import type { FaceKind, Scene } from "./scene.js";
+import { DEEP, freeEnds, lineCentre, WET } from "./terrain.js";
 
 /**
  * Cliffs and ridges on open ground. A cliff is a line along its brink (the top edge),
@@ -40,6 +40,7 @@ export interface ResolvedCliff {
   id: string;
   seed: number;
   height: number;
+  face: FaceKind;
   /** The top edge, about 0.12 squares between points. */
   brink: Pt[];
   /** Unit vectors at each brink point, pointing down the face to the low side. */
@@ -49,8 +50,8 @@ export interface ResolvedCliff {
   /** The same, but 0 where a path or river crosses the brink: for shadow and scree. */
   depth: number[];
   crossings: Crossing[];
-  /** The face's outline, brink then foot: ground nobody can stand on, but for its crossings. */
-  face: Pt[];
+  /** The face's outline, brink then foot: for rock, ground nobody can stand on but at its crossings. */
+  outline: Pt[];
 }
 
 /** The band of blocks is this deep for a cliff of `height` squares. */
@@ -78,10 +79,15 @@ export function resolveCliffs(scene: Scene, regions: readonly ResolvedRegion[]):
     const sign = c.high === "left" ? -1 : 1;
     const down = vertexNormals(brink, false).map(([x, y]): Pt => [x * sign, y * sign]);
     const deep = makeNoise(new Rng(c.seed).fork("depth"));
+    // Soft faces (dunes, drifts) are broader slopes, and die away more gently.
+    const soft = c.face !== "rock";
+    const endTaper = soft ? END_TAPER * 2.5 : END_TAPER;
     const full = brink.map((_, k) => {
-      const near = Math.min(ends[0] ? s[k]! : END_TAPER, ends[1] ? total - s[k]! : END_TAPER);
-      const taper = rounded(Math.min(1, near / END_TAPER));
-      return faceDepth(c.height) * (1 + 0.15 * layered(deep, s[k]! * 0.5, 1.5)) * taper;
+      const near = Math.min(ends[0] ? s[k]! : endTaper, ends[1] ? total - s[k]! : endTaper);
+      const t = Math.min(1, near / endTaper);
+      const taper = soft ? t * t * (3 - 2 * t) : rounded(t);
+      const deepBy = soft ? 1.6 : 1;
+      return faceDepth(c.height) * deepBy * (1 + 0.15 * layered(deep, s[k]! * 0.5, 1.5)) * taper;
     });
 
     const crossings: Crossing[] = [];
@@ -90,7 +96,7 @@ export function resolveCliffs(scene: Scene, regions: readonly ResolvedRegion[]):
       const wet = WET.includes(g.kind);
       for (const [from, to] of runs(brink.map((p) => contains(g.outline, p)))) {
         const kind: CrossingKind = wet
-          ? c.height > 1 && g.kind === "water"
+          ? c.height > 1 && DEEP.includes(g.kind)
             ? "waterfall"
             : "rapids"
           : g.climb === "steps"
@@ -114,10 +120,11 @@ export function resolveCliffs(scene: Scene, regions: readonly ResolvedRegion[]):
         .reverse(),
     ];
     return {
-      face,
+      outline: face,
       id: c.id ?? `cliff${i + 1}`,
       seed: c.seed,
       height: c.height,
+      face: c.face,
       brink,
       down,
       full,
@@ -129,7 +136,10 @@ export function resolveCliffs(scene: Scene, regions: readonly ResolvedRegion[]):
 
 /** The cliff whose face is at a point, if any: a ramp or steps through it don't count. */
 export function onFace(cliffs: readonly ResolvedCliff[], p: Pt): ResolvedCliff | undefined {
-  return cliffs.find((c) => contains(c.face, p) && !c.crossings.some((x) => contains(x.cut, p)));
+  return cliffs.find(
+    (c) =>
+      c.face === "rock" && contains(c.outline, p) && !c.crossings.some((x) => contains(x.cut, p)),
+  );
 }
 
 // ---------------------------------------------------------------- drawing
@@ -168,6 +178,10 @@ function clipOpen(paper: Paper, c: ResolvedCliff, kinds?: readonly CrossingKind[
 }
 
 export function drawCliff(paper: Paper, pal: Palette, c: ResolvedCliff): void {
+  if (c.face !== "rock") {
+    drawSoftFace(paper, pal, c);
+    return;
+  }
   const { g } = paper;
   const rng = new Rng(c.seed).fork("draw");
   const outer = c.brink.map((_, k) => at(c, k, c.depth[k]!));
@@ -350,6 +364,67 @@ function drawScree(paper: Paper, pal: Palette, c: ResolvedCliff, rng: Rng): void
     fillPoly(g, stone, rng.chance(0.5) ? pal.stone.base : pal.stone.light);
     brush(g, stone, WEIGHT.detail * 1.3, { closed: true, smooth: false, seed: rng.int(0, 9999) });
   }
+}
+
+/**
+ * A soft face: a dune's lee slope or a snowdrift. The same light-aware tone as rock,
+ * in the ground's own colours, fading out into the ground at its foot; a soft crest
+ * line along the top instead of a heavy brink, no fissures, no scree, and only a faint
+ * shadow. Paths and rivers across it are simply left showing.
+ */
+function drawSoftFace(paper: Paper, pal: Palette, c: ResolvedCliff): void {
+  const { g } = paper;
+  const tones = pal.ground[c.face === "sand" ? "sand" : "snow"];
+  clipOpen(paper, c);
+  const cast = c.brink.map((_, k): Pt => {
+    const turned = Math.max(0, facing(c.down[k]!));
+    const p = at(c, k, c.full[k]! * 0.8);
+    const len = turned * 0.25 * Math.min(c.height, 5);
+    return [p[0] + LIGHT[0] * len, p[1] + LIGHT[1] * len];
+  });
+  softPoly(paper, [...c.brink, ...cast.reverse()], withAlpha(INK, 0.12), 0.4);
+  g.save();
+  g.beginPath();
+  tracePath(g, strip(c, -0.05, 1), true);
+  g.clip();
+  lowres(paper, 4, 0.15, (lg) => {
+    const steps = 8;
+    for (let i = 0; i < steps; i++) {
+      const f = (i + 0.5) / steps;
+      for (let k = 0; k < c.brink.length - 1; k++) {
+        const fac = facing(c.down[k]!);
+        // Dark below the crest on a slope turned from the light, light on one turned
+        // to it; either way fading out into the flat ground at the foot.
+        const lee = mix(tones.shade, INK, 0.18);
+        const colour =
+          fac > 0
+            ? mix(tones.base, lee, Math.min(1, 1.3 * fac))
+            : mix(tones.base, tones.light, -fac);
+        const fade = 1 - f * f;
+        fillPoly(
+          lg,
+          strip(c, i / steps, (i + 1.1) / steps, k, k + 1),
+          withAlpha(colour, 0.9 * fade),
+        );
+      }
+    }
+  });
+  g.restore();
+  for (const [from, to] of runs(c.full.map((d) => d > 0.05))) {
+    if (to - from < 2) continue;
+    const crest = c.brink.slice(from, to + 1);
+    brush(g, crest, WEIGHT.object * 1.2, {
+      seed: (c.seed + from) % 1000,
+      colour: mix(tones.shade, INK, 0.6),
+    });
+    brush(
+      g,
+      crest.map(([x, y]): Pt => [x - 0.04, y - 0.04]),
+      WEIGHT.detail * 1.4,
+      { seed: (c.seed + from + 1) % 1000, colour: withAlpha(tones.light, 0.9) },
+    );
+  }
+  g.restore();
 }
 
 // ---------------------------------------------------------------- crossings

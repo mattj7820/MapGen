@@ -92,7 +92,7 @@ export function checkScene(scene: Scene): string[] {
     const name = `cliff "${r.cliffs[i]!.id}"`;
     const far = c.line.find((p) => !inMap(p, 3));
     if (far) problems.push(`${name} runs far off the map at ${fmt(far)}`);
-    const room = r.regions.find((g) => g.room && overlaps(g.outline, r.cliffs[i]!.face));
+    const room = r.regions.find((g) => g.room && overlaps(g.outline, r.cliffs[i]!.outline));
     if (room) problems.push(`${name} runs through the room ${room.id}`);
   });
 
@@ -144,7 +144,9 @@ export function checkScene(scene: Scene): string[] {
       problems.push(...bridgeProblems(r, p, name));
       continue;
     }
-    const under = [p.prop.at, ...p.footprint].find((q) => !walkable(q));
+    // A canopy may hang over water or anything else; only its trunk has to stand somewhere.
+    const feet = p.spec.layer === "overhead" ? [p.prop.at] : [p.prop.at, ...p.footprint];
+    const under = feet.find((q) => !walkable(q));
     if (under) problems.push(`${name} hangs off the ground at ${fmt(under)} (${what(under)})`);
   }
   const solid = r.props.filter((p) => p.spec.layer === "solid");

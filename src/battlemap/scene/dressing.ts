@@ -45,8 +45,11 @@ export function dress(r: Resolved): ResolvedProp[] {
         ? stores(r, area, d.amount, rng, out, choices("stores", d.setting, STORES))
         : d.kind === "litter"
           ? litter(r, area, d.amount, rng, out, choices("litter", d.setting, LITTER))
-          : d.kind === "forest"
-            ? forest(r, region, area, d.amount, rng, out, FOREST_MIXES[d.setting!] ?? WOODLAND)
+          : d.kind === "forest" || d.kind === "scrub"
+            ? forest(r, region, area, d.amount, rng, out, {
+                ...(FOREST_MIXES[d.setting!] ?? WOODLAND),
+                ...(d.kind === "scrub" ? { trees: [] } : {}),
+              })
             : cobwebs(area, d.amount, rng);
     out.push(...made.map((item) => ({ ...item, from })));
   }
@@ -617,7 +620,6 @@ const FOREST_MIXES: Partial<Record<Setting, ForestMix>> = {
     trunk: [["tree-trunk", 1]],
     undergrowth: [
       ["bush-snow", 3],
-      ["snow-drift", 2],
       ["boulder-small-snow", 1],
       ["boulder-snow", 0.4],
       ["stump", 0.4],
@@ -680,7 +682,7 @@ function forest(
   const spacing = 4.4 - 3 * amount;
   const trunks: ResolvedProp[] = [];
   const crowns: { at: Pt; r: number }[] = [];
-  for (let y = Math.floor(b.y0 / spacing); y * spacing < b.y1; y++) {
+  for (let y = Math.floor(b.y0 / spacing); mix.trees.length > 0 && y * spacing < b.y1; y++) {
     for (let x = Math.floor(b.x0 / spacing); x * spacing < b.x1; x++) {
       const cell = rng.fork(`tree ${x} ${y}`);
       const at: Pt = [

@@ -2,7 +2,7 @@ import { centroid, distance, gap, type Pt } from "../../geometry.js";
 import type { Crop } from "../review.js";
 import { bridgeEnds } from "./check.js";
 import type { Resolved } from "./resolve.js";
-import { WET } from "./terrain.js";
+import { DEEP, WET } from "./terrain.js";
 
 /** Crops closer together than this show mostly the same thing; keep the first. */
 const APART = 1.5;
@@ -41,7 +41,7 @@ export function sceneCrops(r: Resolved, max = 6): Crop[] {
   const open = r.regions.filter((g) => !g.room);
   const ford = open.find((g) => g.kind === "shallows");
   if (ford) add(centroid(ford.outline), "ford");
-  for (const w of open.filter((g) => g.kind === "water").slice(0, 2)) {
+  for (const w of open.filter((g) => DEEP.includes(g.kind)).slice(0, 2)) {
     const bank = w.outline.filter((p) => inFrame(p, 1.5));
     add(bank[Math.floor(bank.length / 3)], w.surf ? "shore and surf" : "bank");
   }
