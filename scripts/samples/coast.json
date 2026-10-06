@@ -7,7 +7,7 @@
   "ground": [
     {
       "id": "beach",
-      "kind": "dirt",
+      "kind": "sand",
       "outline": [
         [27, 4],
         [21, 7],

@@ -1,0 +1,122 @@
+{
+  "type": "scene",
+  "name": "desert",
+  "squares": [26, 18],
+  "base": "sand",
+  "lighting": "day",
+  "ground": [
+    {
+      "id": "sands",
+      "kind": "sand",
+      "outline": [
+        [-1, -1],
+        [27, -1],
+        [27, 19],
+        [-1, 19]
+      ]
+    },
+    {
+      "id": "pan",
+      "kind": "cracked-earth",
+      "outline": [
+        [2, 11],
+        [7, 10],
+        [10, 12.5],
+        [9, 16.5],
+        [4, 17],
+        [1.5, 14]
+      ]
+    },
+    {
+      "id": "oasis",
+      "kind": "grass",
+      "outline": [
+        [16, 2],
+        [21, 1.5],
+        [24, 4],
+        [23.5, 8],
+        [19, 9],
+        [15.5, 6.5]
+      ]
+    },
+    {
+      "id": "pool",
+      "kind": "water",
+      "outline": [
+        [18, 3.5],
+        [21, 3.4],
+        [22, 5.5],
+        [20, 7],
+        [17.6, 6]
+      ]
+    },
+    {
+      "id": "track",
+      "kind": "dirt",
+      "line": [
+        [-1, 6],
+        [6, 7],
+        [12, 9.5],
+        [18, 11],
+        [27, 12.5]
+      ],
+      "width": 1.4
+    }
+  ],
+  "cliffs": [
+    {
+      "id": "dune",
+      "line": [
+        [1, 3.5],
+        [5, 2.2],
+        [10, 2.8],
+        [13, 4.6]
+      ],
+      "high": "left",
+      "height": 2,
+      "face": "sand"
+    },
+    {
+      "id": "dune2",
+      "line": [
+        [12, 16.5],
+        [16, 14.5],
+        [21, 15],
+        [25, 17.5]
+      ],
+      "high": "left",
+      "height": 2.5,
+      "face": "sand"
+    }
+  ],
+  "props": [
+    {
+      "kind": "rock-outcrop",
+      "at": [13, 13],
+      "rotation": 20
+    },
+    {
+      "kind": "boulder-large-cracked",
+      "at": [24, 9.6]
+    },
+    {
+      "kind": "skeleton-scattered",
+      "at": [7.5, 13.5],
+      "rotation": 40
+    }
+  ],
+  "dressing": [
+    {
+      "kind": "forest",
+      "in": "oasis",
+      "amount": 0.6,
+      "setting": "desert"
+    },
+    {
+      "kind": "scrub",
+      "in": "sands",
+      "amount": 0.35,
+      "setting": "desert"
+    }
+  ]
+}

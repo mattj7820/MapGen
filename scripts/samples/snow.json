@@ -1,0 +1,106 @@
+{
+  "type": "scene",
+  "name": "snow",
+  "squares": [26, 18],
+  "base": "snow",
+  "lighting": "day",
+  "ground": [
+    {
+      "id": "field",
+      "kind": "snow",
+      "outline": [
+        [-1, -1],
+        [27, -1],
+        [27, 19],
+        [-1, 19]
+      ]
+    },
+    {
+      "id": "pines",
+      "kind": "snow",
+      "outline": [
+        [14, -1],
+        [27, -1],
+        [27, 9],
+        [22, 10],
+        [16, 7.5],
+        [13.5, 3]
+      ]
+    },
+    {
+      "id": "pond",
+      "kind": "ice",
+      "outline": [
+        [3, 9],
+        [8, 8],
+        [11, 10],
+        [10.5, 14],
+        [6, 15.5],
+        [2.5, 13]
+      ]
+    },
+    {
+      "id": "track",
+      "kind": "dirt",
+      "line": [
+        [-1, 4],
+        [6, 4.6],
+        [13, 7.5],
+        [18, 12],
+        [27, 14]
+      ],
+      "width": 1.3,
+      "ruts": true
+    }
+  ],
+  "cliffs": [
+    {
+      "id": "drift",
+      "line": [
+        [13, 17.5],
+        [17, 15.5],
+        [22, 16.2],
+        [25, 18.5]
+      ],
+      "high": "right",
+      "height": 1.5,
+      "face": "snow"
+    },
+    {
+      "id": "drift2",
+      "line": [
+        [1, 2],
+        [4, 0.8],
+        [8, 1.4]
+      ],
+      "high": "right",
+      "height": 1,
+      "face": "snow"
+    }
+  ],
+  "props": [
+    {
+      "kind": "boulder-large-snow",
+      "at": [12, 13.5]
+    },
+    {
+      "kind": "sled",
+      "at": [9, 5.6],
+      "rotation": 75
+    }
+  ],
+  "dressing": [
+    {
+      "kind": "forest",
+      "in": "pines",
+      "amount": 0.75,
+      "setting": "snow"
+    },
+    {
+      "kind": "scrub",
+      "in": "field",
+      "amount": 0.25,
+      "setting": "snow"
+    }
+  ]
+}

@@ -13,7 +13,7 @@ import { Rng } from "../../rng.js";
 import { mix, withAlpha } from "../../style/colour.js";
 import { grit, pebble } from "../../style/details.js";
 import { drawEdge, edgeOutlineWeight } from "../../style/edges.js";
-import { brush, chaikin, INK, offsetOutline, WEIGHT } from "../../style/ink.js";
+import { brush, chaikin, INK, offsetOutline, vertexNormals, WEIGHT } from "../../style/ink.js";
 import { makeNoise } from "../../style/noise.js";
 import {
   clipTo,
@@ -26,6 +26,15 @@ import {
 } from "../../style/paper.js";
 import { innerShade, toneSteps } from "../../style/shading.js";
 import { jagged } from "../../style/shapes.js";
+import {
+  drawCrackedEarth,
+  drawDuckweed,
+  drawFrost,
+  drawIce,
+  drawMud,
+  drawSand,
+  drawSnow,
+} from "./biomes.js";
 import { drawCaveFace, drawCaveLine } from "./cave.js";
 import type { Palette, Tones } from "./palette.js";
 import type { Resolved, ResolvedRegion } from "./resolve.js";
@@ -40,6 +49,7 @@ import {
   drawReeds,
   drawShore,
   inkRoad,
+  DEEP,
   WET,
 } from "./terrain.js";
 
@@ -70,6 +80,9 @@ export function drawBase(paper: Paper, pal: Palette, r: Resolved): void {
 
 /** One ground region: its raised edge if it has one, its surface, and its outline. */
 export function drawRegion(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved): void {
+  // A patch of the same natural ground as what's under it only marks out an area (for
+  // a wood's trees, say): drawing it again would show a seam in the texture.
+  if (!region.room && !region.line && !region.edge && sameAsUnder(r, region)) return;
   // Shallows over water (a ford) are drawn only on that water, fading into it.
   const water = waterUnder(r, region);
   if (region.kind === "shallows" && water.length > 0) {
@@ -88,7 +101,7 @@ export function drawRegion(paper: Paper, pal: Palette, region: ResolvedRegion, r
         ...water.map((w) => w.outline),
         ...joins.map((j) => offsetOutline(j.outline, PAVED.includes(j.kind) ? 0.04 : -0.15)),
       ]
-    : region.kind === "water" && !region.room
+    : DEEP.includes(region.kind) && !region.room
       ? water.map((w) => offsetOutline(w.outline, -0.12))
       : [];
   const { g } = paper;
@@ -127,7 +140,10 @@ function drawSurface(paper: Paper, pal: Palette, region: ResolvedRegion, r: Reso
     softPoly(paper, region.outline, pal.ground[region.kind].base, 0.25);
   }
   paint(paper, pal, region, r, frame);
-  if (open && !wet && !region.line && !region.edge && !PAVED.includes(region.kind)) {
+  if (open && region.kind === "ice") {
+    // Ice has a hard edge where it meets the ground, unlike water's soft bank.
+    brush(paper.g, region.outline, WEIGHT.object, { closed: true, seed: region.seed % 1000 });
+  } else if (open && !wet && !region.line && !region.edge && !PAVED.includes(region.kind)) {
     blendInto(paper, pal, region, r);
   }
   if (region.cave) drawCaveLine(paper, region, r);
@@ -136,7 +152,7 @@ function drawSurface(paper: Paper, pal: Palette, region: ResolvedRegion, r: Reso
       closed: true,
       seed: region.seed % 1000,
     });
-  } else if (wet && region.kind === "water") {
+  } else if (wet && DEEP.includes(region.kind)) {
     brush(paper.g, region.outline, WEIGHT.heavy, { closed: true, seed: region.seed % 1000 });
     drawReeds(paper, pal, region, below);
   } else if (wet) {
@@ -165,17 +181,60 @@ function drawSurface(paper: Paper, pal: Palette, region: ResolvedRegion, r: Reso
  * it on a line.
  */
 function blendInto(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved): void {
-  const round = offsetOutline(region.outline, 0.3);
+  const under = mostlyUnder(r, region);
+  if (!under || under === region.kind || UNWALKABLE.includes(under)) return;
+  const [cols, rows] = r.scene.squares;
+  const onMap = ([x, y]: Pt) => x > -0.5 && y > -0.5 && x < cols + 0.5 && y < rows + 0.5;
+  const outline = region.outline;
+  const normals = vertexNormals(outline, true);
+  const rng = new Rng(region.seed).fork("blend");
+  // Irregular rounded clumps, soft-edged, of very mixed sizes.
+  const clump = (at: Pt, r: number, colour: string) =>
+    softPoly(paper, chaikin(jagged(rng, at, r), true, 2), colour, 0.05);
+  const own = withAlpha(pal.ground[region.kind].base, 0.75);
+  const theirs = withAlpha(pal.ground[under].base, 0.8);
+  // A narrow fade inside the edge, and clumps of the ground round it tucked in along
+  // it, so the two textures break into each other instead of meeting on a line.
+  clipTo(paper.g, outline);
+  softStroke(paper, outline, withAlpha(pal.ground[under].base, 0.7), 0.3, 0.12);
+  outline.forEach((p, i) => {
+    const n = normals[i]!;
+    const keep = rng.chance(0.3);
+    const depth = rng.range(0.02, 0.4);
+    const size = rng.range(0.04, 0.24) * rng.range(0.5, 1);
+    if (keep && onMap(p)) clump([p[0] - n[0] * depth, p[1] - n[1] * depth], size, theirs);
+  });
+  paper.g.restore();
+  // And clumps of its own ground reaching out past the edge.
+  outline.forEach((p, i) => {
+    const n = normals[i]!;
+    const keep = rng.chance(0.2);
+    const depth = rng.range(0.02, 0.3);
+    const size = rng.range(0.04, 0.18) * rng.range(0.5, 1);
+    if (keep && onMap(p)) clump([p[0] + n[0] * depth, p[1] + n[1] * depth], size, own);
+  });
+}
+
+/** The ground most of the way round a region, just outside it (on the map). */
+function mostlyUnder(r: Resolved, region: ResolvedRegion): GroundKind | undefined {
+  const [cols, rows] = r.scene.squares;
+  const round = offsetOutline(region.outline, 0.3).filter(
+    ([x, y]) => x > 0 && y > 0 && x < cols && y < rows,
+  );
   const counts = new Map<GroundKind, number>();
   for (let i = 0; i < round.length; i += 3) {
     const kind = groundBelow(r, region, round[i]!);
     counts.set(kind, (counts.get(kind) ?? 0) + 1);
   }
-  const [under] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0] ?? [];
-  if (!under || under === region.kind || UNWALKABLE.includes(under)) return;
-  clipTo(paper.g, region.outline);
-  softStroke(paper, region.outline, withAlpha(pal.ground[under].base, 0.8), 0.9, 0.35);
-  paper.g.restore();
+  // A region running off the map all round lies wholly on whatever is at its middle.
+  if (counts.size === 0) return groundBelow(r, region, centroid(region.outline));
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]![0];
+}
+
+/** Natural ground written over more of the same: an area marker, drawn as nothing. */
+function sameAsUnder(r: Resolved, region: ResolvedRegion): boolean {
+  if (PAVED.includes(region.kind) || WET.includes(region.kind)) return false;
+  return mostlyUnder(r, region) === region.kind;
 }
 
 /** The surface of a region, clipped to its outline. */
@@ -191,6 +250,7 @@ function paint(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved, 
 
   const cracks = r.scene.cracks.filter((c) => c.region === region.id);
   const lichen = r.scene.scatter.filter((s) => s.kind === "lichen" && regionAt(r, s.at) === region);
+  const surface = { paper, pal, tones, region, area, frame, rng };
   switch (region.kind) {
     case "rock":
       drawRock(paper, pal, tones, region, area, frame, rng, lichen, cracks);
@@ -215,8 +275,26 @@ function paint(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved, 
       break;
     case "water":
     case "shallows":
+    case "bog":
       drawWater(paper, tones, region, area, rng);
+      if (region.kind === "bog") drawDuckweed(surface);
       if (!region.room) drawShore(paper, pal, region);
+      break;
+    case "sand":
+      drawSand(surface);
+      break;
+    case "cracked-earth":
+      drawCrackedEarth(surface);
+      break;
+    case "snow":
+      drawSnow(surface);
+      break;
+    case "ice":
+      drawIce(surface);
+      if (!region.room) drawFrost(paper, region);
+      break;
+    case "mud":
+      drawMud(surface);
       break;
     case "bedrock":
       toneSteps(
@@ -254,7 +332,7 @@ function paint(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved, 
 /** The deep-water regions painted before a region that it overlaps. */
 function waterUnder(r: Resolved, region: ResolvedRegion): ResolvedRegion[] {
   const before = r.regions.slice(0, r.regions.indexOf(region));
-  return before.filter((g) => g.kind === "water" && overlaps(g.outline, region.outline));
+  return before.filter((g) => DEEP.includes(g.kind) && overlaps(g.outline, region.outline));
 }
 
 /** The ground at a point under a region: what was painted before it there. */
@@ -275,7 +353,7 @@ export function regionAt(r: Resolved, p: Pt): ResolvedRegion | undefined {
     const g = r.regions[i]!;
     if (!contains(g.outline, p)) continue;
     const dry = g.line && !WET.includes(g.kind);
-    if (dry && r.regions.slice(0, i).some((w) => w.kind === "water" && contains(w.outline, p))) {
+    if (dry && r.regions.slice(0, i).some((w) => DEEP.includes(w.kind) && contains(w.outline, p))) {
       continue;
     }
     return g;

@@ -20,19 +20,30 @@ import type { ResolvedRegion } from "./resolve.js";
 import type { GroundKind } from "./scene.js";
 
 /** Ground that's water: it gets a bank rather than an ink rule. */
-export const WET: readonly GroundKind[] = ["water", "shallows"];
+/** Water too deep to wade: clear, or murky in a swamp. */
+export const DEEP: readonly GroundKind[] = ["water", "bog"];
+
+/** Ground that's water: it gets a bank rather than an ink rule. */
+export const WET: readonly GroundKind[] = [...DEEP, "shallows"];
 
 /**
  * Ground whose written outline is rounded off: water, and natural ground (a clearing,
  * a patch of earth), which would otherwise show the straight sides of its outline.
  */
 export const ROUNDED: readonly GroundKind[] = [
-  "water",
-  "shallows",
+  ...WET,
   "dirt",
   "grass",
   "forest-floor",
+  "sand",
+  "cracked-earth",
+  "snow",
+  "ice",
+  "mud",
 ];
+
+/** Ground reeds grow from, along a bank. */
+const REEDY: readonly GroundKind[] = ["grass", "mud", "forest-floor"];
 
 /** Built ground: roads of it hardly wander, and keep an inked edge. */
 const BUILT: readonly GroundKind[] = ["wood", "flagstone", "cobbles"];
@@ -115,6 +126,27 @@ export function smoothWater(outline: readonly Pt[], [cols, rows]: [number, numbe
 }
 
 /**
+ * A natural edge: a smoothed outline set wandering in and out by up to about 0.2
+ * squares from the seed, so a clearing or a patch of earth has a ragged, organic edge
+ * rather than a perfect curve. Points off the map stay put.
+ */
+export function raggedOutline(
+  outline: readonly Pt[],
+  seed: number,
+  [cols, rows]: [number, number],
+): Pt[] {
+  const noise = makeNoise(new Rng(seed).fork("ragged"));
+  const normals = vertexNormals(outline, true);
+  const lengths = arcLengths([...outline, outline[0]!]);
+  return outline.map(([x, y], i): Pt => {
+    if (x < -0.01 || y < -0.01 || x > cols + 0.01 || y > rows + 0.01) return [x, y];
+    const s = lengths[i]!;
+    const o = 0.13 * layered(noise, s * 0.9, 0.5) + 0.07 * layered(noise, s * 2.6, 3.5);
+    return [x + normals[i]![0] * o, y + normals[i]![1] * o];
+  });
+}
+
+/**
  * The outline of a band `width` wide along a centre line, its width wandering a little
  * from the seed, narrowing towards free ends, with round ends.
  */
@@ -184,10 +216,15 @@ function every(rng: Rng, outline: readonly Pt[], gap: () => number): number[] {
  * half under the bank in small clusters (the water covers their inner halves).
  */
 export function drawBank(paper: Paper, pal: Palette, region: ResolvedRegion): void {
-  if (region.kind === "water") {
+  if (DEEP.includes(region.kind)) {
     softPoly(paper, offsetOutline(region.outline, 0.22), withAlpha(INK, 0.3), 0.18);
   }
   const rng = new Rng(region.seed).fork("bank");
+  if (region.kind === "bog") {
+    // A bog's bank is soft mud, dark and wet, with no stones in it.
+    softPoly(paper, offsetOutline(region.outline, 0.3), pal.ground.mud.shade, 0.15);
+    return;
+  }
   drawEdge(paper, "brushed", region.outline, pal.rim, rng);
   const normals = vertexNormals(region.outline, true);
   for (const i of every(rng, region.outline, () => rng.range(0.3, 1.1))) {
@@ -214,14 +251,15 @@ export function drawBank(paper: Paper, pal: Palette, region: ResolvedRegion): vo
  */
 export function drawShore(paper: Paper, pal: Palette, region: ResolvedRegion): void {
   const tones = pal.ground[region.kind];
-  if (region.kind === "water") {
+  if (DEEP.includes(region.kind)) {
+    const edge = region.kind === "bog" ? tones : pal.ground.shallows;
     if (region.line) {
       const { centre, width, ends } = region.line;
       const deep = lineOutline(centre, width * 0.45, region.seed + 2, ends);
       softPoly(paper, deep, mix(tones.base, tones.shade, 0.8), 0.5);
     }
-    softStroke(paper, region.outline, pal.ground.shallows.base, 1, 0.3);
-    softStroke(paper, region.outline, pal.ground.shallows.light, 0.35, 0.12);
+    softStroke(paper, region.outline, edge.base, 1, 0.3);
+    softStroke(paper, region.outline, edge.light, 0.35, 0.12);
   } else {
     // Shallows: stones showing through, softly, with no ink.
     const rng = new Rng(region.seed).fork("stones");
@@ -247,7 +285,7 @@ export function drawReeds(paper: Paper, pal: Palette, region: ResolvedRegion, un
   for (const i of every(rng, region.outline, () => rng.range(1, 3.5))) {
     const [x, y] = region.outline[i]!;
     const [nx, ny] = normals[i]!;
-    if (under([x + nx * 0.3, y + ny * 0.3]) !== "grass" || rng.chance(0.35)) continue;
+    if (!REEDY.includes(under([x + nx * 0.3, y + ny * 0.3])) || rng.chance(0.35)) continue;
     const into = Math.atan2(-ny, -nx);
     for (let b = rng.int(5, 9); b > 0; b--) {
       const a = into + rng.range(-1.1, 1.1);
@@ -285,8 +323,10 @@ export function drawFord(
   // A little past the water's edge, so the ford covers the bank's ink where it crosses.
   for (const w of under) tracePath(g, offsetOutline(w.outline, 0.08), true);
   g.clip("nonzero");
-  softPoly(paper, region.outline, pal.ground.shallows.base, 0.35);
-  softPoly(paper, offsetOutline(region.outline, -0.3), pal.ground.shallows.light, 0.4);
+  // Over a bog the shallows are murky too.
+  const tones = under.every((w) => w.kind === "bog") ? pal.ground.bog : pal.ground.shallows;
+  softPoly(paper, region.outline, mix(tones.base, tones.light, 0.5), 0.35);
+  softPoly(paper, offsetOutline(region.outline, -0.3), tones.light, 0.4);
   drawShore(paper, pal, region);
   g.restore();
 }

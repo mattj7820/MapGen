@@ -118,6 +118,7 @@ Tests write only under `output/.test/` and clean up after themselves.
     surf, path wear and fading ends
   - `cliff.ts`: cliffs and ridges: the brink, the face, its shadow and scree, and the
     ramps, steps, waterfalls and rapids where paths and rivers cross it
+  - `biomes.ts`: sand, cracked earth, snow, ice, mud and bog surfaces
   - `cave.ts`: cave rooms: the roughened outline, the rock face, which faces stop light
   - `lighting.ts`: ambient light by time of day, light sources, visibility polygons,
     the light layer
@@ -236,6 +237,18 @@ Tests write only under `output/.test/` and clean up after themselves.
   - Natural ground outlines (grass, dirt, forest floor) are rounded like water's, and
     fade into the ground under them over about half a square instead of a fringe
     outside; a clearing's edge looked rough before.
+- **Biomes** (`biomes.ts` draws the surfaces): `sand`, `cracked-earth`, `snow`, `ice`,
+  `mud` and `bog` ground. `bog` is deep water like `water` (`DEEP` in terrain.ts) with
+  duckweed and a muddy bank instead of stones; shallows over it go murky. `ice` is
+  walkable, read apart from water by a hard ink edge, cracks, glassy streaks and frost.
+  Cliffs take `face`: `rock`, or `sand` (dune) and `snow` (drift), which are walkable
+  soft slopes (`onFace` only counts rock). `scrub` dressing is the forest mixes
+  without trees. Matt's note: be careful where textures meet. So natural ground gets a
+  seeded ragged edge (`raggedOutline`), a narrow fade, and irregular clumps of each
+  ground tucked across the edge, rather than a wide smooth wash that smeared both
+  textures; and a region of the same natural kind as the ground under it draws
+  nothing (it only marks an area), which removed a seam round a pine wood on snow.
+  Snow-capped library props still use cream linen for snow; Matt left them as they are.
 - **Removing generated items:** a scene's `remove` list (`{ kind, at }`, matched
   within 0.01) drops one dressing item. Removed items are still made, then dropped,
   so nothing moves into the gap and they keep their numbers. To move or turn one,
@@ -516,8 +529,9 @@ Done after step 9 (one branch, `lighting-and-props`):
       settings need them.
 
 Done from the roadmap since: the numbered review overlay (2.1), paths and rivers, and
-cliffs and ridges, forests (the first four parts of 3.1), with outdoor proof maps (a
-ford, a coast, a ridge, a sea cliff, a forest road) in `scripts/samples/`. Decisions are under "Decisions so far".
+cliffs and ridges, forests and biomes (all of 3.1 but buildings from outside), with
+outdoor proof maps (a ford, a coast, a ridge, a sea cliff, a forest road, a desert, a
+snowfield and a swamp) in `scripts/samples/`. Decisions are under "Decisions so far".
 
 What's next is in `docs/roadmap.md`: every idea Matt wants to get to, in a suggested
 order. Tick items off there and record decisions here as they land. New map kinds

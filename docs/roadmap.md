@@ -95,7 +95,7 @@ The thinnest area now: outdoor maps are base ground plus scattered stones.
 - [ ] **Buildings from outside:** roofs (thatch, slate, tile, timber) over a room's
       outline for street and village maps, with chimneys and a ridge line, and a
       way to show a roofed building whose inside isn't mapped.
-- [ ] **Biomes:** desert (dunes, cracked earth), snow (drifts, ice), swamp (pools,
+- [x] **Biomes:** desert (dunes, cracked earth), snow (drifts, ice), swamp (pools,
       reeds, mud), as ground kinds and dressing settings.
 
 ### 3.2 Atmosphere layers
@@ -138,7 +138,7 @@ The thinnest area now: outdoor maps are base ground plus scattered stones.
 
 1. Numbered review overlay (2.1): small, and speeds up every round of feedback after.
    Done.
-2. Outdoor terrain (3.1), paths and rivers first. Paths and rivers, cliffs and forests done.
+2. Outdoor terrain (3.1), paths and rivers first. Paths and rivers, cliffs, forests and biomes done.
 3. Walls, doors and lights in the sidecar (1.1): small, and turns every map into a
    playable one in Guildhall. Start when Matt has said what Guildhall reads.
 4. State variants (1.2), then multi-level buildings (1.3).

@@ -16,6 +16,7 @@ import {
   type Scene,
   BUILT_WALLS,
   CLIMBS,
+  FACE_KINDS,
   WALL_KINDS,
 } from "./scene.js";
 
@@ -187,6 +188,7 @@ export function parseScene(text: string): Scene {
         line: pts,
         high: oneOf(o.high, ["left", "right"] as const, `${n}.high`),
         height: o.height === undefined ? 2 : positive(o.height, `${n}.height`),
+        face: o.face === undefined ? "rock" : oneOf(o.face, FACE_KINDS, `${n}.face`),
         seed: seedFor(o.seed, `${n}.seed`, "cliff", pts),
       };
     }),

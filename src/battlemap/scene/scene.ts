@@ -79,8 +79,14 @@ export const GROUND_KINDS = [
   "dirt",
   "grass",
   "forest-floor",
+  "sand",
+  "cracked-earth",
+  "snow",
+  "ice",
+  "mud",
   "rock",
   "water",
+  "bog",
   "shallows",
   "void",
   "bedrock",
@@ -88,7 +94,7 @@ export const GROUND_KINDS = [
 export type GroundKind = (typeof GROUND_KINDS)[number];
 
 /** Ground nobody can stand on: props and scatter must stay off it. */
-export const UNWALKABLE: readonly GroundKind[] = ["water", "void", "bedrock"];
+export const UNWALKABLE: readonly GroundKind[] = ["water", "bog", "void", "bedrock"];
 
 /**
  * `cave` is for rooms only: a rough rock face round the floor instead of a built
@@ -213,8 +219,9 @@ export type SurfaceDressing = (typeof SURFACE_DRESSINGS)[number];
  * - `cobwebs`: in the corners.
  * - `forest`: trees (a trunk under each canopy) and undergrowth across a ground region,
  *   thinning towards its edge, kept off whatever is painted over it (paths, clearings).
+ * - `scrub`: a forest's undergrowth without its trees, for open ground of any biome.
  */
-export const DRESSING_KINDS = ["stores", "litter", "cobwebs", "forest"] as const;
+export const DRESSING_KINDS = ["stores", "litter", "cobwebs", "forest", "scrub"] as const;
 export type DressingKind = (typeof DRESSING_KINDS)[number];
 
 export interface Dressing {
@@ -239,6 +246,9 @@ export interface Scatter {
   seed: number;
 }
 
+export const FACE_KINDS = ["rock", "sand", "snow"] as const;
+export type FaceKind = (typeof FACE_KINDS)[number];
+
 export const CLIMBS = ["ramp", "steps"] as const;
 export type Climb = (typeof CLIMBS)[number];
 
@@ -254,6 +264,11 @@ export interface Cliff {
   high: "left" | "right";
   /** In squares (default 2): a 1-square bank, a 4-square cliff. */
   height: number;
+  /**
+   * What the face is: `rock` (default) can't be climbed but by its ramps and steps;
+   * `sand` (a dune) and `snow` (a drift) are soft slopes you can walk up.
+   */
+  face: FaceKind;
   seed: number;
 }
 
