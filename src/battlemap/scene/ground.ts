@@ -77,17 +77,20 @@ export function drawRegion(paper: Paper, pal: Palette, region: ResolvedRegion, r
     return;
   }
   // A dry path or road stops at the bank of any water it crosses (it takes a ford or a
-  // bridge to get over), and goes under the paths it joins, reaching just into their
-  // soft edges so the two blend.
+  // bridge to get over), and goes under the paths it joins: just into a dirt path's
+  // soft edge so the two blend, or up to a paved road's hard one. Water running into
+  // water painted earlier (a stream into the sea) reaches just past the other's bank,
+  // covering its ink, so the two join with no line across the mouth.
   const dry = region.line && !WET.includes(region.kind);
+  const joins = (region.line?.joins ?? []).map((id) => r.regions.find((o) => o.id === id)!);
   const cuts = dry
     ? [
         ...water.map((w) => w.outline),
-        ...region.line!.joins.map((id) =>
-          offsetOutline(r.regions.find((o) => o.id === id)!.outline, -0.15),
-        ),
+        ...joins.map((j) => offsetOutline(j.outline, PAVED.includes(j.kind) ? 0.04 : -0.15)),
       ]
-    : [];
+    : region.kind === "water" && !region.room
+      ? water.map((w) => offsetOutline(w.outline, -0.12))
+      : [];
   const { g } = paper;
   for (const cut of cuts) {
     g.save();
@@ -98,9 +101,8 @@ export function drawRegion(paper: Paper, pal: Palette, region: ResolvedRegion, r
   }
   drawSurface(paper, pal, region, r);
   for (let i = 0; i < cuts.length; i++) g.restore();
-  // Soften the seam where it meets each path it joins, with that path's own colour.
-  for (const id of region.line?.joins ?? []) {
-    const join = r.regions.find((o) => o.id === id)!;
+  // Soften the seam where it meets each dirt path it joins, with that path's colour.
+  for (const join of joins.filter((j) => !PAVED.includes(j.kind))) {
     g.save();
     clipTo(g, offsetOutline(region.outline, 0.3));
     softStroke(paper, offsetOutline(join.outline, -0.15), pal.ground[join.kind].base, 0.35, 0.18);
@@ -239,10 +241,19 @@ function groundBelow(r: Resolved, region: ResolvedRegion, p: Pt): GroundKind {
   return r.scene.base;
 }
 
-/** The topmost region at a point, if any. */
+/**
+ * The topmost region at a point, if any. A dry path or road doesn't cover water
+ * painted before it (it's drawn stopping at the bank), so there the water counts.
+ */
 export function regionAt(r: Resolved, p: Pt): ResolvedRegion | undefined {
   for (let i = r.regions.length - 1; i >= 0; i--) {
-    if (contains(r.regions[i]!.outline, p)) return r.regions[i];
+    const g = r.regions[i]!;
+    if (!contains(g.outline, p)) continue;
+    const dry = g.line && !WET.includes(g.kind);
+    if (dry && r.regions.slice(0, i).some((w) => w.kind === "water" && contains(w.outline, p))) {
+      continue;
+    }
+    return g;
   }
   return undefined;
 }

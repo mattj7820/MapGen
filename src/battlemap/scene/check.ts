@@ -279,8 +279,9 @@ function bridgeProblems(r: Resolved, b: ResolvedProp, name: string): string[] {
     if (!sound) problems.push(`${name}: its ${end.name} isn't fully on solid ground`);
     return sound ? (region ?? "base") : undefined;
   });
-  // Two banks of the base ground or of a room are fine; two ends on one raised region aren't.
-  if (landed[0] && landed[0] !== "base" && !landed[0].room && landed[0] === landed[1]) {
+  // Two banks of one ground are fine (a road on both sides of a stream); two ends on
+  // one raised region aren't.
+  if (landed[0] && landed[0] !== "base" && landed[0].edge && landed[0] === landed[1]) {
     problems.push(`${name}: both ends are on ${landed[0].id}`);
   }
   for (const g of r.regions) {

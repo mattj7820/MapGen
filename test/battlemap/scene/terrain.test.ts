@@ -124,6 +124,15 @@ describe("paths and rivers", () => {
     expect(groundAt(r, [2, 10])).toBe("grass");
   });
 
+  it("stop at the bank: without a ford, a road over water is water there, and takes a bridge", () => {
+    const s = crossing();
+    s.ground.splice(2, 1); // no ford
+    const without = resolveScene(s);
+    expect(groundAt(without, [7.3, 6])).toBe("water");
+    s.props.push({ kind: "bridge", at: [7.4, 6], rotation: 90, size: [1.2, 4.4], seed: 1 });
+    expect(checkScene(s)).toEqual([]);
+  });
+
   it("know which ends stop inside the map, and which paths they run into", () => {
     expect(region("road").line!.ends).toEqual([false, false]);
     expect(region("path").line!.ends).toEqual([false, true]);
