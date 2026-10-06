@@ -63,6 +63,7 @@ describe("review labels", () => {
     const key = labelKey(all).split("\n");
     expect(key).toHaveLength(all.length);
     expect(key[0]).toMatch(/^ *A {2}wood floor, stone wall .*rooms\[0\] "hall"$/);
+    expect(key.find((l) => /^101 /.test(l))).toMatch(/ seed \d+/);
     expect(key.find((l) => /^ *4 /.test(l))).toMatch(/bar .*\(5\.00, 2\.50\) {2}props\[0\]$/);
   });
 

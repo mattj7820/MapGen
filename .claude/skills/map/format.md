@@ -24,6 +24,7 @@ to try a different look for one item.
   "dressing": [],
   "scatter": [],
   "cracks": [],
+  "remove": [], // optional: generated items taken out by hand (see Dressing)
 }
 ```
 
@@ -177,6 +178,20 @@ barracks, prison, sewer, ship, docks, market, camp, graveyard, farm, stable, kit
 warehouse, shop, noble, workshop, ruins, forest, swamp, desert, snow, underdark, cult,
 bath, vault. A setting with nothing tagged for the role falls back to household
 things; `npm run props -- --search <setting>` shows what's there.
+
+### Removing one generated item
+
+Dressing can't be edited item by item, but one item can be taken out: add a rule to
+`remove` with its kind and position, exactly as `labels.txt` shows them.
+
+```json
+"remove": [{ "kind": "sack", "at": [3.41, 1.22] }]
+```
+
+Only that item goes; everything else stays exactly where it was (nothing moves into
+the gap). A rule that matches nothing is reported by the checks. To move or turn a
+generated item instead, remove it and add it as a written prop with the same `kind`,
+`at`, `seed` and `size` from the key, then edit that.
 
 ## Lighting
 

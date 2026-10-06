@@ -118,7 +118,8 @@ Tests write only under `output/.test/` and clean up after themselves.
   - `lighting.ts`: ambient light by time of day, light sources, visibility polygons,
     the light layer
   - `palette.ts`: palettes (colour roles for every ground, wall and material)
-  - `crops.ts`: review crops; `flat.ts`: the restyle export
+  - `crops.ts`: review crops; `labels.ts`: the numbered overlay and its key;
+    `flat.ts`: the restyle export
   - `props/`: the prop library, about a thousand kinds:
     - `library.ts` joins every group (and refuses a kind defined twice);
       `catalogue.ts` is the fixed vocabulary of categories and tags
@@ -172,6 +173,17 @@ Tests write only under `output/.test/` and clean up after themselves.
     owner's seed regardless of the rest of the scene, then colliders are dropped. So
     adding a prop only removes the dressing it lands on (tested).
   - Doors and double doors can stand open (`"open": true`), swung into the room.
+- **Numbered review overlay** (`labels.ts`): every render writes `review-labels.png`
+  (the map scaled to 128 px per square, tagged) and `labels.txt`. Rooms are lettered;
+  openings then written props are numbered from 1 in layout order; generated items
+  from the next hundred (101 up), in the order dressing makes them, so editing
+  written props doesn't renumber them. Tags that would overlap move aside with a
+  leader line; room letters go on open floor. Drawn on a copy: the map PNG is
+  byte-identical with or without it (tested).
+- **Removing generated items:** a scene's `remove` list (`{ kind, at }`, matched
+  within 0.01) drops one dressing item. Removed items are still made, then dropped,
+  so nothing moves into the gap and they keep their numbers. To move or turn one,
+  `/map` writes it out as a prop with the seed and size from the key.
 - **Lighting** (`lighting.ts`; Matt's bar is the painted tavern reference: a dim room,
   warm pools of light falling off softly):
   - A scene's `lighting` is a time, `day`, `dusk`, `night` or `dark`, with optional
@@ -250,6 +262,8 @@ output/plateau-s7-24x16-256/
   plateau-s7.json    sidecar (same base name)
   layout.json        the scene: editable
   review.png         Claude's inspection sheet, not for the vault
+  review-labels.png  the map with a number on everything, for edits by number
+  labels.txt         its key (also printed by `npm run render`)
 ```
 
 A scene's base name is its `name` (a plain description like `tavern`), or its folder's

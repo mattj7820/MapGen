@@ -49,7 +49,7 @@ the wishlist loop).
 
 ### 2.1 Numbered review overlay
 
-- [ ] A `review-labels.png` beside `review.png`: the map with a small number on every
+- [x] A `review-labels.png` beside `review.png`: the map with a small number on every
       prop, room and opening, and a key in the terminal, so Matt can say "remove 23,
       turn 41 to face the hearth" without knowing kind names or coordinates.
 - Numbers come from the scene's order, so they stay put between renders of an
@@ -135,11 +135,12 @@ The thinnest area now: outdoor maps are base ground plus scattered stones.
 
 ## Suggested order
 
-1. Walls, doors and lights in the sidecar (1.1): small, and turns every map into a
+1. Numbered review overlay (2.1): small, and speeds up every round of feedback after.
+   Done.
+2. Outdoor terrain (3.1), paths and rivers first.
+3. Walls, doors and lights in the sidecar (1.1): small, and turns every map into a
    playable one in Guildhall. Start when Matt has said what Guildhall reads.
-2. Numbered review overlay (2.1): small, and speeds up every round of feedback after.
-3. State variants (1.2), then multi-level buildings (1.3).
-4. Outdoor terrain (3.1), path and river first.
-5. Room kits (2.3) and the prop browser (2.2).
+4. State variants (1.2), then multi-level buildings (1.3).
+5. The rest of outdoor terrain (3.1), room kits (2.3) and the prop browser (2.2).
 6. Floor wear (3.3), atmosphere (3.2), prop shadows (3.4), height (3.5), and the
    library items (4) alongside.

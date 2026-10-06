@@ -16,6 +16,9 @@ export interface Label {
   ref: string;
   at: Pt;
   rotation?: number;
+  /** For a generated item: what it takes to write it out as a prop of its own. */
+  seed?: number;
+  size?: [number, number];
 }
 
 export function sceneLabels(r: Resolved): Label[] {
@@ -64,6 +67,8 @@ export function sceneLabels(r: Resolved): Label[] {
       ref: p.from ?? "dressing",
       at: p.prop.at,
       rotation: p.prop.rotation,
+      seed: p.prop.seed,
+      ...(p.prop.size ? { size: p.prop.size } : {}),
     });
   }
   return out;
@@ -78,7 +83,9 @@ export function labelKey(labels: Label[]): string {
     .map((l) => {
       const at = `(${l.at[0].toFixed(2)}, ${l.at[1].toFixed(2)})`;
       const turn = l.rotation ? `  turned ${l.rotation}` : "";
-      return `${l.tag.padStart(width)}  ${l.kind.padEnd(kindWidth)}  ${at}  ${l.ref}${turn}`;
+      const seed = l.seed !== undefined ? `  seed ${l.seed}` : "";
+      const size = l.size ? `  size ${l.size.map((v) => +v.toFixed(3)).join("x")}` : "";
+      return `${l.tag.padStart(width)}  ${l.kind.padEnd(kindWidth)}  ${at}  ${l.ref}${turn}${seed}${size}`;
     })
     .join("\n");
 }
