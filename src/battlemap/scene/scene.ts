@@ -78,6 +78,7 @@ export const GROUND_KINDS = [
   "grass",
   "rock",
   "water",
+  "shallows",
   "void",
   "bedrock",
 ] as const;
@@ -104,13 +105,24 @@ export type ScatterKind = (typeof SCATTER_KINDS)[number];
 
 export { type EdgeStyle };
 
-/** An area of one kind of ground: `rect` [x0, y0, x1, y1] or a closed `outline`. */
+/**
+ * An area of one kind of ground: `rect` [x0, y0, x1, y1], a closed `outline`, or a
+ * `line` of points with a `width` (a path, road, river or stream), smoothed and
+ * widened into an outline.
+ */
 export interface Region {
-  /** Needed only when cracks refer to the region. */
+  /** Needed only when cracks or dressing refer to the region. */
   id?: string;
   kind: GroundKind;
   rect?: [number, number, number, number];
   outline?: Pt[];
+  line?: Pt[];
+  /** A line's width in squares. */
+  width?: number;
+  /** Cart ruts along a line of dirt. */
+  ruts?: boolean;
+  /** Surf along water's edge: for a coast. */
+  surf?: boolean;
   /** Draw a raised edge round it (a plateau's rock lip, a grassy bank). */
   edge?: EdgeStyle;
   seed: number;

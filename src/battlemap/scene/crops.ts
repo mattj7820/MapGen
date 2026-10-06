@@ -2,6 +2,7 @@ import { centroid, distance, gap, type Pt } from "../../geometry.js";
 import type { Crop } from "../review.js";
 import { bridgeEnds } from "./check.js";
 import type { Resolved } from "./resolve.js";
+import { WET } from "./terrain.js";
 
 /** Crops closer together than this show mostly the same thing; keep the first. */
 const APART = 1.5;
@@ -35,6 +36,25 @@ export function sceneCrops(r: Resolved, max = 6): Crop[] {
   }
   const bridge = r.props.find((p) => p.spec.layer === "bridge");
   if (bridge) add(bridge.prop.at, "bridge");
+
+  // Outdoor terrain: a ford, a shore with surf, a bank, the middle of each path.
+  const open = r.regions.filter((g) => !g.room);
+  const ford = open.find((g) => g.kind === "shallows");
+  if (ford) add(centroid(ford.outline), "ford");
+  for (const w of open.filter((g) => g.kind === "water").slice(0, 2)) {
+    const bank = w.outline.filter((p) => inFrame(p, 1.5));
+    add(bank[Math.floor(bank.length / 3)], w.surf ? "shore and surf" : "bank");
+  }
+  for (const path of open.filter((g) => g.line && !WET.includes(g.kind)).slice(0, 2)) {
+    const along = path.line!.centre.filter((p) => inFrame(p, 1.5));
+    const label = `${path.kind} ${path.ruts ? "track" : "path"}`;
+    // The middle, or failing that a third of the way along from either end.
+    for (const t of [0.5, 0.3, 0.7]) {
+      const before = crops.length;
+      add(along[Math.floor(along.length * t)], label);
+      if (crops.length > before) break;
+    }
+  }
 
   const corner = r.segments
     .flatMap((s) => [s.reach[0] > 0 ? s.a : undefined, s.reach[1] > 0 ? s.b : undefined])

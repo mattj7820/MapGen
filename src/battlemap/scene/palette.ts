@@ -70,6 +70,7 @@ const EARTH: Record<GroundKind, Tones> = {
   grass: { base: "#7d8a4f", light: "#8f9c5c", shade: "#67743f" },
   rock: { base: "#9a8f80", light: "#aba08f", shade: "#82786a" },
   water: { base: "#4f7480", light: "#6a8f98", shade: "#3c5c67" },
+  shallows: { base: "#6f9097", light: "#86a6aa", shade: "#5a7a80" },
   void: { base: "#151214", light: "#2e2724", shade: "#000000" },
   bedrock: { base: "#4a443d", light: "#57514a", shade: "#37322d" },
 };

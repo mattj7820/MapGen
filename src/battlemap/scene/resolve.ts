@@ -3,6 +3,15 @@ import { hash } from "../../rng.js";
 import { densify } from "../../style/ink.js";
 import { caveOutline } from "./cave.js";
 import { dress } from "./dressing.js";
+import {
+  type Ends,
+  freeEnds,
+  lineCentre,
+  lineOutline,
+  smoothWater,
+  wanderFor,
+  WET,
+} from "./terrain.js";
 import { onSegment, placeProp, rectOutline, WALL_THICKNESS, wallRect } from "./place.js";
 import { PROPS } from "./props/library.js";
 import type { LibraryProp } from "./props/spec.js";
@@ -55,6 +64,16 @@ export interface ResolvedRegion {
   room?: true;
   /** A cave's floor, whose outline is its rough rock face (see cave.ts). */
   cave?: true;
+  /** For a region written as a line: its smoothed centre line and width. */
+  line?: {
+    centre: Pt[];
+    width: number;
+    ends: Ends;
+    /** The ids of other paths or roads its ends run into: it goes under them. */
+    joins: string[];
+  };
+  ruts?: true;
+  surf?: true;
 }
 
 export interface WallSegment {
@@ -122,10 +141,22 @@ export function resolveScene(scene: Scene): Resolved {
       ...(r.wall === "cave" ? { cave: true as const } : {}),
     })),
     ...scene.ground.map((g, i): ResolvedRegion => {
-      const raw = g.outline ?? rectOutline(g.rect!);
+      const ends = g.line ? freeEnds(g.line, scene.squares) : undefined;
+      const centre = g.line
+        ? lineCentre(g.line, g.seed, wanderFor(g.kind, g.width!), ends)
+        : undefined;
+      // Water has no corners: its banks are smoothed once here, so checks agree.
+      const raw = centre
+        ? lineOutline(centre, g.width!, g.seed, ends)
+        : g.outline && WET.includes(g.kind)
+          ? smoothWater(g.outline, scene.squares)
+          : (g.outline ?? rectOutline(g.rect!));
       return {
         id: g.id ?? `ground${i + 1}`,
         kind: g.kind,
+        ...(centre ? { line: { centre, width: g.width!, ends: ends!, joins: [] } } : {}),
+        ...(g.ruts ? { ruts: true as const } : {}),
+        ...(g.surf ? { surf: true as const } : {}),
         // Raised edges are built along the outline's points, so long sides need more of them.
         outline: g.edge && hasLongSides(raw) ? densify(raw, true, 0.25) : raw,
         ...(g.edge ? { edge: g.edge } : {}),
@@ -133,6 +164,8 @@ export function resolveScene(scene: Scene): Resolved {
       };
     }),
   ];
+
+  joinPaths(regions);
 
   const segments = mergeWalls(scene);
   const openings = scene.openings.map((o) => placeOpening(o, segments));
@@ -182,6 +215,26 @@ export function resolveScene(scene: Scene): Resolved {
   // A stable sort, so within a layer things keep the order they were written in.
   props.sort((a, b) => LAYER_ORDER.indexOf(a.spec.layer) - LAYER_ORDER.indexOf(b.spec.layer));
   return resolved;
+}
+
+/**
+ * Where a path's end runs into another path or road, it goes under that one: the
+ * busier way stays on top whichever is written first. That end no longer counts as
+ * free (it doesn't fade out).
+ */
+function joinPaths(regions: ResolvedRegion[]): void {
+  const dry = regions.filter((g) => g.line && !WET.includes(g.kind));
+  for (const g of dry) {
+    const line = g.line!;
+    const tips = [line.centre[0]!, line.centre[line.centre.length - 1]!];
+    tips.forEach((tip, i) => {
+      if (!line.ends[i]) return;
+      const into = dry.find((o) => o !== g && contains(o.outline, tip));
+      if (!into) return;
+      line.ends[i] = false;
+      if (!line.joins.includes(into.id)) line.joins.push(into.id);
+    });
+  }
 }
 
 /** The `remove` rule that takes out a generated item, if there is one. */

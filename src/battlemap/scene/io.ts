@@ -58,11 +58,13 @@ export function parseScene(text: string): Scene {
       const n = `ground[${i}]`;
       const o = obj(g, n);
       const kind = oneOf(o.kind, GROUND_KINDS, `${n}.kind`);
-      const shape = rectOrPoints(o, n, "outline");
+      const shape = o.line !== undefined ? line(o, n) : rectOrPoints(o, n, "outline");
       return {
         ...(o.id !== undefined ? { id: str(o.id, `${n}.id`) } : {}),
         kind,
         ...shape,
+        ...(o.ruts !== undefined ? { ruts: bool(o.ruts, `${n}.ruts`) } : {}),
+        ...(o.surf !== undefined ? { surf: bool(o.surf, `${n}.surf`) } : {}),
         ...(o.edge !== undefined
           ? { edge: oneOf(o.edge, EDGE_STYLES, `${n}.edge`) as EdgeStyle }
           : {}),
@@ -202,6 +204,17 @@ function lighting(value: unknown): NonNullable<Scene["lighting"]> {
   };
 }
 
+/** A `line` of at least two points with a `width`, and no other shape. */
+function line(o: Record<string, unknown>, name: string): { line: Pt[]; width: number } {
+  if (o.rect !== undefined || o.outline !== undefined) {
+    throw new Error(`${name} needs one of rect, outline or line, not several`);
+  }
+  const pts = points(o.line, `${name}.line`);
+  if (pts.length < 2) throw new Error(`${name}.line needs at least 2 points`);
+  if (o.width === undefined) throw new Error(`${name}.line needs a width`);
+  return { line: pts, width: positive(o.width, `${name}.width`) };
+}
+
 /** Exactly one of `rect` [x0, y0, x1, y1] or a list of points. */
 function rectOrPoints(
   o: Record<string, unknown>,
@@ -209,7 +222,9 @@ function rectOrPoints(
   pointsKey: "outline" | "points",
 ): { rect: [number, number, number, number] } | { outline: Pt[] } | { points: Pt[] } {
   if ((o.rect === undefined) === (o[pointsKey] === undefined)) {
-    throw new Error(`${name} needs either rect or ${pointsKey}`);
+    throw new Error(
+      `${name} needs either rect or ${pointsKey}${pointsKey === "outline" ? " (or a line with a width)" : ""}`,
+    );
   }
   if (o.rect !== undefined) {
     const r = arr(o.rect, `${name}.rect`).map((v, i) => num(v, `${name}.rect[${i}]`));
