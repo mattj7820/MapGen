@@ -6,6 +6,7 @@ import {
   type Pt,
   segmentDistance,
 } from "../../geometry.js";
+import { onFace } from "./cliff.js";
 import { groundAt, regionAt } from "./ground.js";
 import { PALETTES } from "./palette.js";
 import { doorwayPath, onSegment } from "./place.js";
@@ -42,7 +43,12 @@ export function checkScene(scene: Scene): string[] {
   const r = resolveScene(scene);
   const inMap = ([x, y]: Pt, margin = 0) =>
     x >= -margin && y >= -margin && x <= cols + margin && y <= rows + margin;
-  const walkable = (p: Pt) => !UNWALKABLE.includes(groundAt(r, p));
+  const walkable = (p: Pt) => !UNWALKABLE.includes(groundAt(r, p)) && !onFace(r.cliffs, p);
+  /** What's under a point, for messages: its ground, or a cliff's face. */
+  const what = (p: Pt) => {
+    const c = onFace(r.cliffs, p);
+    return c ? `the face of ${c.id}` : groundAt(r, p);
+  };
 
   // ------------------------------------------------------------ ground
   const ids = r.regions.map((g) => g.id);
@@ -77,6 +83,19 @@ export function checkScene(scene: Scene): string[] {
   }
   const paths = r.regions.filter((g) => g.line && !WET.includes(g.kind));
 
+  // ------------------------------------------------------------ cliffs
+  const cliffIds = r.cliffs.map((c) => c.id);
+  for (const id of new Set(cliffIds.filter((id, i) => cliffIds.indexOf(id) !== i))) {
+    problems.push(`cliff id "${id}" is used more than once`);
+  }
+  scene.cliffs.forEach((c, i) => {
+    const name = `cliff "${r.cliffs[i]!.id}"`;
+    const far = c.line.find((p) => !inMap(p, 3));
+    if (far) problems.push(`${name} runs far off the map at ${fmt(far)}`);
+    const room = r.regions.find((g) => g.room && overlaps(g.outline, r.cliffs[i]!.face));
+    if (room) problems.push(`${name} runs through the room ${room.id}`);
+  });
+
   // ------------------------------------------------------------ walls and openings
   for (const s of r.segments) {
     const off = [s.a, s.b].find((p) => !inMap(p));
@@ -86,7 +105,7 @@ export function checkScene(scene: Scene): string[] {
     const name = `${o.opening.kind} at ${fmt(o.opening.at)}`;
     if (o.problem) problems.push(`${name} ${o.problem}`);
     else if (PASSABLE.includes(o.opening.kind))
-      problems.push(...doorwayProblems(r, o, name, walkable, inMap));
+      problems.push(...doorwayProblems(r, o, name, walkable, what, inMap));
   }
 
   // ------------------------------------------------------------ props
@@ -123,8 +142,7 @@ export function checkScene(scene: Scene): string[] {
       continue;
     }
     const under = [p.prop.at, ...p.footprint].find((q) => !walkable(q));
-    if (under)
-      problems.push(`${name} hangs off the ground at ${fmt(under)} (${groundAt(r, under)})`);
+    if (under) problems.push(`${name} hangs off the ground at ${fmt(under)} (${what(under)})`);
   }
   const solid = r.props.filter((p) => p.spec.layer === "solid");
   const seats = r.props.filter((p) => p.spec.layer === "seat");
@@ -171,12 +189,7 @@ export function checkScene(scene: Scene): string[] {
             ]),
           ];
     if (!rim.every(walkable)) {
-      problems.push(
-        `${name} hangs off the ground (${groundAt(
-          r,
-          rim.find((q) => !walkable(q))!,
-        )})`,
-      );
+      problems.push(`${name} hangs off the ground (${what(rim.find((q) => !walkable(q))!)})`);
       continue;
     }
     if (s.kind === "lichen") continue;
@@ -220,6 +233,7 @@ function doorwayProblems(
   o: ResolvedOpening,
   name: string,
   walkable: (p: Pt) => boolean,
+  what: (p: Pt) => string,
   inMap: (p: Pt) => boolean,
 ): string[] {
   const s = o.segment!;
@@ -234,7 +248,7 @@ function doorwayProblems(
   for (const side of [1, -1]) {
     const beyond = onSegment(s, o.offset, side * (s.thickness / 2 + 0.5));
     if (inMap(beyond) && !walkable(beyond)) {
-      problems.push(`${name} opens onto ${groundAt(r, beyond)} at ${fmt(beyond)}`);
+      problems.push(`${name} opens onto ${what(beyond)} at ${fmt(beyond)}`);
     }
   }
   return problems;

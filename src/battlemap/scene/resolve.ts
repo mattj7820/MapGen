@@ -2,6 +2,7 @@ import { contains, distance, type Pt, roundPt, segmentDistance } from "../../geo
 import { hash } from "../../rng.js";
 import { densify } from "../../style/ink.js";
 import { caveOutline } from "./cave.js";
+import { type ResolvedCliff, resolveCliffs } from "./cliff.js";
 import { dress } from "./dressing.js";
 import {
   type Ends,
@@ -16,6 +17,7 @@ import { onSegment, placeProp, rectOutline, WALL_THICKNESS, wallRect } from "./p
 import { PROPS } from "./props/library.js";
 import type { LibraryProp } from "./props/spec.js";
 import {
+  type Climb,
   type EdgeStyle,
   type GroundKind,
   type Opening,
@@ -52,6 +54,7 @@ export interface Resolved {
    * then took out (those aren't in `props`). Labels are numbered in this order.
    */
   dressed: ResolvedProp[];
+  cliffs: ResolvedCliff[];
 }
 
 export interface ResolvedRegion {
@@ -74,6 +77,7 @@ export interface ResolvedRegion {
   };
   ruts?: true;
   surf?: true;
+  climb?: Climb;
 }
 
 export interface WallSegment {
@@ -157,6 +161,7 @@ export function resolveScene(scene: Scene): Resolved {
         ...(centre ? { line: { centre, width: g.width!, ends: ends!, joins: [] } } : {}),
         ...(g.ruts ? { ruts: true as const } : {}),
         ...(g.surf ? { surf: true as const } : {}),
+        ...(g.climb ? { climb: g.climb } : {}),
         // Raised edges are built along the outline's points, so long sides need more of them.
         outline: g.edge && hasLongSides(raw) ? densify(raw, true, 0.25) : raw,
         ...(g.edge ? { edge: g.edge } : {}),
@@ -208,6 +213,7 @@ export function resolveScene(scene: Scene): Resolved {
     props,
     unknownProps,
     dressed: [],
+    cliffs: resolveCliffs(scene, regions),
   };
   // Removed items are still made, then dropped, so nothing else moves into their space.
   resolved.dressed = dress(resolved);

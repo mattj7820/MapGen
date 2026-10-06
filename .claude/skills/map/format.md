@@ -24,6 +24,7 @@ to try a different look for one item.
   "dressing": [],
   "scatter": [],
   "cracks": [],
+  "cliffs": [], // optional: ridges and cliffs on open ground (see Cliffs and ridges)
   "remove": [], // optional: generated items taken out by hand (see Dressing)
 }
 ```
@@ -87,6 +88,49 @@ Any region can be a `line` of points with a `width` instead of a rect or outline
 - Water running into water (a stream into a lake or the sea) joins it with no line
   across the mouth: end the stream's line inside the other water.
 - Scatter `shrub`s stay off paths and roads (a check); stones may lie on them.
+
+### Cliffs and ridges
+
+A raised edge between two levels of open ground: a ridge across a field, a cliff above
+a beach. Write a `line` along its **brink** (the top edge), say which side is high, and
+how high it is:
+
+```json
+{
+  "id": "ridge",
+  "line": [
+    [-1, 7],
+    [6, 6],
+    [12, 7.5],
+    [29, 7]
+  ],
+  "high": "left",
+  "height": 3
+}
+```
+
+- `high` is `left` or `right`, **walking along the line in the order it's written**
+  (with y running down the map: walking east, left is north). The face drops on the
+  other side.
+- `height` is in squares (default 2): 1 is a bank you could scramble up, 3 a real
+  cliff, 5 the most that changes the look. Taller cliffs have a deeper face (about
+  0.25 + 0.4 × height squares wide, seen from above), more scree at the foot and a
+  longer shadow.
+- The face is drawn over the ground under it, so paint the ground either side as
+  usual: grass above and a beach region below for a sea cliff. Run the line a square
+  or two off the map to carry on out of view; an end inside the map rounds off.
+- Nothing stands on the face: props, scatter, doorways and dressing keep off it (a
+  check), and a cliff can't run through a room.
+- **Paths and rivers crossing a cliff** are worked out from the ground regions: no
+  extra entries.
+  - A path or road through it gets a **ramp**: the face is cut along the path's own
+    edges and the path slopes down the gap. Add `"climb": "steps"` to the path's
+    region for stone steps cut down through the face instead.
+  - A river or stream (`water`) over a cliff higher than 1 makes a **waterfall**: a
+    pale lip, streaks down the face and foam at the foot. Over a bank of 1 or less, or
+    for `shallows`, it runs through a notch as **rapids**.
+- Write a stream's line across the brink, not along it, and keep paths from running
+  along the foot of the face: the face covers what's under it.
 
 ## Rooms and walls
 

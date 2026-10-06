@@ -116,6 +116,8 @@ Tests write only under `output/.test/` and clean up after themselves.
   - `ground.ts`, `walls.ts`, `scatter.ts`, `render.ts`: drawing
   - `terrain.ts`: paths, roads, rivers and shores: lines into outlines, banks, fords,
     surf, path wear and fading ends
+  - `cliff.ts`: cliffs and ridges: the brink, the face, its shadow and scree, and the
+    ramps, steps, waterfalls and rapids where paths and rivers cross it
   - `cave.ts`: cave rooms: the roughened outline, the rock face, which faces stop light
   - `lighting.ts`: ambient light by time of day, light sources, visibility polygons,
     the light layer
@@ -197,6 +199,28 @@ Tests write only under `output/.test/` and clean up after themselves.
   may have both ends on one region unless it's raised (a road either side of a
   stream). Matt's notes: no paths dead straight, side paths merge under the busier
   track, roads mustn't stop abruptly.
+- **Cliffs and ridges** (`cliff.ts`): a scene's `cliffs` are lines along the brink,
+  with `high` (`left` or `right` walking the line as written) and `height` in squares
+  (default 2). The ground either side is ordinary regions; the cliff is drawn over
+  them, after the ground and before props. Matt's notes, after three rounds:
+  - Height reads from shading, not from texture: a block mosaic, stepped ledges and
+    fissures all looked alike to Matt. What sells the drop is a tone down the face
+    and a big soft shadow thrown down-right, scaled to height. The face is a soft
+    tone with ink fissures running down it (the simplest of the three).
+  - Shading always darkens the way the light travels. A face turned from the light
+    runs from a lit lip to a dark foot; one turned towards it is bright, darkening a
+    little towards the brink (dark at its foot looked "upside down"). The band just
+    inside the brink on the high ground is dark or light by the same rule.
+  - Crossings come from the ground regions, with no extra entries: a path makes a
+    ramp (`"climb": "steps"` on the path for cut steps), water over a cliff higher
+    than 1 a waterfall, else rapids. The face is drawn right across and the crossing's
+    outline is cut out of it (a dry path's pulled in 0.12, inside its soft edge), so
+    the cut follows the path however it slants; tapering the face to points beside a
+    ramp looked bad, and cutting square to the cliff line didn't line up.
+  - The face is unwalkable (`onFace`) except through its crossings: checks, scatter,
+    doorways and dressing respect it. Cliffs don't stop light.
+  - Don't paint many small shapes inside `lowres`: its blur filter applies per draw
+    call. Paint them on a plain canvas and blur that once.
 - **Removing generated items:** a scene's `remove` list (`{ kind, at }`, matched
   within 0.01) drops one dressing item. Removed items are still made, then dropped,
   so nothing moves into the gap and they keep their numbers. To move or turn one,
@@ -313,7 +337,7 @@ The full format is in `.claude/skills/map/format.md`; read it before writing a s
 In short: `base` ground, `ground` regions, `rooms` (a rect or points, a floor kind and
 a wall kind), free `walls`, `openings` placed on a wall's centre line, `props` by kind,
 position and facing (with optional `size` and `dress`), room `dressing` (optionally for
-a `setting`), `lighting`, outdoor `scatter` and `cracks`. Caves are rooms with
+a `setting`), `lighting`, outdoor `scatter`, `cracks` and `cliffs`. Caves are rooms with
 `"wall": "cave"` over a `bedrock` base. All in squares: x right, y down, origin at the top-left corner.
 
 To make a change Matt asks for, edit the scene rather than regenerating it, so
@@ -476,9 +500,9 @@ Done after step 9 (one branch, `lighting-and-props`):
     - **Cave walls** for mines and caverns (done): many of the new
       settings need them.
 
-Done from the roadmap since: the numbered review overlay (2.1), and paths and rivers
-(the first two parts of 3.1), with outdoor proof maps (a ford, a coast) in
-`scripts/samples/`. Decisions are under "Decisions so far".
+Done from the roadmap since: the numbered review overlay (2.1), paths and rivers, and
+cliffs and ridges (the first three parts of 3.1), with outdoor proof maps (a ford, a
+coast, a ridge, a sea cliff) in `scripts/samples/`. Decisions are under "Decisions so far".
 
 What's next is in `docs/roadmap.md`: every idea Matt wants to get to, in a suggested
 order. Tick items off there and record decisions here as they land. New map kinds
