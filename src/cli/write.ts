@@ -4,6 +4,7 @@ import path from "node:path";
 import { makeGrid } from "../battlemap/grid.js";
 import { reviewSheet } from "../battlemap/review.js";
 import { sceneCrops } from "../battlemap/scene/crops.js";
+import { labelKey, labelSheet, sceneLabels } from "../battlemap/scene/labels.js";
 import { renderScene } from "../battlemap/scene/render.js";
 import { resolveScene } from "../battlemap/scene/resolve.js";
 import type { Scene } from "../battlemap/scene/scene.js";
@@ -22,6 +23,8 @@ export interface MapFiles {
   base: string;
   /** A small copy of the map, for contact sheets. */
   thumbnail: Canvas;
+  /** The key to review-labels.png: one line per number. */
+  key: string;
 }
 
 export interface WriteOptions {
@@ -81,7 +84,16 @@ export async function writeMap(
   });
   out.write(path.join(folder, "review.png"), await sheet.encode("png"));
 
-  return { folder, png, base, thumbnail: shrink(map, 682) };
+  // A numbered copy for talking about the map ("remove 123"); the map stays clean.
+  const labels = sceneLabels(resolved);
+  const key = labelKey(labels);
+  out.write(
+    path.join(folder, "review-labels.png"),
+    await labelSheet(map, grid.px, labels).encode("png"),
+  );
+  out.write(path.join(folder, "labels.txt"), `${key}\n`);
+
+  return { folder, png, base, thumbnail: shrink(map, 682), key };
 }
 
 /** Pretty JSON, but with each [x, y] pair kept on one line so outlines stay readable. */
