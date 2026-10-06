@@ -42,6 +42,8 @@ export interface Scene {
   /** Small loose things: stones, shrubs, lichen. */
   scatter: Scatter[];
   cracks: Crack[];
+  /** Raised edges across open ground: a ridge across a field, a cliff above a beach. */
+  cliffs: Cliff[];
   /**
    * How dark it is. Left out: `night` for scenes with rooms, `day` for the rest (see
    * lighting.ts).
@@ -123,6 +125,8 @@ export interface Region {
   ruts?: boolean;
   /** Surf along water's edge: for a coast. */
   surf?: boolean;
+  /** How a path gets up a cliff it crosses: a worn ramp (the default) or cut steps. */
+  climb?: Climb;
   /** Draw a raised edge round it (a plateau's rock lip, a grassy bank). */
   edge?: EdgeStyle;
   seed: number;
@@ -229,6 +233,24 @@ export interface Scatter {
   kind: ScatterKind;
   at: Pt;
   radius: number;
+  seed: number;
+}
+
+export const CLIMBS = ["ramp", "steps"] as const;
+export type Climb = (typeof CLIMBS)[number];
+
+/**
+ * A cliff or ridge: a `line` along its top edge (the brink), with the high ground on
+ * one side and a broken face of blocks dropping to the low ground on the other. The
+ * ground either side is whatever regions are painted there.
+ */
+export interface Cliff {
+  id?: string;
+  line: Pt[];
+  /** Which side is high, walking along the line the way it's written. */
+  high: "left" | "right";
+  /** In squares (default 2): a 1-square bank, a 4-square cliff. */
+  height: number;
   seed: number;
 }
 

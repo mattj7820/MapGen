@@ -1,5 +1,6 @@
 import type { Canvas } from "@napi-rs/canvas";
 import { createPaper, type Paper } from "../../style/paper.js";
+import { drawCliff } from "./cliff.js";
 import { drawBase, drawRegion } from "./ground.js";
 import { drawLighting } from "./lighting.js";
 import { palette, type Palette } from "./palette.js";
@@ -24,6 +25,7 @@ export function renderScene(scene: Scene, px: number): Canvas {
 
   drawBase(paper, pal, r);
   for (const region of r.regions) drawRegion(paper, pal, region, r);
+  for (const cliff of r.cliffs) drawCliff(paper, pal, cliff);
   const props = (pick: (p: ResolvedProp) => boolean) => {
     for (const p of r.props.filter(pick)) drawProp(paper, pal, p);
   };

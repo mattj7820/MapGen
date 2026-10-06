@@ -15,6 +15,7 @@ import {
   SCATTER_KINDS,
   type Scene,
   BUILT_WALLS,
+  CLIMBS,
   WALL_KINDS,
 } from "./scene.js";
 
@@ -65,6 +66,7 @@ export function parseScene(text: string): Scene {
         ...shape,
         ...(o.ruts !== undefined ? { ruts: bool(o.ruts, `${n}.ruts`) } : {}),
         ...(o.surf !== undefined ? { surf: bool(o.surf, `${n}.surf`) } : {}),
+        ...(o.climb !== undefined ? { climb: oneOf(o.climb, CLIMBS, `${n}.climb`) } : {}),
         ...(o.edge !== undefined
           ? { edge: oneOf(o.edge, EDGE_STYLES, `${n}.edge`) as EdgeStyle }
           : {}),
@@ -173,6 +175,19 @@ export function parseScene(text: string): Scene {
         region: str(o.region, `${n}.region`),
         points: points(o.points, `${n}.points`),
         weight: o.weight === undefined ? 1 : positive(o.weight, `${n}.weight`),
+      };
+    }),
+    cliffs: list(s.cliffs, "cliffs").map((c, i) => {
+      const n = `cliffs[${i}]`;
+      const o = obj(c, n);
+      const pts = points(o.line, `${n}.line`);
+      if (pts.length < 2) throw new Error(`${n}.line needs at least 2 points`);
+      return {
+        ...(o.id !== undefined ? { id: str(o.id, `${n}.id`) } : {}),
+        line: pts,
+        high: oneOf(o.high, ["left", "right"] as const, `${n}.high`),
+        height: o.height === undefined ? 2 : positive(o.height, `${n}.height`),
+        seed: seedFor(o.seed, `${n}.seed`, "cliff", pts),
       };
     }),
     ...(s.lighting !== undefined ? { lighting: lighting(s.lighting) } : {}),
