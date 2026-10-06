@@ -73,7 +73,9 @@ Sketch the plan in squares before writing JSON:
    Biomes: a desert is `sand` with `cracked-earth` pans, dunes (`"face": "sand"`
    cliffs) and `scrub` with `"setting": "desert"`; snow is `snow` with `ice` ponds,
    drifts and `snow` scrub; a swamp is `mud` with `bog` pools, `swamp` scrub and a
-   swamp forest. A beach is `sand`.
+   swamp forest. A beach is `sand`. For a street or village, buildings nobody goes
+   into are `buildings` (roofs, see "Buildings from outside"), with chimneys and doors
+   facing the street; map as rooms only the ones the party will enter.
 7. **Make it lived in**: nothing perfectly lined up. Turn chairs and stools by 3–15
    degrees, pull some out from their tables, set a crate askew, put a rug in front of
    the hearth, a broom or bucket where work happens. Vary table sizes.
