@@ -29,7 +29,7 @@ import { jagged } from "../../style/shapes.js";
 import { drawCaveFace, drawCaveLine } from "./cave.js";
 import type { Palette, Tones } from "./palette.js";
 import type { Resolved, ResolvedRegion } from "./resolve.js";
-import type { Crack, GroundKind, Scatter } from "./scene.js";
+import { type Crack, type GroundKind, type Scatter, UNWALKABLE } from "./scene.js";
 import { drawLichen } from "./scatter.js";
 import {
   drawBank,
@@ -122,11 +122,14 @@ function drawSurface(paper: Paper, pal: Palette, region: ResolvedRegion, r: Reso
   if (region.edge) drawEdge(paper, region.edge, region.outline, pal.rim, rng.fork("edge"));
   else if (wet) drawBank(paper, pal, region);
   else if (open && region.line && PAVED.includes(region.kind)) drawRoadFringe(paper, pal, region);
-  else if (open && !PAVED.includes(region.kind)) {
-    // Natural ground fades into what's round it rather than stopping at a hard line.
+  else if (open && region.line && !PAVED.includes(region.kind)) {
+    // A path fades into what's round it rather than stopping at a hard line.
     softPoly(paper, region.outline, pal.ground[region.kind].base, 0.25);
   }
   paint(paper, pal, region, r, frame);
+  if (open && !wet && !region.line && !region.edge && !PAVED.includes(region.kind)) {
+    blendInto(paper, pal, region, r);
+  }
   if (region.cave) drawCaveLine(paper, region, r);
   if (region.edge) {
     brush(paper.g, region.outline, edgeOutlineWeight(region.edge), {
@@ -154,6 +157,25 @@ function drawSurface(paper: Paper, pal: Palette, region: ResolvedRegion, r: Reso
     });
   }
   if (open) drawEndFades(paper, pal, region, below);
+}
+
+/**
+ * Natural ground thins into the ground round it over its last half square or so (a
+ * clearing into the forest floor, a patch of earth into grass), rather than meeting
+ * it on a line.
+ */
+function blendInto(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved): void {
+  const round = offsetOutline(region.outline, 0.3);
+  const counts = new Map<GroundKind, number>();
+  for (let i = 0; i < round.length; i += 3) {
+    const kind = groundBelow(r, region, round[i]!);
+    counts.set(kind, (counts.get(kind) ?? 0) + 1);
+  }
+  const [under] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0] ?? [];
+  if (!under || under === region.kind || UNWALKABLE.includes(under)) return;
+  clipTo(paper.g, region.outline);
+  softStroke(paper, region.outline, withAlpha(pal.ground[under].base, 0.8), 0.9, 0.35);
+  paper.g.restore();
 }
 
 /** The surface of a region, clipped to its outline. */
@@ -187,6 +209,9 @@ function paint(paper: Paper, pal: Palette, region: ResolvedRegion, r: Resolved, 
       break;
     case "grass":
       drawGrass(paper, pal, tones, region, area, frame, rng);
+      break;
+    case "forest-floor":
+      drawForestFloor(paper, pal, tones, region, area, frame, rng);
       break;
     case "water":
     case "shallows":
@@ -702,6 +727,77 @@ function drawGrass(
       );
     }
   }
+}
+
+/**
+ * The floor of a wood: darker than grass, in soft patches of moss and bare earth, with
+ * fallen leaves, twigs and the odd tuft where light gets through.
+ */
+function drawForestFloor(
+  paper: Paper,
+  pal: Palette,
+  tones: Tones,
+  region: ResolvedRegion,
+  area: Rect,
+  frame: Rect,
+  rng: Rng,
+): void {
+  const { g } = paper;
+  const steps = [
+    { at: 0.32, colour: mix(tones.base, pal.moss.base, 0.45) },
+    { at: -0.3, colour: mix(tones.base, pal.ground.dirt.shade, 0.5) },
+  ];
+  toneSteps(paper, makeNoise(rng.fork("tone")), steps, 2.2, 0.15, area);
+  const visible = areaInRect(region.outline, frame);
+  // Fallen leaves: small pointed ovals in a few muted tones, no ink.
+  const leaves = rng.fork("leaves");
+  const colours = [
+    mix(tones.light, pal.straw, 0.35),
+    mix(tones.shade, pal.leather.base, 0.4),
+    mix(tones.base, pal.foliage.light, 0.3),
+  ];
+  for (let i = Math.round(visible * 14); i > 0; i--) {
+    const at: Pt = [leaves.range(area.x0, area.x1), leaves.range(area.y0, area.y1)];
+    const a = leaves.range(0, Math.PI);
+    const len = leaves.range(0.05, 0.09);
+    const colour = leaves.pick(colours);
+    if (!contains(region.outline, at)) continue;
+    const [c, s] = [Math.cos(a), Math.sin(a)];
+    const leaf: Pt[] = [
+      [at[0] - c * len, at[1] - s * len],
+      [at[0] - s * len * 0.4, at[1] + c * len * 0.4],
+      [at[0] + c * len, at[1] + s * len],
+      [at[0] + s * len * 0.4, at[1] - c * len * 0.4],
+    ];
+    g.globalAlpha = 0.75;
+    fillPoly(g, leaf, colour);
+  }
+  g.globalAlpha = 1;
+  // Twigs: short thin ink strokes, now and then forked.
+  const twigs = rng.fork("twigs");
+  for (let i = Math.round(visible * 0.9); i > 0; i--) {
+    const at: Pt = [twigs.range(area.x0, area.x1), twigs.range(area.y0, area.y1)];
+    const a = twigs.range(0, Math.PI * 2);
+    const len = twigs.range(0.12, 0.3);
+    const end: Pt = [at[0] + Math.cos(a) * len, at[1] + Math.sin(a) * len];
+    const fork = twigs.chance(0.4);
+    const b = a + twigs.pick([-0.6, 0.6]);
+    if (!contains(region.outline, at)) continue;
+    brush(g, [at, end], WEIGHT.detail * 0.9, { smooth: false, seed: twigs.int(0, 9999) });
+    if (fork) {
+      const mid: Pt = [(at[0] + end[0]) / 2, (at[1] + end[1]) / 2];
+      brush(
+        g,
+        [mid, [mid[0] + Math.cos(b) * len * 0.4, mid[1] + Math.sin(b) * len * 0.4]],
+        WEIGHT.detail * 0.7,
+        {
+          smooth: false,
+          seed: twigs.int(0, 9999),
+        },
+      );
+    }
+  }
+  drawGrit(paper, tones, region.outline, frame, rng.fork("grit"), 3, 0.6);
 }
 
 function drawWater(paper: Paper, tones: Tones, region: ResolvedRegion, area: Rect, rng: Rng): void {

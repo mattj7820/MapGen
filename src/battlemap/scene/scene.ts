@@ -78,6 +78,7 @@ export const GROUND_KINDS = [
   "cobbles",
   "dirt",
   "grass",
+  "forest-floor",
   "rock",
   "water",
   "shallows",
@@ -210,8 +211,10 @@ export type SurfaceDressing = (typeof SURFACE_DRESSINGS)[number];
  * - `stores`: sacks, crates, barrels, baskets, buckets and firewood along the walls.
  * - `litter`: straw, spills, crumbs and scraps on the floor.
  * - `cobwebs`: in the corners.
+ * - `forest`: trees (a trunk under each canopy) and undergrowth across a ground region,
+ *   thinning towards its edge, kept off whatever is painted over it (paths, clearings).
  */
-export const DRESSING_KINDS = ["stores", "litter", "cobwebs"] as const;
+export const DRESSING_KINDS = ["stores", "litter", "cobwebs", "forest"] as const;
 export type DressingKind = (typeof DRESSING_KINDS)[number];
 
 export interface Dressing {

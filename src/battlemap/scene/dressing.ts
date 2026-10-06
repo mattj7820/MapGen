@@ -11,10 +11,10 @@ import {
 import { Rng } from "../../rng.js";
 import { doorwayPath, placeProp, WALL_THICKNESS } from "./place.js";
 import { PROPS } from "./props/library.js";
-import type { Resolved, ResolvedProp } from "./resolve.js";
+import type { Resolved, ResolvedProp, ResolvedRegion } from "./resolve.js";
 import type { Setting } from "./props/catalogue.js";
 import { onFace } from "./cliff.js";
-import { groundAt } from "./ground.js";
+import { groundAt, regionAt } from "./ground.js";
 import { PASSABLE, type SurfaceDressing, UNWALKABLE } from "./scene.js";
 
 /**
@@ -45,7 +45,9 @@ export function dress(r: Resolved): ResolvedProp[] {
         ? stores(r, area, d.amount, rng, out, choices("stores", d.setting, STORES))
         : d.kind === "litter"
           ? litter(r, area, d.amount, rng, out, choices("litter", d.setting, LITTER))
-          : cobwebs(area, d.amount, rng);
+          : d.kind === "forest"
+            ? forest(r, region, area, d.amount, rng, out, FOREST_MIXES[d.setting!] ?? WOODLAND)
+            : cobwebs(area, d.amount, rng);
     out.push(...made.map((item) => ({ ...item, from })));
   }
   return out;
@@ -542,5 +544,184 @@ function cobwebs(area: Area, amount: number, rng: Rng): ResolvedProp[] {
     const at: Pt = [inner[0] + half * cos - half * sin, inner[1] + half * sin + half * cos];
     out.push(make("cobweb", at, rotation, seed, [size, size]));
   });
+  return out;
+}
+
+// ---------------------------------------------------------------- forest
+
+interface ForestMix {
+  trees: [string, number][];
+  trunk: [string, number][];
+  undergrowth: [string, number][];
+}
+
+const WOODLAND: ForestMix = {
+  trees: [
+    ["tree", 6],
+    ["tree-pine", 2.5],
+    ["tree-autumn", 0.5],
+    ["tree-dead", 0.25],
+  ],
+  trunk: [
+    ["tree-trunk", 4],
+    ["tree-trunk-mossy", 1],
+  ],
+  undergrowth: [
+    ["ferns", 4],
+    ["bush", 3],
+    ["bush-berry", 0.7],
+    ["mushrooms", 1],
+    ["mushrooms-red", 0.3],
+    ["stump", 0.5],
+    ["stump-mossy", 0.5],
+    ["log-mossy", 0.4],
+    ["log", 0.25],
+    ["boulder-small-mossy", 0.4],
+  ],
+};
+
+/**
+ * What a forest grows, by its dressing's `setting`. Any other setting (or none) gets
+ * the mixed woodland. Written out rather than looked up by tag: the snow variants
+ * share their family's `forest` tag, and mustn't turn up in a summer wood.
+ */
+const FOREST_MIXES: Partial<Record<Setting, ForestMix>> = {
+  forest: WOODLAND,
+  swamp: {
+    trees: [
+      ["tree-dead", 3],
+      ["tree", 3],
+      ["tree-pine", 0.5],
+    ],
+    trunk: [
+      ["tree-trunk-mossy", 3],
+      ["tree-trunk", 1],
+    ],
+    undergrowth: [
+      ["reeds", 3],
+      ["reeds-cattails", 2],
+      ["ferns", 2],
+      ["mushrooms-pale", 1],
+      ["log-mossy", 1],
+      ["stump-mossy", 1],
+      ["boulder-small-mossy", 0.4],
+      ["vines-moss", 0.6],
+    ],
+  },
+  snow: {
+    trees: [
+      ["tree-pine-snow", 6],
+      ["tree-snow", 2],
+      ["tree-dead", 0.3],
+    ],
+    trunk: [["tree-trunk", 1]],
+    undergrowth: [
+      ["bush-snow", 3],
+      ["snow-drift", 2],
+      ["boulder-small-snow", 1],
+      ["boulder-snow", 0.4],
+      ["stump", 0.4],
+      ["log", 0.3],
+    ],
+  },
+  desert: {
+    trees: [["tree-palm", 1]],
+    trunk: [["tree-trunk", 1]],
+    undergrowth: [
+      ["bush-dry", 3],
+      ["grass-dune", 2],
+      ["cactus-pads", 1],
+      ["boulder-small", 1],
+    ],
+  },
+  graveyard: {
+    trees: [
+      ["tree-dead", 4],
+      ["tree", 1],
+    ],
+    trunk: [["tree-trunk", 1]],
+    undergrowth: [
+      ["bush-dry", 2],
+      ["ferns", 1],
+      ["mushrooms-pale", 1],
+      ["stump", 1],
+      ["log", 0.4],
+    ],
+  },
+};
+
+/** How far in from a forest's edge it reaches its full density, in squares. */
+const FOREST_EDGE = 2.5;
+
+/**
+ * Trees across a region, each a trunk (which blocks the way) under its canopy (which
+ * hangs over anything), on a jittered grid that tightens as `amount` rises and thins
+ * out towards the edge; then undergrowth between them, much of it round the trunks.
+ * Everything stands on the region's own visible ground, so paths, clearings and water
+ * painted over it stay open.
+ */
+function forest(
+  r: Resolved,
+  region: ResolvedRegion,
+  area: Area,
+  amount: number,
+  rng: Rng,
+  earlier: ResolvedProp[],
+  mix: ForestMix,
+): ResolvedProp[] {
+  const out: ResolvedProp[] = [];
+  const own = (p: ResolvedProp) =>
+    [p.prop.at, ...p.footprint].every((q) => regionAt(r, q) === region);
+  const depth = (at: Pt) =>
+    contains(area.outline, at) ? Math.min(1, edgeDistance(area.outline, at) / FOREST_EDGE) : 0;
+  const b = bounds(area.outline);
+  // Trees about 3.5 squares apart at 0.3 (scattered), 2.3 at 0.7 (a wood), 1.4 at 1
+  // (crowns touching all round).
+  const spacing = 4.4 - 3 * amount;
+  const trunks: ResolvedProp[] = [];
+  for (let y = Math.floor(b.y0 / spacing); y * spacing < b.y1; y++) {
+    for (let x = Math.floor(b.x0 / spacing); x * spacing < b.x1; x++) {
+      const cell = rng.fork(`tree ${x} ${y}`);
+      const at: Pt = [
+        (x + 0.5 + cell.range(-0.45, 0.45)) * spacing,
+        (y + 0.5 + cell.range(-0.45, 0.45)) * spacing,
+      ];
+      const kind = weighted(cell, mix.trees);
+      const stemKind = weighted(cell, mix.trunk);
+      const crown = PROPS[kind]!.size[0] * cell.range(0.75, 1.15);
+      const keep = cell.range(0, 1);
+      const turn = cell.range(0, 360);
+      const seeds = [cell.int(0, 2 ** 31 - 1), cell.int(0, 2 ** 31 - 1)];
+      const t = depth(at);
+      if (keep > 0.15 + 0.85 * t * t * (3 - 2 * t)) continue;
+      const stem = Math.min(0.75, Math.max(0.4, crown * 0.17));
+      const trunk = make(stemKind, at, turn, seeds[0]!, [stem, stem]);
+      if (!own(trunk) || !fits(r, area, trunk, [...earlier, ...out], 0.15)) continue;
+      if (trunks.some((o) => distance(o.prop.at, at) < spacing * 0.55)) continue;
+      trunks.push(trunk);
+      out.push(trunk, make(kind, at, turn, seeds[1]!, [crown, crown]));
+    }
+  }
+  const count = Math.round((b.x1 - b.x0) * (b.y1 - b.y0) * 0.6 * amount);
+  for (let i = 0; i < count; i++) {
+    const near = rng.chance(0.55) && trunks.length > 0 ? rng.pick(trunks) : undefined;
+    const a = rng.range(0, Math.PI * 2);
+    const d = rng.range(0.5, 1.5);
+    const at: Pt = near
+      ? [near.prop.at[0] + Math.cos(a) * d, near.prop.at[1] + Math.sin(a) * d]
+      : [rng.range(b.x0, b.x1), rng.range(b.y0, b.y1)];
+    const kind = weighted(rng, mix.undergrowth);
+    const spec = PROPS[kind]!;
+    const scale = rng.range(0.7, 1.3);
+    const size: [number, number] | undefined = spec.resizable
+      ? [spec.size[0] * scale, spec.size[1] * scale]
+      : undefined;
+    const keep = rng.range(0, 1);
+    const item = make(kind, at, rng.range(0, 360), rng.int(0, 2 ** 31 - 1), size);
+    if (keep > 0.2 + 0.8 * depth(at) || !own(item) || !onFirmGround(r, item)) continue;
+    if (out.some((o) => o.spec.layer === "floor" && distance(o.prop.at, at) < 0.5)) continue;
+    if (spec.layer !== "floor" && !fits(r, area, item, [...earlier, ...out], 0.1)) continue;
+    out.push(item);
+  }
   return out;
 }

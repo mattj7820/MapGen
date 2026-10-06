@@ -14,7 +14,7 @@ import type { LibraryProp } from "../spec.js";
  *
  * Trees are `overhead`: from above you see the canopy, and tokens can stand under it.
  * Their trunks are hidden by the canopy, so nothing blocks the ground beneath; a scene
- * that wants a trunk to block can add a `stump` under the tree.
+ * that wants a trunk to block can add a `tree-trunk` under the tree (forest dressing does).
  */
 
 const turn = (pts: Pt[], at: Pt, a: number): Pt[] => {
@@ -402,6 +402,57 @@ const stumps = family({
       }
       k.outline(cut, WEIGHT.detail, true);
       k.outline(top, WEIGHT.object, true);
+    },
+  }),
+});
+
+/**
+ * A standing tree's trunk, seen from above: bark round a dark core, roots flaring out
+ * into the ground. A forest puts one under each canopy, so trees block the way.
+ */
+const trunks = family({
+  base: "tree-trunk",
+  category: "nature",
+  tags: "forest farm swamp wood",
+  axes: { state: ["plain", "mossy"] },
+  spec: ({ state }) => ({
+    about: `a standing tree's trunk${state === "mossy" ? ", moss on its roots" : ""}, seen from above under its canopy; it blocks the way`,
+    size: [0.6, 0.6],
+    resizable: true,
+    round: true,
+    layer: "solid",
+    height: 0.4,
+    draw: (k) => {
+      const r = k.w / 2;
+      const bark = darkWood(k);
+      // Roots first, tapering out from under the trunk.
+      const roots = k.rng.int(4, 6);
+      for (let i = 0; i < roots; i++) {
+        const a = (i / roots) * Math.PI * 2 + k.rng.range(-0.3, 0.3);
+        const reach = r * k.rng.range(0.8, 1);
+        const bend = k.rng.range(-0.25, 0.25);
+        const root: Pt[] = [
+          [Math.cos(a) * r * 0.45, Math.sin(a) * r * 0.45],
+          [Math.cos(a + bend) * reach * 0.75, Math.sin(a + bend) * reach * 0.75],
+          [Math.cos(a + bend * 1.5) * reach, Math.sin(a + bend * 1.5) * reach],
+        ];
+        k.line(root, r * 0.22, INK);
+        k.line(root, r * 0.14, state === "mossy" && i % 2 === 0 ? k.pal.moss.base : bark.base);
+      }
+      const body = lobed(k.rng, [0, 0], r * 0.6);
+      k.shadow(body, 0.4);
+      k.body(body, bark, 0.06);
+      // Furrows in the bark, running round the trunk.
+      for (let i = 0; i < 5; i++) {
+        const a = k.rng.range(0, Math.PI * 2);
+        const rr = r * k.rng.range(0.25, 0.5);
+        const arc: Pt[] = Array.from({ length: 5 }, (_, j): Pt => {
+          const t = a + (j / 4) * k.rng.range(0.5, 0.9);
+          return [Math.cos(t) * rr, Math.sin(t) * rr];
+        });
+        k.line(arc, WEIGHT.detail * 0.8, bark.shade);
+      }
+      k.outline(body, WEIGHT.object, true);
     },
   }),
 });
@@ -1191,6 +1242,7 @@ export const NATURE: Record<string, LibraryProp> = {
   ...seaweed,
   ...trees,
   ...stumps,
+  ...trunks,
   ...logs,
   ...bushes,
   ...boulders,
