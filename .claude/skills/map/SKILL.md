@@ -70,6 +70,10 @@ Sketch the plan in squares before writing JSON:
    streams over it waterfalls. Woods are `forest-floor` regions with `forest`
    dressing (see "Forests"): set `amount` from the description (scattered trees 0.3,
    a wood 0.8, dense forest 1), and paint clearings and paths after the wood.
+   Biomes: a desert is `sand` with `cracked-earth` pans, dunes (`"face": "sand"`
+   cliffs) and `scrub` with `"setting": "desert"`; snow is `snow` with `ice` ponds,
+   drifts and `snow` scrub; a swamp is `mud` with `bog` pools, `swamp` scrub and a
+   swamp forest. A beach is `sand`.
 7. **Make it lived in**: nothing perfectly lined up. Turn chairs and stools by 3–15
    degrees, pull some out from their tables, set a crate askew, put a rug in front of
    the hearth, a broom or bucket where work happens. Vary table sizes.

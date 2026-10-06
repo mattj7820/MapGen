@@ -1,0 +1,101 @@
+{
+  "type": "scene",
+  "name": "swamp",
+  "squares": [26, 18],
+  "base": "mud",
+  "lighting": "day",
+  "ground": [
+    {
+      "id": "marsh",
+      "kind": "mud",
+      "outline": [
+        [-1, -1],
+        [27, -1],
+        [27, 19],
+        [-1, 19]
+      ]
+    },
+    {
+      "id": "hummock",
+      "kind": "grass",
+      "outline": [
+        [1, 1],
+        [8, 0.5],
+        [10, 4],
+        [7, 7],
+        [2, 6.5]
+      ]
+    },
+    {
+      "id": "wood",
+      "kind": "forest-floor",
+      "outline": [
+        [15, -1],
+        [27, -1],
+        [27, 11],
+        [20, 9],
+        [16, 5]
+      ]
+    },
+    {
+      "id": "pool",
+      "kind": "bog",
+      "outline": [
+        [6, 8],
+        [12, 7.5],
+        [15, 10.5],
+        [13, 14],
+        [7, 14.5],
+        [4.5, 11]
+      ]
+    },
+    {
+      "id": "pool2",
+      "kind": "bog",
+      "outline": [
+        [17, 12],
+        [22, 11.5],
+        [24, 14.5],
+        [20, 17],
+        [16.5, 15]
+      ]
+    },
+    {
+      "id": "wade",
+      "kind": "shallows",
+      "outline": [
+        [12.5, 12],
+        [14, 11.5],
+        [17.6, 13.8],
+        [16, 15]
+      ]
+    }
+  ],
+  "props": [
+    {
+      "kind": "bridge",
+      "at": [12, 10.8],
+      "rotation": 0,
+      "size": [1, 9]
+    }
+  ],
+  "dressing": [
+    {
+      "kind": "forest",
+      "in": "wood",
+      "amount": 0.7,
+      "setting": "swamp"
+    },
+    {
+      "kind": "scrub",
+      "in": "marsh",
+      "amount": 0.4,
+      "setting": "swamp"
+    },
+    {
+      "kind": "scrub",
+      "in": "hummock",
+      "amount": 0.5
+    }
+  ]
+}

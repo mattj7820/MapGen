@@ -31,10 +31,23 @@ to try a different look for one item.
 
 ## Ground
 
-Kinds: `wood`, `flagstone`, `cobbles`, `dirt`, `grass`, `forest-floor`, `rock`,
-`water`, `shallows`, `void` (and `bedrock` round caves). `forest-floor` is the ground
-of a wood: dark, mossy, with fallen leaves and twigs (see Forests). `water` and `void` can't be stood on: props,
-scatter and doorways stay off them. `shallows` is water you can wade: a ford.
+Kinds: `wood`, `flagstone`, `cobbles`, `dirt`, `grass`, `forest-floor`, `sand`,
+`cracked-earth`, `snow`, `ice`, `mud`, `rock`, `water`, `bog`, `shallows`, `void` (and
+`bedrock` round caves). `water`, `bog` and `void` can't be stood on: props, scatter and
+doorways stay off them. `shallows` is water you can wade: a ford.
+
+- `forest-floor`: the ground of a wood, dark and mossy with fallen leaves (see Forests).
+- `sand`: a beach or desert, with wind ripples. `cracked-earth`: a dry clay pan.
+- `snow`: a snowfield with drift lines. `ice`: frozen water, **walkable**, with a hard
+  inked edge, cracks and frost; use it for a frozen pond or river instead of `water`.
+- `mud`: churned wet ground with puddles, for a marsh or a farmyard.
+- `bog`: murky swamp water with duckweed and soft muddy banks. It behaves exactly like
+  `water` (banks, reeds, fords of `shallows` over it, bridges, waterfalls).
+
+Natural ground (`dirt`, `grass`, `forest-floor`, `sand`, `cracked-earth`, `snow`,
+`ice`, `mud`) gets a ragged edge from its seed and breaks into the ground round it in
+clumps. A region of the same kind as the ground under it draws nothing: it only marks
+out an area, for dressing (a wood of snowy pines on a snowfield).
 
 - `base`: the whole map, under everything else. Use the ground outside the building
   (`cobbles` for a street, `grass`, `dirt`), or `void` for a dungeon-style dark surround.
@@ -117,6 +130,10 @@ how high it is:
   cliff, 5 the most that changes the look. Taller cliffs have a deeper face (about
   0.25 + 0.4 × height squares wide, seen from above), more scree at the foot and a
   longer shadow.
+- `face` is `rock` (default), `sand` for a **dune** or `snow` for a **drift**. Sand and
+  snow faces are soft slopes: a crest line along the brink, a shaded lee fading into
+  the ground, no scree, and they **can be walked on** (props and dressing may stand
+  there). Write a dune's line along its crest, `high` on the windward side.
 - The face is drawn over the ground under it, so paint the ground either side as
   usual: grass above and a beach region below for a sea cliff. Run the line a square
   or two off the map to carry on out of view; an end inside the map rounds off.
@@ -247,6 +264,8 @@ keeps clear of walls, doorways, props and scatter, so it never breaks the checks
 - `litter`: straw, spills and dropped food on the floor.
 - `cobwebs`: in the inside corners.
 - `forest`: trees and undergrowth across a ground region (see Forests).
+- `scrub`: a forest's undergrowth without its trees, for open ground: dry bushes and
+  cacti on sand, snowy bushes and rocks on a snowfield, reeds and logs in a marsh.
 
 `amount` runs from 0 to 1 (default 0.5).
 
@@ -284,9 +303,9 @@ A wood is a `forest-floor` region with `forest` dressing in it:
   only stand where the forest's own ground shows, so a `grass` clearing or a road
   `line` through the wood stays open. Natural ground fades into what it's painted
   over, so a clearing thins softly into the forest floor.
-- `setting` picks the mix: `forest` (or none) a mixed broadleaf and pine wood,
-  `swamp` dead trees, reeds and moss, `snow` snowy pines and drifts, `desert` palms
-  and dry scrub, `graveyard` dead trees.
+- `setting` picks the mix (for `scrub` too): `forest` (or none) a mixed broadleaf and
+  pine wood, `swamp` dead trees, reeds and moss, `snow` snowy pines, `desert` palms and
+  dry scrub, `graveyard` dead trees.
 - A tree is one item in `labels.txt` (its canopy): removing it takes the trunk too. To
   move one, remove it and write both a `tree-trunk` and the canopy as props at the
   new spot.
