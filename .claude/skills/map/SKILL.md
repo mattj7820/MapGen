@@ -1,6 +1,6 @@
 ---
 name: map
-description: Make a battle map in this repo from a description, e.g. "a two-room tavern, bar along the north wall, hearth in the corner, back door to an alley". Writes a scene, finds the props it needs in the library, lights it, checks and renders it, inspects the review sheet, fixes what's wrong, and hands back the PNG and sidecar paths, plus any props the map needed that the library doesn't have yet.
+description: Make a battle map in this repo from a description, e.g. "a two-room tavern, bar along the north wall, hearth in the corner, back door to an alley". Writes a scene, finds the props it needs in the library, lights it, checks and renders it, inspects the review sheet, fixes what's wrong, and hands back the PNG and sidecar paths and a numbered review image for edits like "remove 23", plus any props the map needed that the library doesn't have yet.
 ---
 
 # Make a battle map from a description
@@ -102,7 +102,9 @@ Write `output/<name>/layout.json` (a new folder; if it exists, add `-2`). Then:
 npm run render -- output/<name>/layout.json
 ```
 
-It runs the checks first and draws nothing if there are problems: props in walls,
+Besides the map, sidecar and `review.png`, it writes `review-labels.png` (the map
+with a number on everything) and its key, `labels.txt`, which it also prints. It runs
+the checks first and draws nothing if there are problems: props in walls,
 blocked doorways, overlapping furniture, a candle not on a surface, a door not on a
 wall. Each problem names the item and its position. Fix the layout and render again
 until it's clean.
@@ -140,6 +142,8 @@ kinds to the wishlist (step 3).
 Tell Matt, briefly:
 
 - the map PNG and its sidecar (same base name, `.json`): these two go into the vault
+- `review-labels.png`, so he can ask for changes by number ("remove 123, turn 41 to
+  face the hearth"); see step 7
 - the size in squares and px per square
 - anything you decided that he didn't specify (size, room layout, extra rooms,
   lighting)
@@ -149,3 +153,39 @@ Tell Matt, briefly:
   and re-render the map with them.
 
 Don't copy anything into the vault or Guildhall; Matt does that by hand.
+
+## 7. Edits by number
+
+`review-labels.png` tags everything with a number or letter, and `labels.txt` lists
+them, one per line: tag, kind, position, where it lives in the layout, and for
+generated items their turn, seed and size.
+
+- **Letters** (A, B...) are rooms, `rooms[i]` in order.
+- **1 up** are openings then written props, in layout order (`openings[i]`,
+  `props[i]`, as the key says).
+- **101 up** (or the next hundred) are generated: dressing and laid tables. The key
+  says what made each one ("stores in hall", "meal on props[3]").
+
+When Matt names numbers, read `labels.txt` from the last render first and look all of
+them up before changing anything: an edit can renumber things, and a request with
+several numbers refers to the image he was looking at.
+
+- **Remove a written item:** delete its entry (the `props[i]` or `openings[i]` the
+  key names).
+- **Remove a generated item:** add `{ "kind": ..., "at": [x, y] }` to the scene's
+  `remove` list, copied exactly from the key. It stays gone on every re-render;
+  nothing else moves. Don't lower the dressing `amount` instead: that reshuffles
+  the room.
+- **Move or turn a written item:** edit its `at` or `rotation`. "Face the hearth"
+  means turning its front (+y at rotation 0) towards the hearth's position:
+  rotation = atan2(-dx, dy) in degrees, where (dx, dy) runs from the item to the
+  hearth. Round to a sensible angle, then add a few degrees of skew if it suits.
+- **Move or turn a generated item:** remove it (as above) and add a written prop with
+  the same `kind`, `at`, `seed`, `size` and rotation from the key, then edit that.
+- **A room** (by letter): change its `rect` or `points`, its floor or wall kind, or
+  its dressing (`"in"` is its id from the key).
+- **"Remove all the litter in A"** and the like: change or remove that room's dressing
+  entry rather than listing every item.
+
+Render again, then hand over the new `review-labels.png`, saying what changed and
+which numbers moved, if any.

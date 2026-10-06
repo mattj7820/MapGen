@@ -22,8 +22,8 @@ Options:
 
 The layout is checked first; if anything is wrong (a prop in a wall, a door that
 isn't on one, a stone hanging over the chasm...) nothing is drawn and the problems
-are listed. The map, sidecar and review sheet in that folder are written or
-replaced; layout.json is left as it is.`;
+are listed. The map, sidecar, review sheet, numbered review-labels.png and its key
+(labels.txt, also printed) are written or replaced; layout.json is left as it is.`;
 
 /** `npm run render`. Returns the folder written. */
 export async function runRender(argv: string[], ctx: CliContext): Promise<string | undefined> {
@@ -72,6 +72,8 @@ export async function runRender(argv: string[], ctx: CliContext): Promise<string
   ctx.log(path.relative(ctx.cwd, files.png));
   ctx.log(path.relative(ctx.cwd, path.join(files.folder, `${files.base}.json`)));
   ctx.log(path.relative(ctx.cwd, path.join(files.folder, "review.png")));
+  ctx.log(path.relative(ctx.cwd, path.join(files.folder, "review-labels.png")));
+  ctx.log(`\nKey to review-labels.png (also in labels.txt):\n${files.key}`);
   return files.folder;
 }
 

@@ -12,6 +12,7 @@ import {
   type Opening,
   OPENING_WIDTH,
   type Prop,
+  type Removal,
   type Scene,
   type WallKind,
 } from "./scene.js";
@@ -37,6 +38,11 @@ export interface Resolved {
   props: ResolvedProp[];
   /** Props whose kind isn't in the library. */
   unknownProps: Prop[];
+  /**
+   * Every item dressing made, in the order it made them, including any a `remove` rule
+   * then took out (those aren't in `props`). Labels are numbered in this order.
+   */
+  dressed: ResolvedProp[];
 }
 
 export interface ResolvedRegion {
@@ -98,6 +104,8 @@ export interface ResolvedProp {
   footprint: Pt[];
   /** Put there by dressing rather than written in the scene. */
   generated?: true;
+  /** For a generated item, what made it: "stores in hall", "meal on props[3]". */
+  from?: string;
 }
 
 /** Painting order of prop layers: seats go under table edges. */
@@ -158,11 +166,27 @@ export function resolveScene(scene: Scene): Resolved {
     if (spec) props.push(placeProp(prop, spec));
     else unknownProps.push(prop);
   }
-  const resolved = { scene, regions, segments, pieces, openings, props, unknownProps };
-  props.push(...dress(resolved));
+  const resolved: Resolved = {
+    scene,
+    regions,
+    segments,
+    pieces,
+    openings,
+    props,
+    unknownProps,
+    dressed: [],
+  };
+  // Removed items are still made, then dropped, so nothing else moves into their space.
+  resolved.dressed = dress(resolved);
+  props.push(...resolved.dressed.filter((p) => !removedBy(scene, p)));
   // A stable sort, so within a layer things keep the order they were written in.
   props.sort((a, b) => LAYER_ORDER.indexOf(a.spec.layer) - LAYER_ORDER.indexOf(b.spec.layer));
   return resolved;
+}
+
+/** The `remove` rule that takes out a generated item, if there is one. */
+export function removedBy(scene: Scene, p: ResolvedProp): Removal | undefined {
+  return scene.remove?.find((m) => m.kind === p.prop.kind && distance(m.at, p.prop.at) < 0.01);
 }
 
 function hasLongSides(outline: readonly Pt[]): boolean {

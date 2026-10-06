@@ -14,6 +14,7 @@ import {
   fmt,
   type Resolved,
   type ResolvedOpening,
+  removedBy,
   type ResolvedProp,
   resolveScene,
 } from "./resolve.js";
@@ -88,6 +89,13 @@ export function checkScene(scene: Scene): string[] {
   for (const d of scene.dressing) {
     if (!r.regions.some((g) => g.id === d.in))
       problems.push(`${d.kind} dressing: no room or region "${d.in}"`);
+  }
+  for (const m of scene.remove ?? []) {
+    if (!r.dressed.some((p) => removedBy(scene, p) === m)) {
+      problems.push(
+        `remove: no generated ${m.kind} at ${fmt(m.at)}; a written prop is removed by deleting its entry`,
+      );
+    }
   }
   for (const p of r.props) {
     if (p.prop.dress && !p.spec.surface) {

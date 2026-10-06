@@ -47,6 +47,17 @@ export interface Scene {
    * lighting.ts).
    */
   lighting?: Lighting;
+  /**
+   * Generated items taken out by hand: each rule drops the dressing item of that kind
+   * at that position. The rest of the dressing stays exactly where it was.
+   */
+  remove?: Removal[];
+}
+
+/** One generated item to leave out, by its kind and position (as the label key shows). */
+export interface Removal {
+  kind: string;
+  at: Pt;
 }
 
 export const LIGHTING_TIMES = ["day", "dusk", "night", "dark"] as const;

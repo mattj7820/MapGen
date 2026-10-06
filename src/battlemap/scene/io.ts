@@ -174,6 +174,14 @@ export function parseScene(text: string): Scene {
       };
     }),
     ...(s.lighting !== undefined ? { lighting: lighting(s.lighting) } : {}),
+    ...(s.remove !== undefined
+      ? {
+          remove: arr(s.remove, "remove").map((m, i) => {
+            const o = obj(m, `remove[${i}]`);
+            return { kind: str(o.kind, `remove[${i}].kind`), at: point(o.at, `remove[${i}].at`) };
+          }),
+        }
+      : {}),
   };
 }
 

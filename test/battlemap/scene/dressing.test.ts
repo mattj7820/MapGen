@@ -92,6 +92,38 @@ describe("rendering a building", () => {
   });
 });
 
+describe("removing a generated item", () => {
+  const scene = dressed();
+  const before = resolveScene(scene);
+  const target = before.dressed.find((p) => p.spec.layer === "solid")!;
+  const pinned = (): Scene => ({
+    ...dressed(),
+    remove: [{ kind: target.prop.kind, at: target.prop.at }],
+  });
+
+  it("takes out only that item, leaving a gap", () => {
+    const after = resolveScene(pinned());
+    const key = (p: (typeof after.props)[number]) => `${p.prop.kind}@${p.prop.at.join()}`;
+    expect(after.props.map(key)).toEqual(before.props.filter((p) => p !== target).map(key));
+    // It's still listed among what dressing made, so labels keep their numbers.
+    expect(after.dressed.map(key)).toEqual(before.dressed.map(key));
+    expect(checkScene(pinned())).toEqual([]);
+  });
+
+  it("changes only the pixels round it", () => {
+    const changed = differences(renderScene(scene, PX), renderScene(pinned(), PX));
+    expect(changed.length).toBeGreaterThan(0);
+    for (const p of changed) expect(distance(p, target.prop.at)).toBeLessThan(1.5);
+  });
+
+  it("is reported when it matches nothing", () => {
+    const s = { ...dressed(), remove: [{ kind: "sack", at: [0.5, 0.5] as [number, number] }] };
+    expect(checkScene(s)).toEqual([
+      "remove: no generated sack at (0.50, 0.50); a written prop is removed by deleting its entry",
+    ]);
+  });
+});
+
 describe("dressing for a setting", () => {
   const scene = tavern();
   scene.dressing.push(

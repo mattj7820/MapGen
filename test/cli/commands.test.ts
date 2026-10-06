@@ -19,9 +19,11 @@ describe("npm run map", () => {
     const [folder] = await runMap(["plateau", "--seed", "7", "--px", "16", "--lines", "0.3"], ctx);
     expect(folder).toBe(path.join(out, "plateau-s7-24x16-16"));
     expect(readdirSync(folder!).sort()).toEqual([
+      "labels.txt",
       "layout.json",
       "plateau-s7.json",
       "plateau-s7.png",
+      "review-labels.png",
       "review.png",
     ]);
     const sidecar = json(path.join(folder!, "plateau-s7.json"));
@@ -86,6 +88,8 @@ describe("npm run render", () => {
     const sidecar = json(path.join(folder!, "plateau-s5.json"));
     expect(sidecar.source).toMatchObject({ px: 16, edited: true });
     expect(json(layoutFile).scatter).toHaveLength(layout.scatter.length); // left as edited
+    expect(logs.join("\n")).toMatch(/Key to review-labels\.png/);
+    expect(readFileSync(path.join(folder!, "labels.txt"), "utf8")).toMatch(/nothing to number/);
   });
 
   it("refuses to draw a layout with problems, and says what they are", async () => {
