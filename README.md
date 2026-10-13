@@ -265,3 +265,7 @@ scripts/samples/           the sample scenes shown here
 
 The README images come from `npx tsx scripts/readme-images.ts`, which writes to
 `output/readme/`; they're then copied into `docs/images/` by hand.
+
+## License
+
+[MIT](LICENSE)
