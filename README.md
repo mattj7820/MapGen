@@ -226,6 +226,21 @@ top-down, no grid lines. Give both to an image model along with a style referenc
 The grid sidecar is in fractions of the image, so it still lines up with the result
 as long as the proportions are kept.
 
+### Aerial maps
+
+For angled, illustrated maps at any scale, from one road to a continent, MapGen draws the
+layout and an image model paints it. Describe a map to the `/aerial` skill, or write a
+layout by hand (`scripts/samples/aerial/` has one) and draw it:
+
+```sh
+npm run aerial -- output/aerial/<name>/layout.json
+```
+
+This writes `guide.png` and `prompt.txt`. Upload the guide to any image tool and paste the
+prompt. `guide-labels.png` numbers everything for changes like "move 3 north", `plan.png`
+shows the layout from straight above, and `log.md` records each attempt. No image model
+runs from this repo, and no reference image is needed.
+
 ## Development
 
 ```sh

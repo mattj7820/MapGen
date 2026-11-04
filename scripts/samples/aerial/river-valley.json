@@ -1,0 +1,141 @@
+{
+  "type": "aerial",
+  "name": "river-valley",
+  "angle": "medium",
+  "px": [1536, 1024],
+  "miles": [12, 12],
+  "base": {
+    "kind": "valley floor",
+    "tone": "bright green",
+    "shows": "Bright green",
+    "means": "a broad green valley of rich meadows"
+  },
+  "areas": [
+    {
+      "kind": "fields",
+      "tone": "tan",
+      "field": "olive",
+      "shows": "Tan and olive patches",
+      "means": "a patchwork of small farmed fields, hedges and tracks",
+      "points": [
+        [1.2, 7],
+        [5.3, 6.6],
+        [5.8, 9.5],
+        [3.4, 11.4],
+        [1, 10.6]
+      ]
+    },
+    {
+      "kind": "forest",
+      "tone": "dark green",
+      "shows": "Dark green trees",
+      "means": "old mixed woodland",
+      "points": [
+        [7.8, 3.6],
+        [12.8, 3],
+        [13, 8.4],
+        [10.2, 7.8],
+        [8.4, 6]
+      ]
+    },
+    {
+      "kind": "hills",
+      "tone": "olive",
+      "shows": "Olive hills",
+      "means": "low rounded hills of rough pasture",
+      "peak": 74,
+      "points": [
+        [-1, 3.8],
+        [3.4, 3.4],
+        [3.8, 5.2],
+        [-1, 5.8]
+      ]
+    },
+    {
+      "kind": "mountains",
+      "tone": "grey",
+      "shows": "Grey peaks",
+      "means": "a wall of high, bare mountains at the head of the valley",
+      "snow": true,
+      "peak": 130,
+      "points": [
+        [-1, 1.2],
+        [13, 1.2],
+        [13, 2.6],
+        [-1, 3]
+      ]
+    },
+    {
+      "kind": "soft",
+      "tone": "pale grey",
+      "shows": "Soft pale patch",
+      "means": "low morning mist lying in the woods",
+      "blur": 46,
+      "points": [
+        [8.8, 4.8],
+        [11.6, 4.4],
+        [11.8, 6.2],
+        [9.2, 6.4]
+      ]
+    }
+  ],
+  "lines": [
+    {
+      "kind": "river",
+      "tone": "blue",
+      "shows": "Blue line",
+      "means": "a clear river winding down the valley",
+      "width": 11,
+      "points": [
+        [5.8, 2.8],
+        [6.6, 5],
+        [5.6, 6.8],
+        [6.8, 9],
+        [6.2, 13]
+      ]
+    },
+    {
+      "kind": "road",
+      "tone": "tan",
+      "shows": "Thin tan lines",
+      "means": "a dirt road",
+      "points": [
+        [-1, 8.6],
+        [3.2, 6.2],
+        [5.5, 5.8],
+        [7.8, 7],
+        [13, 9.6]
+      ]
+    }
+  ],
+  "sites": [
+    {
+      "kind": "settlement",
+      "at": [4.6, 5.6],
+      "radius": 0.72,
+      "size": 0.1,
+      "count": 40,
+      "roofs": ["brown", "tan"],
+      "wall": "stone",
+      "shows": "Buildings inside a ring",
+      "means": "a small walled market town of timber and stone houses, with a square at its heart"
+    },
+    {
+      "kind": "settlement",
+      "at": [9, 9.4],
+      "radius": 0.2,
+      "shows": "A few buildings",
+      "means": "a hamlet of a few farmhouses"
+    },
+    {
+      "kind": "castle",
+      "at": [2.4, 4.3],
+      "size": 34,
+      "shows": "Grey walled block",
+      "means": "a small stone castle on the hills, with a tall keep"
+    }
+  ],
+  "purpose": [
+    "The river runs down the middle of the valley from the mountains towards the viewer, and the road crosses it at the town."
+  ]
+}

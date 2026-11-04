@@ -1,6 +1,7 @@
 # MapGen: guide for Claude
 
-A local tool for making true top-down D&D battle maps in code. Matt runs it with
+A local tool for making true top-down D&D battle maps in code, and layout guides for
+angled maps that an image model paints (see "Aerial maps" below). Matt runs it with
 Claude Code as the operator: Matt describes a map, Claude writes it as a scene (the
 `/map` skill), renders it, looks at the PNG, judges it against the style checklist
 below, and iterates. Props a map needs that the library lacks go on a wishlist, and
@@ -68,6 +69,7 @@ npm run map -- plateau --seeds 1-6 --px 128        # several, plus a contact she
 npm run map -- plateau --seed 7 --edge brushed --bridge --squares 20x20
 npm run map -- plateau --seed 7 --reference references/MountainPath.png@2956,1906
 npm run restyle -- output/<map folder>/layout.json # flat export + prompt for an image model
+npm run aerial -- output/aerial/<name>/layout.json # guide + prompt for an aerial map
 ```
 
 - With no seed, `map` picks a random one; it appears in the folder name.
@@ -140,15 +142,18 @@ Tests write only under `output/.test/` and clean up after themselves.
 - **`src/battlemap/plateau/`:** the plateau generator (`generate.ts`, its rules in
   `layout.ts`, outline shapes in `shape.ts`), `scene.ts` to turn its output into a
   scene, and `io.ts` to read old plateau layouts.
-- **`.claude/skills/map/`:** the `/map` skill (`SKILL.md`) and the scene format
+- **`src/aerial/`:** aerial map guides, separate from battlemaps: `format.ts` (types, tones),
+  `io.ts`, `check.ts`, `camera.ts`, `guide.ts` (the canvas and outlines), `terrain.ts`,
+  `sites.ts`, `render.ts` (guide, plan, numbers) and `prompt.ts` (prompt and log).
+- **`.claude/skills/aerial/`:** the `/aerial` skill, its format reference and the painting
+  guide. **`.claude/skills/map/`:** the `/map` skill (`SKILL.md`) and the scene format
   reference (`format.md`). **`.claude/skills/prop/`:** the `/prop` skill, which builds
   props from the wishlist or a request.
 - **`docs/`:** `prop-library.md` (how the library scales), `props-coverage.md` (what
   maps need, by category and setting, from a survey of published asset catalogues:
   ideas only).
-- **Other kinds of map** (region and world maps) are expected later. They'll reuse
-  `style/` but not the grid, sidecar or scenes. Don't build a "map kinds" layer until
-  the first one is actually being built.
+- **Other kinds of map:** aerial maps have their own command and format, so there's still
+  no "map kinds" layer. Finished inked region and world maps are paused.
 
 ## Decisions so far
 
@@ -318,6 +323,25 @@ Tests write only under `output/.test/` and clean up after themselves.
 - **The wishlist loop:** `/map` searches the library for everything a map needs and
   logs what's missing in `output/prop-wishlist.md` (outside git: it can carry campaign
   context) with the stand-in it used; `/prop` builds from that list and ticks it off.
+- **Aerial maps** (`src/aerial/`, roadmap section 6): angled, illustrated maps at any scale.
+  MapGen draws a flat guide and writes the prompt; Matt paints it by hand in a free image
+  tool. Nothing here calls an image model, so no keys and no local models (Matt's choice:
+  he makes a couple a week). The hard rules hold: code draws the guide, and painted images
+  stay in `output/`.
+  - Proved on four very different maps in ChatGPT and Gemini: layouts held, with no
+    reference image. Models can't count to hundreds, but follow a picture.
+  - Models copy guide shapes literally: plain blobs, neat triangles and even spacing all
+    came back as drawn. So terrain must be irregular and settlements need real structure.
+  - `means` makes it generic: every entry has a sentence for the prompt's colour key, so a
+    kind with no generator still works as a plain mark. It comes from Matt's description:
+    drawing detail may be added, but no names or story.
+  - Hard shapes mean "keep this"; `soft` marks mean "invent this". Cloud drawn as round puffs
+    came back as beads. The soft version hasn't been painted yet (Matt chose to save his free
+    images); the first real use is its test.
+  - Each entry's seed comes from its kind and position, so editing one leaves the others.
+  - Matt's reason for caring: a map has to do something ("a barrier nobody can walk round"),
+    which goes in `purpose`.
+  - `/aerial` does the rest by eye, including spotting stray strips of colour.
 - **Prototype findings to carry forward:**
   - Tone blotches were too contrasty ("camouflage") at overview size. Use softer
     steps and larger shapes.
