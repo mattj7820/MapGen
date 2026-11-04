@@ -16,6 +16,7 @@
     "map": "tsx src/cli/bin/map.ts",
     "render": "tsx src/cli/bin/render.ts",
     "restyle": "tsx src/cli/bin/restyle.ts",
+    "aerial": "tsx src/cli/bin/aerial.ts",
     "props": "tsx src/cli/bin/props.ts",
     "test": "vitest run",
     "test:watch": "vitest",
